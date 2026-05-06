@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT SaaS — Manual de Base de Datos</title>
+<style>
+  :root {
+    --blue:#2563eb;--blue-light:#dbeafe;--blue-dark:#1e40af;
+    --green:#16a34a;--green-light:#dcfce7;
+    --amber:#d97706;--amber-light:#fef3c7;
+    --red:#dc2626;--red-light:#fee2e2;
+    --purple:#7c3aed;--purple-light:#ede9fe;
+    --cyan:#0891b2;--cyan-light:#cffafe;
+    --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-500:#6b7280;--gray-700:#374151;--gray-900:#111827;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--gray-900);background:var(--gray-50);line-height:1.6;}
+
+  .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+  nav{background:#0c1a2e;color:white;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  nav .logo{padding:22px 20px 14px;border-bottom:1px solid #1e3352;}
+  nav .logo h1{font-size:1.05rem;font-weight:700;color:white;}
+  nav .logo p{font-size:0.72rem;color:#64748b;margin-top:3px;}
+  nav ul{list-style:none;padding:8px 0;}
+  nav li a{display:block;padding:7px 20px;color:#94a3b8;text-decoration:none;font-size:0.83rem;transition:all 0.15s;border-left:3px solid transparent;}
+  nav li a:hover{background:#1e2d45;color:white;border-left-color:var(--cyan);}
+  nav li a.section-label{color:#475569;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:14px 20px 4px;pointer-events:none;}
+
+  .page-header{background:linear-gradient(135deg,#0c1a2e 0%,#0e7490 100%);color:white;padding:40px 48px;}
+  .page-header h1{font-size:1.9rem;font-weight:800;color:white;margin-bottom:6px;}
+  .page-header p{color:#a5f3fc;font-size:0.95rem;}
+  .page-header .chips{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .chip{display:inline-block;padding:3px 10px;border-radius:9999px;font-size:0.73rem;font-weight:600;}
+  .chip-cyan{background:rgba(8,145,178,0.4);color:#a5f3fc;}
+
+  main{padding:40px 48px;max-width:960px;}
+  h2{font-size:1.35rem;font-weight:700;margin:40px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--gray-200);}
+  h3{font-size:1rem;font-weight:600;color:var(--gray-700);margin:24px 0 10px;}
+  p{color:var(--gray-700);line-height:1.65;margin-bottom:12px;font-size:0.9rem;}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:0.85rem;}
+  th{background:var(--gray-100);text-align:left;padding:9px 12px;font-weight:600;color:var(--gray-700);border-bottom:2px solid var(--gray-200);}
+  td{padding:8px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--gray-50);}
+  .pk{color:var(--amber);font-weight:700;}
+  .fk{color:var(--blue);font-weight:600;}
+  .nn{color:var(--red);}
+  .def{color:var(--green);}
+
+  /* Code */
+  pre{background:#1e293b;color:#e2e8f0;border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:0.8rem;line-height:1.65;margin:12px 0;}
+  code{font-family:var(--mono);font-size:0.83em;background:var(--gray-100);padding:1px 6px;border-radius:4px;color:#9333ea;}
+
+  /* Alerts */
+  .alert{border-radius:8px;padding:12px 16px;margin:14px 0;border-left:4px solid;font-size:0.875rem;line-height:1.5;}
+  .alert-red{background:var(--red-light);border-color:var(--red);color:#7f1d1d;}
+  .alert-blue{background:var(--blue-light);border-color:var(--blue);color:#1e3a8a;}
+  .alert-amber{background:var(--amber-light);border-color:var(--amber);color:#78350f;}
+  .alert-green{background:var(--green-light);border-color:var(--green);color:#14532d;}
+  .alert-cyan{background:var(--cyan-light);border-color:var(--cyan);color:#164e63;}
+  .alert strong{font-weight:700;}
+
+  /* ERD Diagram */
+  .erd-container{background:#1e293b;border-radius:10px;padding:24px;margin:20px 0;overflow-x:auto;}
+
+  /* Table cards */
+  .table-card{background:white;border:1px solid var(--gray-200);border-radius:10px;margin:20px 0;overflow:hidden;}
+  .table-card-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);}
+  .table-name{font-family:var(--mono);font-size:0.95rem;font-weight:700;color:var(--gray-900);}
+  .table-desc{font-size:0.8rem;color:var(--gray-500);}
+  .tenant-badge{margin-left:auto;background:var(--blue-light);color:var(--blue-dark);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+  .global-badge{margin-left:auto;background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+
+  /* Script table */
+  .script-num{font-family:var(--mono);font-size:0.82rem;color:var(--blue);}
+  .status-ok{color:var(--green);font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav>
+    <div class="logo">
+      <h1>OPT SaaS — BD</h1>
+      <p>Manual de Base de Datos</p>
+    </div>
+    <ul>
+      <li><a class="section-label">Introducción</a></li>
+      <li><a href="#overview">Resumen</a></li>
+      <li><a href="#scripts">Scripts SQL</a></li>
+      <li><a href="#diagrama">Diagrama de Tablas</a></li>
+      <li><a class="section-label">Catálogos</a></li>
+      <li><a href="#region">OPT_Region</a></li>
+      <li><a href="#comuna">OPT_Comuna</a></li>
+      <li><a class="section-label">Negocio</a></li>
+      <li><a href="#tenant">OPT_Tenant</a></li>
+      <li><a href="#sucursal">OPT_Sucursal</a></li>
+      <li><a href="#cliente">OPT_Cliente</a></li>
+      <li><a href="#contacto">OPT_Contacto</a></li>
+      <li><a href="#usuario">OPT_Usuario</a></li>
+      <li><a class="section-label">Guías</a></li>
+      <li><a href="#indices">Índices</a></li>
+      <li><a href="#cascadas">Cascadas FK</a></li>
+      <li><a href="#nuevo-script">Agregar Script</a></li>
+      <li><a href="#roles">Roles de Usuario</a></li>
+    </ul>
+  </nav>
+
+  <div>
+    <div class="page-header">
+      <h1>Manual de Base de Datos</h1>
+      <p>OPT SaaS · SQL Server 2022 · Azure SQL Compatible · Multi-Tenant</p>
+      <div class="chips">
+        <span class="chip chip-cyan">Base de datos: dbOPT</span>
+        <span class="chip chip-cyan">8 tablas</span>
+        <span class="chip chip-cyan">Soft-delete en todas</span>
+        <span class="chip chip-cyan">Multi-tenant</span>
+      </div>
+    </div>
+
+    <main>
+
+      <!-- RESUMEN -->
+      <h2 id="overview">Resumen</h2>
+      <p>La base de datos <strong>dbOPT</strong> está en SQL Server 2022 (compatible con Azure SQL). Toda la evolución del esquema se gestiona con scripts SQL numerados en <code>src/basedatos/</code>. No se usa Entity Framework Migrations.</p>
+
+      <div class="alert alert-red">
+        <strong>Regla multi-tenant:</strong> Todas las tablas de negocio tienen columna <code>TenantId</code>. Nunca hacer consultas sin filtrar por TenantId. Un error aquí expone datos de otros clientes.
+      </div>
+
+      <table>
+        <tr><th>Tipo</th><th>Tabla</th><th>TenantId</th><th>Descripción</th></tr>
+        <tr><td>Catálogo</td><td>OPT_Region</td><td>No</td><td>16 regiones de Chile (solo lectura)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_Comuna</td><td>No</td><td>Comunas por región (solo lectura)</td></tr>
+        <tr><td>Raíz SaaS</td><td>OPT_Tenant</td><td>No</td><td>Empresas clientes del SaaS</td></tr>
+        <tr><td>Negocio</td><td>OPT_Sucursal</td><td>Sí</td><td>Sucursales de la óptica</td></tr>
+        <tr><td>Negocio</td><td>OPT_Cliente</td><td>Sí</td><td>Clientes (Persona y Empresa unificados)</td></tr>
+        <tr><td>Negocio</td><td>OPT_Contacto</td><td>Sí</td><td>Contactos de clientes Empresa</td></tr>
+        <tr><td>Auth</td><td>OPT_Usuario</td><td>Sí</td><td>Usuarios del sistema (login JWT)</td></tr>
+      </table>
+
+      <!-- SCRIPTS -->
+      <h2 id="scripts">Scripts SQL</h2>
+      <p>Los scripts se ejecutan en orden numérico una sola vez para crear la base de datos. Son idempotentes donde corresponde (verifican existencia antes de insertar).</p>
+
+      <table>
+        <tr><th>Script</th><th>Descripción</th><th>Estado</th></tr>
+        <tr><td><span class="script-num">000</span> creacion_base_datos.sql</td><td>Crea la base de datos <code>dbOPT</code></td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">001</span> OPT_Tenant.sql</td><td>Tabla raíz del SaaS, RutEmpresa único</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">002</span> OPT_Region.sql</td><td>Catálogo de regiones (código + nombre)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">003</span> OPT_Comuna.sql</td><td>Catálogo de comunas (FK a Region)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">004</span> OPT_Sucursal.sql</td><td>Sucursales de la óptica (con TenantId)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">005</span> OPT_Cliente.sql</td><td>Tabla unificada Persona + Empresa</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">006</span> OPT_Contacto.sql</td><td>Contactos de clientes Empresa</td><td><span class="status-ok">✓ corregido</span></td></tr>
+        <tr><td><span class="script-num">007</span> datos_iniciales.sql</td><td>16 regiones + Tenant demo (idempotente)</td><td><span class="status-ok">✓ corregido</span></td></tr>
+        <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices)</td><td><span class="status-ok">✓ corregido</span></td></tr>
+      </table>
+
+      <div class="alert alert-amber">
+        <strong>Próximo script:</strong> Para nuevas tablas o cambios de esquema, crear <code>009_...</code>, <code>010_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
+      </div>
+
+      <!-- DIAGRAMA -->
+      <h2 id="diagrama">Diagrama de Relaciones</h2>
+      <div class="erd-container">
+        <svg viewBox="0 0 820 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:Consolas,monospace;">
+          <!-- Lines FK -->
+          <!-- Region → Comuna -->
+          <line x1="130" y1="130" x2="130" y2="220" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <!-- Tenant → Sucursal -->
+          <line x1="340" y1="100" x2="340" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- Tenant → Cliente -->
+          <line x1="370" y1="100" x2="490" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- Tenant → Usuario -->
+          <line x1="390" y1="100" x2="660" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- Tenant → Contacto -->
+          <line x1="360" y1="100" x2="490" y2="320" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <!-- Cliente → Contacto -->
+          <line x1="530" y1="270" x2="530" y2="320" stroke="#22d3ee" stroke-width="2"/>
+          <!-- Comuna → Cliente -->
+          <line x1="160" y1="250" x2="470" y2="230" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+          <!-- Tenant table (center top) -->
+          <rect x="280" y="30" width="160" height="70" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="360" y="52" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Tenant</text>
+          <line x1="285" y1="58" x2="435" y2="58" stroke="#3b82f6" stroke-width="1"/>
+          <text x="295" y="72" fill="#fde68a" font-size="9">🔑 TenantId (PK)</text>
+          <text x="295" y="86" fill="#94a3b8" font-size="9">RutEmpresa, Nombre, Email</text>
+
+          <!-- Region -->
+          <rect x="50" y="50" width="150" height="70" rx="8" fill="#1e2d3d" stroke="#8b5cf6" stroke-width="2"/>
+          <text x="125" y="72" fill="#c4b5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Region</text>
+          <line x1="55" y1="78" x2="195" y2="78" stroke="#8b5cf6" stroke-width="1"/>
+          <text x="65" y="92" fill="#fde68a" font-size="9">🔑 idRegion (PK)</text>
+          <text x="65" y="106" fill="#94a3b8" font-size="9">Region, Codigo</text>
+
+          <!-- Comuna -->
+          <rect x="50" y="175" width="150" height="80" rx="8" fill="#1e2d3d" stroke="#8b5cf6" stroke-width="2"/>
+          <text x="125" y="197" fill="#c4b5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Comuna</text>
+          <line x1="55" y1="203" x2="195" y2="203" stroke="#8b5cf6" stroke-width="1"/>
+          <text x="65" y="217" fill="#fde68a" font-size="9">🔑 idComuna (PK)</text>
+          <text x="65" y="231" fill="#60a5fa" font-size="9">🔗 idRegion (FK)</text>
+          <text x="65" y="245" fill="#94a3b8" font-size="9">Comuna, Codigo</text>
+
+          <!-- Sucursal -->
+          <rect x="250" y="200" width="160" height="80" rx="8" fill="#1e2d3d" stroke="#3b82f6" stroke-width="2"/>
+          <text x="330" y="222" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Sucursal</text>
+          <line x1="255" y1="228" x2="405" y2="228" stroke="#3b82f6" stroke-width="1"/>
+          <text x="265" y="242" fill="#fde68a" font-size="9">🔑 idSucursal (PK)</text>
+          <text x="265" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
+          <text x="265" y="270" fill="#94a3b8" font-size="9">Nombre, Matriz, ...</text>
+
+          <!-- Cliente -->
+          <rect x="435" y="200" width="165" height="110" rx="8" fill="#1e2d3d" stroke="#22d3ee" stroke-width="2"/>
+          <text x="517" y="222" fill="#a5f3fc" text-anchor="middle" font-size="11" font-weight="700">OPT_Cliente</text>
+          <line x1="440" y1="228" x2="595" y2="228" stroke="#22d3ee" stroke-width="1"/>
+          <text x="450" y="242" fill="#fde68a" font-size="9">🔑 ClienteId (PK)</text>
+          <text x="450" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
+          <text x="450" y="270" fill="#60a5fa" font-size="9">🔗 idComuna (FK, opt)</text>
+          <text x="450" y="284" fill="#94a3b8" font-size="9">TipoCliente, RUT, Nombre</text>
+          <text x="450" y="298" fill="#94a3b8" font-size="9">FechaNac, Prevision, Giro</text>
+
+          <!-- Contacto -->
+          <rect x="435" y="340" width="165" height="90" rx="8" fill="#1e2d3d" stroke="#22d3ee" stroke-width="1.5"/>
+          <text x="517" y="362" fill="#a5f3fc" text-anchor="middle" font-size="11" font-weight="700">OPT_Contacto</text>
+          <line x1="440" y1="368" x2="595" y2="368" stroke="#22d3ee" stroke-width="1"/>
+          <text x="450" y="382" fill="#fde68a" font-size="9">🔑 ContactoId (PK)</text>
+          <text x="450" y="396" fill="#60a5fa" font-size="9">🔗 TenantId (FK-noaction)</text>
+          <text x="450" y="410" fill="#60a5fa" font-size="9">🔗 ClienteId (FK-cascade)</text>
+
+          <!-- Usuario -->
+          <rect x="625" y="200" width="160" height="100" rx="8" fill="#1e2d3d" stroke="#3b82f6" stroke-width="2"/>
+          <text x="705" y="222" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Usuario</text>
+          <line x1="630" y1="228" x2="780" y2="228" stroke="#3b82f6" stroke-width="1"/>
+          <text x="640" y="242" fill="#fde68a" font-size="9">🔑 UsuarioId (PK)</text>
+          <text x="640" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
+          <text x="640" y="270" fill="#94a3b8" font-size="9">RutUsuario, Email</text>
+          <text x="640" y="284" fill="#94a3b8" font-size="9">PasswordHash, Rol</text>
+
+          <!-- Legend -->
+          <rect x="50" y="390" width="220" height="40" rx="6" fill="#0f172a" stroke="#334155"/>
+          <line x1="65" y1="407" x2="90" y2="407" stroke="#3b82f6" stroke-width="2"/>
+          <text x="95" y="411" fill="#94a3b8" font-size="9">FK con TenantId</text>
+          <line x1="65" y1="422" x2="90" y2="422" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="95" y="426" fill="#94a3b8" font-size="9">Catálogo (sin TenantId)</text>
+        </svg>
+      </div>
+
+      <!-- TABLAS -->
+      <h2 id="tenant">OPT_Tenant</h2>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Tenant</span>
+          <span class="table-desc">Empresas clientes del SaaS (raíz multi-tenant)</span>
+          <span class="global-badge">Global</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">TenantId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>RutEmpresa</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE (filtrado IsDeleted=0)</td></tr>
+          <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Telefono</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">1</td><td></td></tr>
+          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ FechaRegistro, CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+      </div>
+
+      <h2 id="cliente">OPT_Cliente</h2>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Cliente</span>
+          <span class="table-desc">Clientes de la óptica — Persona y Empresa unificados</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">ClienteId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td>TipoCliente</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK: 'Persona' | 'Empresa'</td></tr>
+          <tr><td>NumeroDocumento</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(200)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">idComuna</span></td><td>INT</td><td>NULL</td><td>—</td><td>FK → OPT_Comuna (opcional)</td></tr>
+          <tr><td>Celular</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Mail</td><td>NVARCHAR(150)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td class="def">SYSUTCDATETIME()</td><td></td></tr>
+          <tr><td>FechaNacimiento</td><td>DATE</td><td>NULL</td><td>—</td><td><em>Solo Persona</em></td></tr>
+          <tr><td>TipoPrevision</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td><em>Solo Persona:</em> Fonasa, Isapre, Particular</td></tr>
+          <tr><td>Giro</td><td>NVARCHAR(150)</td><td>NULL</td><td>—</td><td><em>Solo Empresa</em></td></tr>
+          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div style="padding:12px 20px;background:#fffbeb;border-top:1px solid #fde68a;">
+          <p style="font-size:0.82rem;color:#78350f;margin:0;"><strong>Decisión de diseño:</strong> Persona y Empresa están unificadas en una sola tabla para simplificar el modelo. Los campos <em>FechaNacimiento</em> y <em>TipoPrevision</em> son NULL para Empresa; <em>Giro</em> es NULL para Persona.</p>
+        </div>
+      </div>
+
+      <h2 id="usuario">OPT_Usuario</h2>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Usuario</span>
+          <span class="table-desc">Usuarios del sistema para autenticación JWT</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">UsuarioId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td>RutUsuario</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td>Tiene índice IX_Email</td></tr>
+          <tr><td>PasswordHash</td><td>NVARCHAR(256)</td><td class="nn">NOT NULL</td><td>—</td><td>Hash BCrypt (nunca texto plano)</td></tr>
+          <tr><td>Rol</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td class="def">'Operador'</td><td>Admin | Operador | Lectura</td></tr>
+          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td class="def">SYSUTCDATETIME()</td><td></td></tr>
+          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+      </div>
+
+      <h2 id="contacto">OPT_Contacto</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Contacto</span>
+          <span class="table-desc">Contactos de clientes Empresa (múltiples por empresa)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">ContactoId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>FK → OPT_Tenant (<strong>NO ACTION</strong>)</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>FK → OPT_Cliente (<strong>CASCADE</strong>)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td></td></tr>
+          <tr><td>Email, Telefono, Cargo</td><td>NVARCHAR</td><td>NULL</td><td></td></tr>
+          <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td>Default 1</td></tr>
+        </table>
+        <div style="padding:12px 20px;background:#fff7ed;border-top:1px solid #fdba74;">
+          <p style="font-size:0.82rem;color:#7c2d12;margin:0;"><strong>FK importante:</strong> TenantId usa <code>NO ACTION</code> (no CASCADE) para evitar múltiples rutas de cascada. La cascada llega por la ruta: Tenant → Cliente → Contacto.</p>
+        </div>
+      </div>
+
+      <!-- ÍNDICES -->
+      <h2 id="indices">Índices</h2>
+      <table>
+        <tr><th>Tabla</th><th>Índice</th><th>Tipo</th><th>Propósito</th></tr>
+        <tr><td>OPT_Tenant</td><td>IX_Tenant_RutEmpresa</td><td>UNIQUE filtrado</td><td>RUT único por tenants activos</td></tr>
+        <tr><td>OPT_Region</td><td>IX_Region_Codigo</td><td>UNIQUE filtrado</td><td>Código de región único</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_Cliente_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_Cliente_TipoCliente</td><td>NON-UNIQUE</td><td>Filtro por tipo</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_Cliente_Tenant_Documento</td><td>UNIQUE filtrado</td><td>RUT único por tenant (activos)</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_Usuario_Tenant_Rut</td><td>UNIQUE filtrado</td><td>RUT único por tenant (activos)</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_Usuario_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_Usuario_Email</td><td>NON-UNIQUE</td><td>Búsqueda por email</td></tr>
+        <tr><td>OPT_Contacto</td><td>IX_Contacto_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
+        <tr><td>OPT_Contacto</td><td>IX_Contacto_ClienteId</td><td>NON-UNIQUE</td><td>Contactos de un cliente</td></tr>
+      </table>
+
+      <div class="alert alert-blue">
+        <strong>Índices filtrados:</strong> Los índices UNIQUE usan <code>WHERE [IsDeleted] = 0</code>. Esto permite que registros eliminados (soft-delete) no bloqueen la creación de nuevos con el mismo documento.
+      </div>
+
+      <!-- CASCADAS -->
+      <h2 id="cascadas">Comportamiento de Cascadas FK</h2>
+      <table>
+        <tr><th>Tabla hija</th><th>FK hacia</th><th>ON DELETE</th><th>ON UPDATE</th><th>Razón</th></tr>
+        <tr><td>OPT_Sucursal</td><td>OPT_Tenant</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina tenant, sus sucursales se eliminan</td></tr>
+        <tr><td>OPT_Cliente</td><td>OPT_Tenant</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina tenant, sus clientes se eliminan</td></tr>
+        <tr><td>OPT_Cliente</td><td>OPT_Comuna</td><td>NO ACTION</td><td>NO ACTION</td><td>La comuna es un catálogo, no se elimina</td></tr>
+        <tr><td>OPT_Contacto</td><td>OPT_Tenant</td><td><strong>NO ACTION</strong></td><td>NO ACTION</td><td>Evita ruta múltiple (ya llega vía Cliente)</td></tr>
+        <tr><td>OPT_Contacto</td><td>OPT_Cliente</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina cliente, sus contactos se eliminan</td></tr>
+        <tr><td>OPT_Usuario</td><td>OPT_Tenant</td><td>CASCADE</td><td>—</td><td>Si elimina tenant, sus usuarios se eliminan</td></tr>
+        <tr><td>OPT_Comuna</td><td>OPT_Region</td><td>NO ACTION</td><td>CASCADE</td><td>No se elimina región con comunas</td></tr>
+      </table>
+
+      <!-- NUEVO SCRIPT -->
+      <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
+      <p>Pasos para agregar cambios de esquema:</p>
+      <pre>-- Nombrar: 009_descripcion.sql
+-- Siempre: USE [dbOPT]; GO
+
+-- Para tablas nuevas: verificar existencia
+IF OBJECT_ID('[dbo].[OPT_NuevaTabla]', 'U') IS NOT NULL
+    DROP TABLE [dbo].[OPT_NuevaTabla];
+GO
+
+-- Para ALTER TABLE (incrementales): verificar columna
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('OPT_Cliente')
+    AND name = 'NuevaCampo'
+)
+BEGIN
+    ALTER TABLE [dbo].[OPT_Cliente]
+    ADD [NuevaCampo] NVARCHAR(100) NULL;
+END
+GO</pre>
+
+      <div class="alert alert-green">
+        <strong>Buenas prácticas:</strong> Usar <code>SYSUTCDATETIME()</code> para timestamps (UTC, alta precisión). Incluir siempre los campos de auditoría. Datos de catálogos con guards <code>IF NOT EXISTS</code>.
+      </div>
+
+      <!-- ROLES -->
+      <h2 id="roles">Roles de Usuario</h2>
+      <p>Los roles están almacenados como string en <code>OPT_Usuario.Rol</code>. Nunca hardcodear en el código.</p>
+      <table>
+        <tr><th>Rol</th><th>Descripción</th><th>Puede eliminar</th></tr>
+        <tr><td><code>Admin</code></td><td>Acceso completo, gestión de usuarios y configuración</td><td>Sí</td></tr>
+        <tr><td><code>Operador</code></td><td>CRUD de clientes y contactos (default al crear usuario)</td><td>Sí</td></tr>
+        <tr><td><code>Lectura</code></td><td>Solo consultas, sin modificaciones</td><td>No</td></tr>
+      </table>
+
+      <h3>Crear primer usuario (PowerShell)</h3>
+      <pre># Generar hash BCrypt para insertar directamente en BD
+# Instalar: Install-Module -Name bcryptnet
+# O usar este hash de "Opt2026!" para testing:
+# $2a$11$example... (generar con BCrypt.Net-Next)
+
+INSERT INTO [dbo].[OPT_Usuario]
+  (TenantId, RutUsuario, Nombre, Email, PasswordHash, Rol, CreatedBy)
+VALUES
+  (1, '12345678-9', 'Admin Demo', 'admin@optica.cl',
+   '&lt;hash_bcrypt_aqui&gt;', 'Admin', 'SYSTEM');
+GO</pre>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

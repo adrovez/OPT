@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="OPT.API/OPT.API.csproj" Id="bf6662bc-8e5c-4a38-85a9-b02b24b1a5c6" />
+  <Project Path="OPT.Application/OPT.Application.csproj" Id="22274461-901a-4d02-8bb6-de0081132611" />
+  <Project Path="OPT.Domain/OPT.Domain.csproj" Id="2371912c-1eff-4e90-907b-1cdb5acb0c18" />
+  <Project Path="OPT.Infrastructure/OPT.Infrastructure.csproj" Id="2cf9f214-8cf3-4c93-bb37-0700b66fcbf5" />
+</Solution>

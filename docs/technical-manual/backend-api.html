@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPT SaaS - Manual Técnico</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+            --code-bg: #0d1117;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 24px 0;
+            z-index: 100;
+        }
+        .sidebar h2 {
+            padding: 0 24px 16px;
+            font-size: 18px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 8px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+        .sidebar a:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+        .sidebar .section-label {
+            padding: 16px 24px 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+        .main {
+            margin-left: 280px;
+            max-width: 900px;
+            padding: 48px 48px 96px;
+        }
+        .main h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .main h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 48px;
+            margin-bottom: 16px;
+            color: var(--accent);
+        }
+        .main h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .main p { margin-bottom: 16px; color: var(--text-secondary); }
+        .main strong { color: var(--text-primary); }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-green { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .badge-orange { background: rgba(210,153,34,0.15); color: var(--accent-orange); }
+        .badge-red { background: rgba(248,81,73,0.15); color: var(--accent-red); }
+        .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        table th, table td {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        table th {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        table tr:nth-child(even) { background: var(--bg-secondary); }
+        code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--accent-orange);
+        }
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .endpoint {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .method {
+            font-family: 'Cascadia Code', monospace;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            min-width: 65px;
+            text-align: center;
+        }
+        .method-get { background: rgba(63,185,80,0.2); color: var(--accent-green); }
+        .method-post { background: rgba(88,166,255,0.2); color: var(--accent); }
+        .method-put { background: rgba(210,153,34,0.2); color: var(--accent-orange); }
+        .method-delete { background: rgba(248,81,73,0.2); color: var(--accent-red); }
+        .path {
+            font-family: 'Cascadia Code', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .info-box {
+            background: rgba(88,166,255,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        .info-box p { color: var(--text-primary); margin: 0; }
+        .diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+        .diagram .layer {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 6px;
+            margin: 4px;
+            font-weight: 600;
+        }
+        .diagram .layer-api { background: rgba(248,81,73,0.15); color: var(--accent-red); border: 1px solid rgba(248,81,73,0.3); }
+        .diagram .layer-app { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+        .diagram .layer-infra { background: rgba(63,185,80,0.15); color: var(--accent-green); border: 1px solid rgba(63,185,80,0.3); }
+        .diagram .layer-domain { background: rgba(188,140,255,0.15); color: var(--accent-purple); border: 1px solid rgba(188,140,255,0.3); }
+        ul, ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        li { margin-bottom: 6px; }
+        .toc { margin-bottom: 32px; }
+        .toc ol { padding-left: 20px; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+        .footer {
+            margin-top: 64px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <h2>OPT SaaS</h2>
+    <div class="section-label">General</div>
+    <a href="#overview">Vista General</a>
+    <a href="#architecture">Arquitectura</a>
+    <a href="#stack">Stack Tecnologico</a>
+    <a href="#database">Base de Datos</a>
+    <div class="section-label">Modulos API</div>
+    <a href="#api-tenant">Tenant</a>
+    <a href="#api-auth">Auth / Login</a>
+    <a href="#api-clientes">Clientes</a>
+    <a href="#api-contactos">Contactos</a>
+    <div class="section-label">Referencia</div>
+    <a href="#domain-model">Modelo de Dominio</a>
+    <a href="#patterns">Patrones de Diseno</a>
+    <a href="#setup">Setup y Ejecucion</a>
+    <a href="#security">Seguridad Multi-Tenant</a>
+    <a href="#migration">Migracion desde Legacy</a>
+</nav>
+
+<main class="main">
+
+    <h1>Manual Tecnico - OPT SaaS</h1>
+    <p style="font-size:16px; color:var(--text-secondary); margin-bottom:32px;">
+        Backend API para gestion de opticas &mdash; Arquitectura .NET 10, Clean Architecture, SaaS Multi-Tenant
+    </p>
+    <p><strong>Version:</strong> 1.0.0 &nbsp; <span class="badge badge-green">Compilacion OK</span> &nbsp; <strong>Fecha:</strong> Mayo 2026</p>
+
+    <div class="toc">
+        <h3 style="color:var(--text-primary);">Tabla de Contenidos</h3>
+        <ol>
+            <li><a href="#overview">Vista General del Sistema</a></li>
+            <li><a href="#architecture">Arquitectura de Software</a></li>
+            <li><a href="#stack">Stack Tecnologico</a></li>
+            <li><a href="#database">Base de Datos</a></li>
+            <li><a href="#api-tenant">API: Tenant</a></li>
+            <li><a href="#api-auth">API: Auth / Login</a></li>
+            <li><a href="#api-clientes">API: Clientes</a></li>
+            <li><a href="#api-contactos">API: Contactos</a></li>
+            <li><a href="#domain-model">Modelo de Dominio</a></li>
+            <li><a href="#patterns">Patrones de Diseno</a></li>
+            <li><a href="#setup">Setup y Ejecucion</a></li>
+            <li><a href="#security">Seguridad Multi-Tenant</a></li>
+            <li><a href="#migration">Migracion desde Legacy</a></li>
+        </ol>
+    </div>
+
+    <!-- OVERVIEW -->
+    <h2 id="overview">1. Vista General del Sistema</h2>
+    <p>
+        OPT es una plataforma <strong>SaaS multi-tenant</strong> para la gestion de opticas. El sistema permite que multiples opticas (tenants) operen de forma aislada, compartiendo la misma infraestructura pero con datos completamente separados.
+    </p>
+
+    <div class="info-box">
+        <p><strong>Principio rector:</strong> Ningun endpoint puede exponer datos cross-tenant por error de codigo. La seguridad multi-tenant es la prioridad maxima.</p>
+    </div>
+
+    <h3>Funcionalidades implementadas (Sesion Mayo 2026)</h3>
+    <table>
+        <thead>
+            <tr><th>Modulo</th><th>Funcionalidad</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Tenant</strong></td><td>CRUD completo de tenants (opticas clientes del SaaS)</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Auth</strong></td><td>Login con JWT, registro de usuarios</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Clientes</strong></td><td>CRUD de clientes (Persona/Empresa) con paginado y busqueda</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Contactos</strong></td><td>CRUD de contactos asociados a clientes tipo Empresa</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Productos</strong></td><td>Gestion de productos/lentes</td><td><span class="badge badge-orange">Pendiente</span></td></tr>
+            <tr><td><strong>Ordenes</strong></td><td>Ordenes de trabajo</td><td><span class="badge badge-orange">Pendiente</span></td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- ARCHITECTURE -->
+    <h2 id="architecture">2. Arquitectura de Software</h2>
+    <p>El backend sigue el patron <strong>Clean Architecture</strong> con 4 capas claramente separadas:</p>
+
+    <div class="diagram">
+        <div class="layer layer-api">OPT.API</div><br>
+        <span style="color:var(--text-secondary); font-size:11px;">Controllers, Middleware, DI, Swagger</span><br><br>
+        <div class="layer layer-app">OPT.Application</div><br>
+        <span style="color:var(--text-secondary); font-size:11px;">Commands, Queries, Handlers, DTOs, Validators, Interfaces</span><br><br>
+        <div class="layer layer-infra">OPT.Infrastructure</div><br>
+        <span style="color:var(--text-secondary); font-size:11px;">EF Core DbContext, Repositories, JWT Auth, PasswordHasher</span><br><br>
+        <div class="layer layer-domain">OPT.Domain</div><br>
+        <span style="color:var(--text-secondary); font-size:11px;">Entities, Constants, BaseEntity</span>
+    </div>
+
+    <h3>Reglas de dependencia</h3>
+    <table>
+        <thead>
+            <tr><th>Capa</th><th>Depende de</th><th>NO depende de</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>OPT.Domain</code></td><td>Nada (capa base)</td><td>Todo lo demas</td></tr>
+            <tr><td><code>OPT.Application</code></td><td><code>OPT.Domain</code></td><td>Infrastructure, API</td></tr>
+            <tr><td><code>OPT.Infrastructure</code></td><td><code>OPT.Application</code>, <code>OPT.Domain</code></td><td>API</td></tr>
+            <tr><td><code>OPT.API</code></td><td>Todas las capas</td><td>Nada (tope)</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- STACK -->
+    <h2 id="stack">3. Stack Tecnologico</h2>
+    <table>
+        <thead>
+            <tr><th>Tecnologia</th><th>Version</th><th>Uso</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>.NET</td><td>10.0</td><td>Framework principal</td></tr>
+            <tr><td>MediatR</td><td>12.4.1</td><td>CQRS / Mensajeria</td></tr>
+            <tr><td>FluentValidation</td><td>11.10.0</td><td>Validacion de comandos</td></tr>
+            <tr><td>EF Core</td><td>9.0.0</td><td>ORM / Acceso a datos</td></tr>
+            <tr><td>EF Core SQL Server</td><td>9.0.0</td><td>Provider SQL Server</td></tr>
+            <tr><td>JWT Bearer</td><td>9.0.0</td><td>Autenticacion</td></tr>
+            <tr><td>BCrypt.Net-Next</td><td>4.0.3</td><td>Hash de passwords</td></tr>
+            <tr><td>Swashbuckle</td><td>7.2.0</td><td>Swagger/OpenAPI</td></tr>
+            <tr><td>SQL Server</td><td>2022</td><td>Base de datos</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- DATABASE -->
+    <h2 id="database">4. Base de Datos</h2>
+    <p><strong>Motor:</strong> SQL Server 2022 &nbsp;|&nbsp; <strong>BD:</strong> <code>dbOPT</code> &nbsp;|&nbsp; <strong>Scripts:</strong> <code>src/basedatos/</code></p>
+
+    <h3>Scripts existentes</h3>
+    <table>
+        <thead>
+            <tr><th>Script</th><th>Tabla</th><th>Descripcion</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>000_creacion_base_datos.sql</code></td><td>&mdash;</td><td>Creacion de <code>dbOPT</code></td></tr>
+            <tr><td><code>001_OPT_Tenant.sql</code></td><td><code>OPT_Tenant</code></td><td>Tenants del SaaS (PK: TenantId)</td></tr>
+            <tr><td><code>002_OPT_Region.sql</code></td><td><code>OPT_Region</code></td><td>16 regiones de Chile</td></tr>
+            <tr><td><code>003_OPT_Comuna.sql</code></td><td><code>OPT_Comuna</code></td><td>Comunas (FK a Region)</td></tr>
+            <tr><td><code>004_OPT_Sucursal.sql</code></td><td><code>OPT_Sucursal</code></td><td>Sucursales por tenant</td></tr>
+            <tr><td><code>005_OPT_Cliente.sql</code></td><td><code>OPT_Cliente</code></td><td>Clientes unificados: Persona + Empresa</td></tr>
+            <tr><td><code>006_OPT_Contacto.sql</code></td><td><code>OPT_Contacto</code></td><td>Contactos de clientes Empresa</td></tr>
+            <tr><td><code>007_datos_iniciales.sql</code></td><td>&mdash;</td><td>Regiones + Tenant demo</td></tr>
+            <tr><td><code>008_OPT_Usuario.sql</code></td><td><code>OPT_Usuario</code></td><td>Usuarios con auth JWT</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Patron de auditoria (todas las tablas)</h3>
+    <p>Todas las tablas incluyen columnas de auditoria:</p>
+    <pre><code>CreatedAt       DATETIME2   NOT NULL DEFAULT SYSUTCDATETIME()
+UpdatedAt       DATETIME2   NULL
+CreatedBy       NVARCHAR(100) NULL
+UpdatedBy       NVARCHAR(100) NULL
+IsDeleted       BIT         NOT NULL DEFAULT 0</code></pre>
+
+    <hr>
+
+    <!-- API: TENANT -->
+    <h2 id="api-tenant">5. API: Tenant</h2>
+    <p><span class="badge badge-blue">Publico</span> &mdash; No requiere autenticacion. Gestion de tenants del SaaS.</p>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/tenants</span>
+        </div>
+        <p>Listar todos los tenants (sin soft-deleted).</p>
+        <p><strong>Response:</strong> <code>200 OK</code> &mdash; Array de TenantDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/tenants/{id}</span>
+        </div>
+        <p>Obtener tenant por ID.</p>
+        <p><strong>Response:</strong> <code>200 OK</code> / <code>404 Not Found</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/tenants</span>
+        </div>
+        <p>Crear nuevo tenant.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "nombre": "Optica Central S.A.",
+  "rutEmpresa": "76123456-7",
+  "direccion": "Av. Libertador 1234, Santiago",
+  "email": "contacto@opticacentral.cl",
+  "telefono": "+56 2 2345 6789"
+}</code></pre>
+        <p><strong>Response:</strong> <code>201 Created</code> con TenantDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-put">PUT</span>
+            <span class="path">/api/tenants/{id}</span>
+        </div>
+        <p>Actualizar tenant existente.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "nombre": "Optica Central S.A. (Actualizado)",
+  "direccion": "Nueva Direccion 567",
+  "email": "nuevo@opticacentral.cl",
+  "telefono": "+56 9 1234 5678",
+  "activo": true
+}</code></pre>
+        <p><strong>Response:</strong> <code>200 OK</code> con TenantDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-delete">DELETE</span>
+            <span class="path">/api/tenants/{id}</span>
+        </div>
+        <p>Soft-delete de tenant (IsDeleted = true).</p>
+        <p><strong>Response:</strong> <code>204 No Content</code></p>
+    </div>
+
+    <hr>
+
+    <!-- API: AUTH -->
+    <h2 id="api-auth">6. API: Auth / Login</h2>
+    <p><span class="badge badge-blue">Publico</span> &mdash; Endpoints de autenticacion JWT.</p>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/auth/login</span>
+        </div>
+        <p>Autenticar usuario y obtener token JWT.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "rutUsuario": "12345678-9",
+  "password": "MiClaveSegura123!",
+  "tenantId": 1
+}</code></pre>
+        <p><strong>Response (200):</strong></p>
+        <pre><code>{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "userId": 1,
+  "tenantId": 1,
+  "nombre": "Admin Demo",
+  "email": "admin@opticademo.cl",
+  "rol": "TenantAdmin",
+  "expiresAt": "2026-05-05T14:30:00Z"
+}</code></pre>
+        <p><strong>Response (401):</strong> <code>"Credenciales invalidas"</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/auth/register</span>
+        </div>
+        <p><span class="badge badge-red">Requiere JWT</span> &mdash; Registrar nuevo usuario en un tenant.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "tenantId": 1,
+  "rutUsuario": "98765432-1",
+  "nombre": "Nuevo Usuario",
+  "email": "usuario@opticademo.cl",
+  "password": "ClaveSegura456!",
+  "rol": "Usuario"
+}</code></pre>
+        <p><strong>Response:</strong> <code>200 OK</code> con LoginResponse (token incluido)</p>
+    </div>
+
+    <h3>JWT Claims generados</h3>
+    <table>
+        <thead><tr><th>Claim</th><th>Valor</th></tr></thead>
+        <tbody>
+            <tr><td><code>sub</code></td><td>UsuarioId</td></tr>
+            <tr><td><code>email</code></td><td>Email del usuario</td></tr>
+            <tr><td><code>UserId</code></td><td>UsuarioId (int)</td></tr>
+            <tr><td><code>TenantId</code></td><td>TenantId del usuario (int)</td></tr>
+            <tr><td><code>role</code></td><td>Rol del usuario</td></tr>
+            <tr><td><code>jti</code></td><td>GUID unico del token</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- API: CLIENTES -->
+    <h2 id="api-clientes">7. API: Clientes</h2>
+    <p><span class="badge badge-red">Requiere JWT</span> &mdash; Todos los endpoints extraen <code>TenantId</code> del token JWT automaticamente.</p>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/clientes?page=1&pageSize=20&search=</span>
+        </div>
+        <p>Listado paginado de clientes del tenant autenticado. Busqueda por nombre, documento o email.</p>
+        <p><strong>Response:</strong> <code>PagedResult&lt;ClienteDto&gt;</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/clientes/{id}</span>
+        </div>
+        <p>Obtener cliente por ID (valida que pertenezca al tenant).</p>
+        <p><strong>Response:</strong> <code>200 OK</code> / <code>404</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/clientes</span>
+        </div>
+        <p>Crear cliente. El <code>TenantId</code> se inyecta desde el JWT (no se acepta del body).</p>
+        <p><strong>Body (Persona):</strong></p>
+        <pre><code>{
+  "tipoCliente": "Persona",
+  "numeroDocumento": "12345678-9",
+  "nombre": "Juan Perez",
+  "direccion": "Calle 123, Santiago",
+  "idComuna": 7,
+  "celular": "+56 9 1234 5678",
+  "mail": "juan@email.com",
+  "fechaNacimiento": "1990-05-15",
+  "tipoPrevision": "Fonasa",
+  "giro": null
+}</code></pre>
+        <p><strong>Body (Empresa):</strong></p>
+        <pre><code>{
+  "tipoCliente": "Empresa",
+  "numeroDocumento": "76123456-7",
+  "nombre": "Empresa ABC SpA",
+  "direccion": "Av. Industrial 456",
+  "idComuna": 5,
+  "celular": "+56 2 2345 6789",
+  "mail": "contacto@empresaabc.cl",
+  "fechaNacimiento": null,
+  "tipoPrevision": null,
+  "giro": "Comercio al por mayor"
+}</code></pre>
+        <p><strong>Response:</strong> <code>201 Created</code> con ClienteDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-put">PUT</span>
+            <span class="path">/api/clientes/{id}</span>
+        </div>
+        <p>Actualizar cliente (valida tenant + unicidad de documento).</p>
+        <p><strong>Response:</strong> <code>200 OK</code> / <code>404</code> / <code>400</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-delete">DELETE</span>
+            <span class="path">/api/clientes/{id}</span>
+        </div>
+        <p>Soft-delete de cliente.</p>
+        <p><strong>Response:</strong> <code>204 No Content</code></p>
+    </div>
+
+    <hr>
+
+    <!-- API: CONTACTOS -->
+    <h2 id="api-contactos">8. API: Contactos</h2>
+    <p><span class="badge badge-red">Requiere JWT</span> &mdash; Contactos asociados a clientes tipo Empresa.</p>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/contactos/cliente/{clienteId}</span>
+        </div>
+        <p>Listar contactos de un cliente especifico (valida tenant).</p>
+        <p><strong>Response:</strong> <code>200 OK</code> &mdash; Array de ContactoDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/contactos</span>
+        </div>
+        <p>Crear contacto para un cliente empresa.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "clienteId": 5,
+  "nombre": "Maria Gonzalez",
+  "email": "maria@empresaabc.cl",
+  "telefono": "+56 9 8765 4321",
+  "cargo": "Jefa de Compras"
+}</code></pre>
+        <p><strong>Response:</strong> <code>200 OK</code> con ContactoDto</p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-put">PUT</span>
+            <span class="path">/api/contactos/{id}</span>
+        </div>
+        <p>Actualizar contacto.</p>
+        <p><strong>Body:</strong></p>
+        <pre><code>{
+  "nombre": "Maria Gonzalez (Actualizada)",
+  "email": "m.gonzalez@empresaabc.cl",
+  "telefono": "+56 9 8765 4321",
+  "cargo": "Gerente de Compras",
+  "activo": true
+}</code></pre>
+        <p><strong>Response:</strong> <code>200 OK</code></p>
+    </div>
+
+    <div class="endpoint">
+        <div class="endpoint-header">
+            <span class="method method-delete">DELETE</span>
+            <span class="path">/api/contactos/{id}</span>
+        </div>
+        <p>Soft-delete de contacto.</p>
+        <p><strong>Response:</strong> <code>204 No Content</code></p>
+    </div>
+
+    <hr>
+
+    <!-- DOMAIN MODEL -->
+    <h2 id="domain-model">9. Modelo de Dominio</h2>
+
+    <h3>Entidades principales</h3>
+    <table>
+        <thead>
+            <tr><th>Entidad</th><th>PK</th><th>TenantScoped</th><th>Campos clave</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Tenant</code></td>
+                <td><code>int Id</code></td>
+                <td>No (es la raiz)</td>
+                <td>Nombre, RutEmpresa, Email, Direccion, Telefono, Activo</td>
+            </tr>
+            <tr>
+                <td><code>Usuario</code></td>
+                <td><code>int Id</code></td>
+                <td>Si</td>
+                <td>TenantId, RutUsuario, Nombre, Email, PasswordHash, Rol</td>
+            </tr>
+            <tr>
+                <td><code>Cliente</code></td>
+                <td><code>int Id</code></td>
+                <td>Si</td>
+                <td>TenantId, TipoCliente, NumeroDocumento, Nombre, Mail, Celular, IdComuna, FechaNacimiento, TipoPrevision, Giro</td>
+            </tr>
+            <tr>
+                <td><code>Contacto</code></td>
+                <td><code>int Id</code></td>
+                <td>Si</td>
+                <td>TenantId, ClienteId, Nombre, Email, Telefono, Cargo, Activo</td>
+            </tr>
+            <tr>
+                <td><code>Sucursal</code></td>
+                <td><code>int Id</code></td>
+                <td>Si</td>
+                <td>TenantId, Nombre, Direccion, Matriz</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>BaseEntity (abstracta)</h3>
+    <p>Todas las entidades heredan de <code>BaseEntity&lt;TId&gt;</code> que provee:</p>
+    <pre><code>public abstract class BaseEntity
+{
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
+    public bool IsDeleted { get; set; }
+}
+
+public abstract class BaseEntity&lt;TId&gt; : BaseEntity
+{
+    public TId Id { get; set; } = default!;
+}</code></pre>
+
+    <h3>Constantes de dominio</h3>
+    <pre><code>public static class TipoCliente
+{
+    public const string Persona = "Persona";
+    public const string Empresa = "Empresa";
+}
+
+public static class Roles
+{
+    public const string PlatformAdmin = "PlatformAdmin";
+    public const string TenantAdmin = "TenantAdmin";
+    public const string Usuario = "Usuario";
+}</code></pre>
+
+    <hr>
+
+    <!-- PATTERNS -->
+    <h2 id="patterns">10. Patrones de Diseno</h2>
+
+    <h3>CQRS con MediatR (Vertical Slices)</h3>
+    <p>Cada caso de uso se implementa como un comando o query independiente con su propio handler:</p>
+    <pre><code>// Command
+public record CreateTenantCommand(CreateTenantDto Dto)
+    : IRequest&lt;Result&lt;TenantDto&gt;&gt;;
+
+// Handler
+public class CreateTenantHandler(ITenantRepository repository)
+    : IRequestHandler&lt;CreateTenantCommand, Result&lt;TenantDto&gt;&gt;
+{
+    public async Task&lt;Result&lt;TenantDto&gt;&gt; Handle(
+        CreateTenantCommand request, CancellationToken ct)
+    {
+        // Validaciones, logica de negocio, persistencia
+        return Result&lt;TenantDto&gt;.Success(dto);
+    }
+}</code></pre>
+
+    <h3>Result Pattern</h3>
+    <pre><code>// Exitoso
+return Result&lt;T&gt;.Success(data);
+
+// Error
+return Result&lt;T&gt;.Failure("Mensaje de error");</code></pre>
+
+    <h3>DTOs como Records Inmutables</h3>
+    <pre><code>public record TenantDto(
+    int Id,
+    string Nombre,
+    string RutEmpresa,
+    string? Direccion,
+    string Email,
+    string? Telefono,
+    bool Activo,
+    DateTime CreatedAt
+);</code></pre>
+
+    <h3>Validacion con FluentValidation</h3>
+    <pre><code>public class CreateTenantValidator : AbstractValidator&lt;CreateTenantCommand&gt;
+{
+    public CreateTenantValidator()
+    {
+        RuleFor(x => x.Dto.Nombre)
+            .NotEmpty()
+            .MaximumLength(150);
+        RuleFor(x => x.Dto.Email)
+            .EmailAddress();
+    }
+}</code></pre>
+
+    <h3>Repositorios (Interfaces en Application, implementacion en Infrastructure)</h3>
+    <pre><code>// Application/Interfaces/IClienteRepository.cs
+public interface IClienteRepository
+{
+    Task&lt;Cliente?&gt; GetByIdAsync(int id, int tenantId, CancellationToken ct);
+    Task&lt;PagedResult&lt;Cliente&gt;&gt; GetPagedAsync(int tenantId, int page, int pageSize, string? search, CancellationToken ct);
+    // ...
+}
+
+// Infrastructure/Repositories/ClienteRepository.cs
+public class ClienteRepository(AppDbContext context) : IClienteRepository
+{
+    // Implementacion con EF Core
+}</code></pre>
+
+    <hr>
+
+    <!-- SETUP -->
+    <h2 id="setup">11. Setup y Ejecucion</h2>
+
+    <h3>Requisitos</h3>
+    <ul>
+        <li>.NET 10 SDK</li>
+        <li>SQL Server 2022 (local o remoto)</li>
+        <li>PowerShell / Terminal</li>
+    </ul>
+
+    <h3>Pasos de instalacion</h3>
+    <ol>
+        <li><strong>Ejecutar scripts SQL</strong> en orden (<code>src/basedatos/000_</code> hasta <code>008_</code>)</li>
+        <li><strong>Configurar connection string</strong> en <code>appsettings.json</code>:
+            <pre><code>"ConnectionStrings": {
+  "DefaultConnection": "Server=localhost;Database=dbOPT;Trusted_Connection=True;TrustServerCertificate=True;"
+}</code></pre>
+        </li>
+        <li><strong>Configurar JWT secret</strong> en <code>appsettings.json</code>:
+            <pre><code>"Jwt": {
+  "Secret": "TU-SECRET-KEY-MUY-LARGO-Y-SEGURO-2026!",
+  "Issuer": "OPT",
+  "Audience": "OPT",
+  "ExpirationMinutes": 60
+}</code></pre>
+        </li>
+        <li><strong>Restaurar paquetes:</strong> <code>dotnet restore</code></li>
+        <li><strong>Compilar:</strong> <code>dotnet build</code></li>
+        <li><strong>Ejecutar:</strong> <code>dotnet run --project OPT.API</code></li>
+    </ol>
+
+    <h3>Endpoints utiles</h3>
+    <table>
+        <thead><tr><th>Recurso</th><th>URL</th></tr></thead>
+        <tbody>
+            <tr><td>API Base</td><td><code>https://localhost:5001</code></td></tr>
+            <tr><td>Swagger UI</td><td><code>https://localhost:5001/swagger</code></td></tr>
+            <tr><td>Health</td><td><code>https://localhost:5001/api/tenants</code></td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- SECURITY -->
+    <h2 id="security">12. Seguridad Multi-Tenant</h2>
+
+    <h3>Como funciona el aislamiento</h3>
+    <ol>
+        <li><strong>Autenticacion:</strong> El usuario se loguea con RUT + password + TenantId</li>
+        <li><strong>Token JWT:</strong> Contiene <code>TenantId</code> como claim</li>
+        <li><strong>En cada request:</strong> El controller extrae <code>TenantId</code> del JWT claim</li>
+        <li><strong>En cada query:</strong> El repositorio filtra por <code>TenantId</code> automaticamente</li>
+        <li><strong>EF Core Query Filters:</strong> <code>HasQueryFilter(e => !e.IsDeleted)</code> en <code>AppDbContext</code></li>
+    </ol>
+
+    <h3>Reglas de seguridad</h3>
+    <table>
+        <thead><tr><th>Regla</th><th>Implementacion</th></tr></thead>
+        <tbody>
+            <tr><td>Datos aislados por tenant</td><td><code>TenantId</code> en todas las queries de negocio</td></tr>
+            <tr><td>Soft-delete global</td><td>Query filter en <code>AppDbContext</code></td></tr>
+            <tr><td>Unicidad de documento</td><td>Index unico: <code>(TenantId, NumeroDocumento)</code> where <code>IsDeleted = 0</code></td></tr>
+            <tr><td>Passwords seguros</td><td>BCrypt hashing (nunca texto plano)</td></tr>
+            <tr><td>Tokens con expiracion</td><td>JWT con <code>Expires</code> configurable (default 60 min)</td></tr>
+        </tbody>
+    </table>
+
+    <div class="info-box">
+        <p><strong>Importante:</strong> Los controllers de Clientes y Contactos tienen el atributo <code>[Authorize]</code>. El <code>TenantId</code> nunca se acepta del request body para operaciones autenticadas &mdash; siempre se extrae del JWT claim.</p>
+    </div>
+
+    <hr>
+
+    <!-- MIGRATION -->
+    <h2 id="migration">13. Migracion desde Legacy</h2>
+
+    <h3>Legacy vs Nuevo</h3>
+    <table>
+        <thead><tr><th>Aspecto</th><th>Legacy (old/)</th><th>Nuevo (src/backend/)</th></tr></thead>
+        <tbody>
+            <tr><td>Framework</td><td>.NET Framework + ASP.NET MVC</td><td>.NET 10 + Minimal API / Controllers</td></tr>
+            <tr><td>ORM</td><td>Entity Framework 6 (Database First)</td><td>EF Core 9.0 (Code First)</td></tr>
+            <tr><td>Auth</td><td>Forms Authentication + Session</td><td>JWT Bearer + BCrypt</td></tr>
+            <tr><td>Arquitectura</td><td>Web + Dato + Entidad (3 capas)</td><td>Clean Architecture (4 capas)</td></tr>
+            <tr><td>Multi-tenant</td><td>No existia (single tenant)</td><td>SaaS con TenantId en todo</td></tr>
+            <tr><td>Persona/Empresa</td><td>2 tablas separadas</td><td>1 tabla unificada con TipoCliente</td></tr>
+            <tr><td>Soft-delete</td><td>No implementado</td><td>IsDeleted en todas las tablas</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Decisiones de migracion clave</h3>
+    <ul>
+        <li><strong>Cliente unificado:</strong> Se elimino la tabla <code>OPT_Empresa</code>. Ahora Persona y Empresa comparten <code>OPT_Cliente</code> con <code>TipoCliente</code>.</li>
+        <li><strong>NumeroDocumento:</strong> Reemplazo a <code>RutCliente</code> del legacy. Soporta RUT de persona y RUT de empresa.</li>
+        <li><strong>Usuario:</strong> Nueva tabla con <code>PasswordHash</code> (BCrypt). El legacy guardaba passwords en texto plano.</li>
+        <li><strong>Multi-tenant:</strong> Se agrego <code>TenantId</code> a todas las tablas de negocio como requisito del nuevo modelo SaaS.</li>
+    </ul>
+
+    <hr>
+
+    <div class="footer">
+        <p>OPT SaaS &mdash; Manual Tecnico v1.0 &mdash; Mayo 2026</p>
+        <p>Documento generado automaticamente tras sesion de implementacion del backend API.</p>
+    </div>
+
+</main>
+
+</body>
+</html>

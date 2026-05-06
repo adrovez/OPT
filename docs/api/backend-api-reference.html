@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT SaaS — Referencia de API Backend</title>
+<style>
+  :root {
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1e40af;
+    --green: #16a34a; --green-light: #dcfce7;
+    --amber: #d97706; --amber-light: #fef3c7;
+    --red: #dc2626; --red-light: #fee2e2;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-300: #d1d5db; --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); color: var(--gray-900); background: var(--gray-50); }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+  nav { background: #0f172a; color: white; padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  nav .logo { padding: 24px 20px 16px; border-bottom: 1px solid #1e293b; }
+  nav .logo h1 { font-size: 1.05rem; font-weight: 700; color: white; }
+  nav .logo p { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
+  nav ul { list-style: none; padding: 8px 0; }
+  nav li a { display: block; padding: 7px 20px; color: #94a3b8; text-decoration: none; font-size: 0.83rem; transition: all 0.15s; border-left: 3px solid transparent; }
+  nav li a:hover, nav li a.active { background: #1e293b; color: white; border-left-color: var(--blue); }
+  nav li a.section-label { color: #475569; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 14px 20px 4px; cursor: default; pointer-events: none; }
+
+  main { padding: 0; }
+  .page-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; padding: 40px 48px; }
+  .page-header h1 { font-size: 1.9rem; font-weight: 800; color: white; margin-bottom: 6px; }
+  .page-header p { color: #93c5fd; font-size: 0.95rem; }
+  .page-header .meta { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  .chip-blue { background: rgba(37,99,235,0.3); color: #93c5fd; }
+  .chip-green { background: rgba(22,163,74,0.3); color: #86efac; }
+
+  .content { padding: 40px 48px; max-width: 900px; }
+  h2 { font-size: 1.35rem; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200); }
+  h3 { font-size: 1rem; font-weight: 600; color: var(--gray-700); margin: 24px 0 10px; }
+  p { color: var(--gray-700); line-height: 1.65; margin-bottom: 12px; font-size: 0.9rem; }
+
+  /* Method badges */
+  .method { display: inline-block; padding: 3px 9px; border-radius: 5px; font-size: 0.72rem; font-weight: 700; font-family: var(--mono); letter-spacing: 0.05em; }
+  .GET    { background: #dcfce7; color: #14532d; }
+  .POST   { background: #dbeafe; color: #1e3a8a; }
+  .PUT    { background: #fef3c7; color: #78350f; }
+  .DELETE { background: #fee2e2; color: #7f1d1d; }
+
+  /* Endpoint cards */
+  .endpoint { background: white; border: 1px solid var(--gray-200); border-radius: 10px; margin: 20px 0; overflow: hidden; }
+  .endpoint-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+  .endpoint-path { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; color: var(--gray-900); }
+  .endpoint-body { padding: 20px; }
+  .endpoint-desc { font-size: 0.875rem; color: var(--gray-700); margin-bottom: 16px; }
+
+  /* Auth badge */
+  .auth-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; margin-left: auto; }
+  .auth-required { background: #fef3c7; color: #78350f; }
+  .auth-public { background: #dcfce7; color: #14532d; }
+
+  /* Code */
+  pre { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 18px 20px; overflow-x: auto; font-family: var(--mono); font-size: 0.8rem; line-height: 1.65; margin: 12px 0; }
+  .json-key { color: #93c5fd; }
+  .json-str { color: #86efac; }
+  .json-num { color: #fde68a; }
+  .json-bool { color: #f9a8d4; }
+  code { font-family: var(--mono); font-size: 0.83em; background: var(--gray-100); padding: 1px 6px; border-radius: 4px; color: #9333ea; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.85rem; }
+  th { background: var(--gray-100); text-align: left; padding: 9px 12px; font-weight: 600; color: var(--gray-700); border-bottom: 2px solid var(--gray-200); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--gray-100); color: var(--gray-700); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .required { color: var(--red); font-weight: 600; }
+  .optional { color: var(--gray-500); }
+
+  /* Response codes */
+  .response-grid { display: grid; gap: 8px; margin: 10px 0; }
+  .response-row { display: flex; align-items: flex-start; gap: 12px; }
+  .status-code { display: inline-block; min-width: 44px; text-align: center; padding: 2px 8px; border-radius: 5px; font-family: var(--mono); font-size: 0.78rem; font-weight: 700; }
+  .s200 { background: #dcfce7; color: #14532d; }
+  .s201 { background: #d1fae5; color: #065f46; }
+  .s204 { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .s400 { background: #fef3c7; color: #78350f; }
+  .s401 { background: #fee2e2; color: #7f1d1d; }
+  .s403 { background: #ffe4e6; color: #9f1239; }
+  .s404 { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+  .s409 { background: #fdf4ff; color: #581c87; }
+  .s500 { background: #fee2e2; color: #7f1d1d; }
+  .response-desc { font-size: 0.83rem; color: var(--gray-700); line-height: 1.4; padding-top: 3px; }
+
+  /* Alerts */
+  .alert { border-radius: 8px; padding: 12px 16px; margin: 14px 0; border-left: 4px solid; font-size: 0.875rem; }
+  .alert-blue { background: var(--blue-light); border-color: var(--blue); color: #1e3a8a; }
+  .alert-amber { background: var(--amber-light); border-color: var(--amber); color: #78350f; }
+  .alert strong { font-weight: 700; }
+
+  /* Section break */
+  .section-break { background: var(--gray-100); padding: 10px 48px; font-size: 0.75rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; border-top: 1px solid var(--gray-200); margin-top: 32px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav>
+    <div class="logo">
+      <h1>OPT SaaS — API</h1>
+      <p>Referencia de Endpoints Backend</p>
+    </div>
+    <ul>
+      <li><a class="section-label">Introducción</a></li>
+      <li><a href="#autenticacion">Autenticación</a></li>
+      <li><a href="#errores">Formato de Errores</a></li>
+      <li><a href="#base-url">URL Base</a></li>
+      <li><a class="section-label">Módulo Auth</a></li>
+      <li><a href="#login">POST /login</a></li>
+      <li><a class="section-label">Módulo Clientes</a></li>
+      <li><a href="#get-clientes">GET /cliente</a></li>
+      <li><a href="#get-cliente-id">GET /cliente/{id}</a></li>
+      <li><a href="#post-cliente">POST /cliente</a></li>
+      <li><a href="#put-cliente">PUT /cliente/{id}</a></li>
+      <li><a href="#delete-cliente">DELETE /cliente/{id}</a></li>
+      <li><a class="section-label">Referencia</a></li>
+      <li><a href="#schemas">Schemas</a></li>
+      <li><a href="#codigos">Códigos de Error</a></li>
+    </ul>
+  </nav>
+
+  <div>
+    <div class="page-header">
+      <h1>Referencia de API — OPT SaaS</h1>
+      <p>Backend .NET 10 · REST · JWT Bearer · Multi-Tenant</p>
+      <div class="meta">
+        <span class="chip chip-blue">Base URL: /api</span>
+        <span class="chip chip-green">Content-Type: application/json</span>
+        <span class="chip chip-blue">Auth: Bearer JWT</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- AUTENTICACIÓN -->
+      <h2 id="autenticacion">Autenticación</h2>
+      <p>La mayoría de los endpoints requieren un token JWT en el header <code>Authorization</code>. El token se obtiene llamando a <code>POST /api/auth/login</code>.</p>
+      <pre>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</pre>
+      <p>El token incluye el <strong>TenantId</strong> del usuario. Todos los endpoints filtran automáticamente los datos por el tenant del token — nunca es posible acceder a datos de otro tenant.</p>
+
+      <!-- ERRORES -->
+      <h2 id="errores">Formato de Errores (RFC 7807)</h2>
+      <p>Todos los errores se devuelven en formato <strong>ProblemDetails</strong>. Los errores de validación incluyen la propiedad adicional <code>errors</code>.</p>
+      <pre>{
+  "status":   400,
+  "title":    "Error de validación",
+  "detail":   "El nombre es requerido.; El email no tiene formato válido.",
+  "instance": "/api/cliente",
+  "errors": {
+    "Nombre": ["El nombre es requerido."],
+    "Mail":   ["El email no tiene formato válido."]
+  }
+}</pre>
+      <p>Los errores 500 nunca exponen el detalle interno al cliente.</p>
+
+      <!-- BASE URL -->
+      <h2 id="base-url">URL Base</h2>
+      <table>
+        <tr><th>Entorno</th><th>URL</th></tr>
+        <tr><td>Desarrollo</td><td><code>http://localhost:5000/api</code> o <code>https://localhost:5001/api</code></td></tr>
+        <tr><td>Swagger UI</td><td><code>https://localhost:5001/swagger</code></td></tr>
+      </table>
+
+      <!-- ──────────────────── AUTH ──────────────────── -->
+      <div class="section-break">Módulo Auth</div>
+
+      <h2 id="login">Autenticación</h2>
+
+      <div class="endpoint" id="post-login">
+        <div class="endpoint-header">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/api/auth/login</span>
+          <span class="auth-badge auth-public">🔓 Público</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Autentica un usuario por RUT + contraseña dentro de un Tenant específico. Devuelve un token JWT válido por 60 minutos (configurable en appsettings).</p>
+
+          <h3>Request Body</h3>
+          <table>
+            <tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descripción</th></tr>
+            <tr><td><code>tenantId</code></td><td>integer</td><td><span class="required">*</span></td><td>ID de la empresa/óptica (ej. 1 para demo)</td></tr>
+            <tr><td><code>rut</code></td><td>string</td><td><span class="required">*</span></td><td>RUT del usuario (ej. "12345678-9")</td></tr>
+            <tr><td><code>password</code></td><td>string</td><td><span class="required">*</span></td><td>Contraseña en texto plano (mín. 6 caracteres)</td></tr>
+          </table>
+          <pre>{
+  "tenantId": 1,
+  "rut":      "12345678-9",
+  "password": "miPassword123"
+}</pre>
+
+          <h3>Respuesta 200 — Éxito</h3>
+          <pre>{
+  "token":     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "nombre":    "Juan Pérez",
+  "rol":       "Admin",
+  "usuarioId": 1,
+  "tenantId":  1,
+  "expiracion": "2026-05-05T15:30:00Z"
+}</pre>
+
+          <h3>Códigos de respuesta</h3>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s200">200</span><div class="response-desc">Login exitoso. Incluye el token JWT y datos del usuario.</div></div>
+            <div class="response-row"><span class="status-code s400">400</span><div class="response-desc">Datos inválidos (RUT vacío, password corto, tenantId = 0).</div></div>
+            <div class="response-row"><span class="status-code s401">401</span><div class="response-desc">Credenciales incorrectas. El mensaje siempre es genérico ("Credenciales inválidas") para no revelar si el RUT existe.</div></div>
+          </div>
+
+          <h3>Ejemplo cURL</h3>
+          <pre>curl -X POST https://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"tenantId":1,"rut":"12345678-9","password":"miPassword123"}'</pre>
+        </div>
+      </div>
+
+      <!-- ──────────────────── CLIENTES ──────────────────── -->
+      <div class="section-break">Módulo Clientes</div>
+
+      <h2 id="get-clientes">Listado de Clientes</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/api/cliente</span>
+          <span class="auth-badge auth-required">🔒 JWT requerido</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Devuelve una lista paginada de clientes activos del tenant autenticado. Soporta filtro por tipo y búsqueda por texto en nombre o documento.</p>
+
+          <h3>Query Parameters</h3>
+          <table>
+            <tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr>
+            <tr><td><code>tipoCliente</code></td><td>string</td><td><span class="optional">—</span></td><td>"Persona" o "Empresa"</td></tr>
+            <tr><td><code>busqueda</code></td><td>string</td><td><span class="optional">—</span></td><td>Busca en nombre y NumeroDocumento (parcial)</td></tr>
+            <tr><td><code>page</code></td><td>integer</td><td>1</td><td>Página actual (mín. 1)</td></tr>
+            <tr><td><code>pageSize</code></td><td>integer</td><td>20</td><td>Registros por página (1–100)</td></tr>
+          </table>
+
+          <h3>Respuesta 200</h3>
+          <pre>{
+  "items": [
+    {
+      "clienteId":       1,
+      "tenantId":        1,
+      "tipoCliente":     "Persona",
+      "numeroDocumento": "12345678-9",
+      "nombre":          "Juan Pérez González",
+      "direccion":       "Av. Providencia 123",
+      "idComuna":        30,
+      "celular":         "+56 9 1234 5678",
+      "mail":            "juan@example.com",
+      "fechaIngreso":    "2026-05-01T10:00:00Z",
+      "fechaNacimiento": "1985-03-15",
+      "tipoPrevision":   "Fonasa",
+      "giro":            null,
+      "createdAt":       "2026-05-01T10:00:00Z",
+      "updatedAt":       null,
+      "createdBy":       "12345678-9",
+      "updatedBy":       null
+    }
+  ],
+  "totalCount":  42,
+  "page":        1,
+  "pageSize":    20,
+  "totalPages":  3,
+  "hasNextPage": true,
+  "hasPreviousPage": false
+}</pre>
+
+          <h3>Ejemplos</h3>
+          <pre># Solo empresas
+GET /api/cliente?tipoCliente=Empresa
+
+# Buscar por nombre/RUT, segunda página
+GET /api/cliente?busqueda=pérez&amp;page=2&amp;pageSize=10</pre>
+        </div>
+      </div>
+
+      <h2 id="get-cliente-id">Detalle de Cliente</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/api/cliente/{id}</span>
+          <span class="auth-badge auth-required">🔒 JWT requerido</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Devuelve el detalle completo de un cliente. Solo devuelve datos del tenant autenticado; si el cliente existe pero pertenece a otro tenant, devuelve 404.</p>
+
+          <h3>Path Parameters</h3>
+          <table>
+            <tr><th>Parámetro</th><th>Tipo</th><th>Descripción</th></tr>
+            <tr><td><code>id</code></td><td>integer</td><td>ClienteId del cliente</td></tr>
+          </table>
+
+          <h3>Códigos de respuesta</h3>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s200">200</span><div class="response-desc">ClienteDto completo (mismo schema que el item del listado).</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cliente no encontrado o pertenece a otro tenant.</div></div>
+          </div>
+          <pre>curl -H "Authorization: Bearer &lt;token&gt;" https://localhost:5001/api/cliente/1</pre>
+        </div>
+      </div>
+
+      <h2 id="post-cliente">Crear Cliente</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/api/cliente</span>
+          <span class="auth-badge auth-required">🔒 JWT requerido</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Crea un nuevo cliente (Persona o Empresa) en el tenant autenticado. El NumeroDocumento debe ser único por tenant.</p>
+
+          <h3>Request Body</h3>
+          <table>
+            <tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descripción</th></tr>
+            <tr><td><code>tipoCliente</code></td><td>string</td><td><span class="required">*</span></td><td>"Persona" o "Empresa"</td></tr>
+            <tr><td><code>numeroDocumento</code></td><td>string(20)</td><td><span class="required">*</span></td><td>RUT (ej. "12345678-9"). Único por tenant.</td></tr>
+            <tr><td><code>nombre</code></td><td>string(200)</td><td><span class="required">*</span></td><td>Nombre completo o razón social</td></tr>
+            <tr><td><code>direccion</code></td><td>string(250)</td><td><span class="optional">opt</span></td><td>Dirección del cliente</td></tr>
+            <tr><td><code>idComuna</code></td><td>integer</td><td><span class="optional">opt</span></td><td>FK a OPT_Comuna</td></tr>
+            <tr><td><code>celular</code></td><td>string(50)</td><td><span class="optional">opt</span></td><td>Número de celular</td></tr>
+            <tr><td><code>mail</code></td><td>string(150)</td><td><span class="optional">opt</span></td><td>Email (validado si se provee)</td></tr>
+            <tr><td><code>fechaNacimiento</code></td><td>date</td><td><span class="optional">opt</span></td><td>Solo Persona. Formato YYYY-MM-DD</td></tr>
+            <tr><td><code>tipoPrevision</code></td><td>string(50)</td><td><span class="optional">opt</span></td><td>Solo Persona. "Fonasa", "Isapre", "Particular"</td></tr>
+            <tr><td><code>giro</code></td><td>string(150)</td><td><span class="optional">opt</span></td><td>Solo Empresa. Giro comercial.</td></tr>
+          </table>
+
+          <h3>Ejemplo — Crear Persona</h3>
+          <pre>{
+  "tipoCliente":     "Persona",
+  "numeroDocumento": "12345678-9",
+  "nombre":          "Juan Pérez González",
+  "direccion":       "Av. Providencia 123, Santiago",
+  "idComuna":        30,
+  "celular":         "+56912345678",
+  "mail":            "juan@example.com",
+  "fechaNacimiento": "1985-03-15",
+  "tipoPrevision":   "Fonasa"
+}</pre>
+
+          <h3>Ejemplo — Crear Empresa</h3>
+          <pre>{
+  "tipoCliente":     "Empresa",
+  "numeroDocumento": "76123456-7",
+  "nombre":          "Óptica Visión S.A.",
+  "direccion":       "Av. Libertador 500",
+  "mail":            "contacto@opticavision.cl",
+  "giro":            "Venta de artículos ópticos"
+}</pre>
+
+          <h3>Códigos de respuesta</h3>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s201">201</span><div class="response-desc">Cliente creado. Header <code>Location: /api/cliente/{nuevoId}</code></div></div>
+            <div class="response-row"><span class="status-code s400">400</span><div class="response-desc">Datos inválidos (nombre vacío, email malformado, TipoCliente incorrecto).</div></div>
+            <div class="response-row"><span class="status-code s409">409</span><div class="response-desc">Ya existe un cliente con el mismo NumeroDocumento en este tenant.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="put-cliente">Actualizar Cliente</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method PUT">PUT</span>
+          <span class="endpoint-path">/api/cliente/{id}</span>
+          <span class="auth-badge auth-required">🔒 JWT requerido</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Actualiza los datos editables de un cliente. <strong>TipoCliente y NumeroDocumento son inmutables</strong> — no se pueden cambiar después de la creación.</p>
+
+          <h3>Campos actualizables</h3>
+          <table>
+            <tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Notas</th></tr>
+            <tr><td><code>nombre</code></td><td>string(200)</td><td><span class="required">*</span></td><td></td></tr>
+            <tr><td><code>direccion</code></td><td>string(250)</td><td><span class="optional">opt</span></td><td></td></tr>
+            <tr><td><code>idComuna</code></td><td>integer</td><td><span class="optional">opt</span></td><td></td></tr>
+            <tr><td><code>celular</code></td><td>string(50)</td><td><span class="optional">opt</span></td><td></td></tr>
+            <tr><td><code>mail</code></td><td>string(150)</td><td><span class="optional">opt</span></td><td></td></tr>
+            <tr><td><code>fechaNacimiento</code></td><td>date</td><td><span class="optional">opt</span></td><td>Solo Persona</td></tr>
+            <tr><td><code>tipoPrevision</code></td><td>string(50)</td><td><span class="optional">opt</span></td><td>Solo Persona</td></tr>
+            <tr><td><code>giro</code></td><td>string(150)</td><td><span class="optional">opt</span></td><td>Solo Empresa</td></tr>
+          </table>
+
+          <h3>Códigos de respuesta</h3>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Actualización exitosa. Sin body en la respuesta.</div></div>
+            <div class="response-row"><span class="status-code s400">400</span><div class="response-desc">Datos inválidos.</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cliente no encontrado en este tenant.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="delete-cliente">Eliminar Cliente (Soft Delete)</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/api/cliente/{id}</span>
+          <span class="auth-badge auth-required">🔒 Roles: Admin, Operador</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Marca el cliente como eliminado (<code>IsDeleted = true</code>). <strong>No es un delete físico</strong>. El cliente deja de aparecer en listados pero sus datos se conservan en la base de datos. Solo roles Admin y Operador pueden ejecutar esta acción.</p>
+
+          <h3>Códigos de respuesta</h3>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Eliminación lógica exitosa.</div></div>
+            <div class="response-row"><span class="status-code s403">403</span><div class="response-desc">El usuario tiene rol "Lectura" y no puede eliminar.</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cliente no encontrado en este tenant.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEMAS -->
+      <div class="section-break">Schemas y Referencia</div>
+
+      <h2 id="schemas">Schema: ClienteDto</h2>
+      <pre>{
+  "clienteId":       1,
+  "tenantId":        1,
+  "tipoCliente":     "Persona | Empresa",
+  "numeroDocumento": "string(20)",
+  "nombre":          "string(200)",
+  "direccion":       "string(250) | null",
+  "idComuna":        42 | null,
+  "celular":         "string(50) | null",
+  "mail":            "string(150) | null",
+  "fechaIngreso":    "datetime",
+  "fechaNacimiento": "date | null",       // solo Persona
+  "tipoPrevision":   "string | null",     // solo Persona: Fonasa, Isapre, Particular
+  "giro":            "string | null",     // solo Empresa
+  "createdAt":       "datetime",
+  "updatedAt":       "datetime | null",
+  "createdBy":       "string | null",
+  "updatedBy":       "string | null"
+}</pre>
+
+      <!-- CÓDIGOS DE ERROR -->
+      <h2 id="codigos">Resumen de Códigos HTTP</h2>
+      <table>
+        <tr><th>Código</th><th>Significado</th><th>Cuándo ocurre</th></tr>
+        <tr><td><span class="status-code s200">200</span></td><td>OK</td><td>Operación exitosa con datos</td></tr>
+        <tr><td><span class="status-code s201">201</span></td><td>Created</td><td>Recurso creado exitosamente</td></tr>
+        <tr><td><span class="status-code s204">204</span></td><td>No Content</td><td>Actualización/eliminación exitosa</td></tr>
+        <tr><td><span class="status-code s400">400</span></td><td>Bad Request</td><td>Datos de entrada inválidos (FluentValidation)</td></tr>
+        <tr><td><span class="status-code s401">401</span></td><td>Unauthorized</td><td>Sin token JWT o credenciales incorrectas</td></tr>
+        <tr><td><span class="status-code s403">403</span></td><td>Forbidden</td><td>Rol insuficiente o TenantId inválido en token</td></tr>
+        <tr><td><span class="status-code s404">404</span></td><td>Not Found</td><td>Recurso no existe o pertenece a otro tenant</td></tr>
+        <tr><td><span class="status-code s409">409</span></td><td>Conflict</td><td>Regla de negocio violada (ej. RUT duplicado)</td></tr>
+        <tr><td><span class="status-code s500">500</span></td><td>Server Error</td><td>Error interno. El detalle NO se expone al cliente.</td></tr>
+      </table>
+
+      <div class="alert alert-blue">
+        <strong>Trazabilidad:</strong> Toda respuesta incluye el header <code>X-Correlation-Id</code>. Úsalo para reportar errores al equipo de soporte — permite correlacionar el request en los logs del servidor.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT SaaS — Manual de Arquitectura Backend</title>
+<style>
+  :root {
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1e40af;
+    --green: #16a34a; --green-light: #dcfce7;
+    --amber: #d97706; --amber-light: #fef3c7;
+    --red: #dc2626; --red-light: #fee2e2;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-300: #d1d5db; --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); color: var(--gray-900); background: var(--gray-50); line-height: 1.6; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  nav { background: var(--gray-900); color: white; padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  nav .logo { padding: 24px 20px 16px; border-bottom: 1px solid #374151; }
+  nav .logo h1 { font-size: 1.1rem; font-weight: 700; color: white; }
+  nav .logo p { font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
+  nav ul { list-style: none; padding: 12px 0; }
+  nav ul li a { display: block; padding: 8px 20px; color: #d1d5db; text-decoration: none; font-size: 0.875rem; transition: all 0.15s; }
+  nav ul li a:hover { background: #374151; color: white; }
+  nav ul li a.section { color: #9ca3af; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 16px 20px 4px; cursor: default; }
+  nav ul li a.section:hover { background: none; color: #9ca3af; }
+
+  main { padding: 40px 48px; max-width: 960px; }
+  h1 { font-size: 2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
+  h2 { font-size: 1.4rem; font-weight: 700; color: var(--gray-900); margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200); }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--gray-700); margin: 24px 0 10px; }
+  p { color: var(--gray-700); margin-bottom: 12px; }
+
+  /* Header */
+  .page-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 40px 48px; }
+  .page-header h1 { color: white; }
+  .page-header p { color: #bfdbfe; font-size: 1.05rem; margin: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+  .badge-blue { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* Cards */
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 24px; margin-bottom: 20px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .layer-card { background: white; border-radius: 10px; padding: 20px; border-left: 4px solid; }
+  .layer-card.domain { border-color: #8b5cf6; }
+  .layer-card.app { border-color: #2563eb; }
+  .layer-card.infra { border-color: #16a34a; }
+  .layer-card.api { border-color: #f59e0b; }
+  .layer-card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+  .layer-card p { font-size: 0.82rem; color: var(--gray-500); margin: 0; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.875rem; }
+  th { background: var(--gray-100); text-align: left; padding: 10px 14px; font-weight: 600; color: var(--gray-700); border-bottom: 2px solid var(--gray-200); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--gray-100); color: var(--gray-700); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-50); }
+
+  /* Code */
+  pre { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 20px; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem; line-height: 1.6; margin: 16px 0; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--gray-100); padding: 1px 6px; border-radius: 4px; color: #c026d3; }
+
+  /* Alerts */
+  .alert { border-radius: 8px; padding: 14px 18px; margin: 16px 0; border-left: 4px solid; }
+  .alert-red { background: var(--red-light); border-color: var(--red); color: #7f1d1d; }
+  .alert-blue { background: var(--blue-light); border-color: var(--blue); color: #1e3a8a; }
+  .alert-amber { background: var(--amber-light); border-color: var(--amber); color: #78350f; }
+  .alert-green { background: var(--green-light); border-color: var(--green); color: #14532d; }
+  .alert strong { font-weight: 700; }
+
+  /* Pipeline */
+  .pipeline { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 20px 0; }
+  .pipe-step { background: white; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--gray-700); white-space: nowrap; }
+  .pipe-step.highlight { background: var(--blue-light); border-color: var(--blue); color: var(--blue-dark); }
+  .pipe-arrow { color: var(--gray-300); font-size: 1.2rem; }
+
+  /* File tree */
+  .tree { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 20px; font-family: var(--mono); font-size: 0.82rem; line-height: 1.8; }
+  .tree .dir { color: #93c5fd; }
+  .tree .file { color: #e2e8f0; }
+  .tree .comment { color: #64748b; }
+
+  section { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav>
+    <div class="logo">
+      <h1>OPT SaaS</h1>
+      <p>Manual de Arquitectura Backend</p>
+    </div>
+    <ul>
+      <li><a class="section">Introducción</a></li>
+      <li><a href="#overview">Visión General</a></li>
+      <li><a href="#stack">Stack Tecnológico</a></li>
+      <li><a class="section">Arquitectura</a></li>
+      <li><a href="#capas">Capas y Proyectos</a></li>
+      <li><a href="#estructura">Estructura de Archivos</a></li>
+      <li><a href="#interfaces">Interfaces Clave</a></li>
+      <li><a class="section">Pipeline</a></li>
+      <li><a href="#middleware">Middleware</a></li>
+      <li><a href="#pipeline">Orden del Pipeline</a></li>
+      <li><a class="section">Seguridad</a></li>
+      <li><a href="#multitenant">Multi-Tenant</a></li>
+      <li><a href="#jwt">JWT y Claims</a></li>
+      <li><a class="section">Guías</a></li>
+      <li><a href="#nuevo-modulo">Agregar Módulo</a></li>
+      <li><a href="#antipatrones">Anti-patrones</a></li>
+      <li><a href="#comandos">Comandos</a></li>
+    </ul>
+  </nav>
+
+  <div>
+    <div class="page-header">
+      <h1>Manual de Arquitectura Backend</h1>
+      <p>OPT SaaS · .NET 10 · Clean Architecture · Multi-Tenant · JWT</p>
+    </div>
+
+    <main>
+
+      <!-- VISIÓN GENERAL -->
+      <section id="overview">
+        <h2>Visión General</h2>
+        <p>OPT es un SaaS multi-tenant para gestión de ópticas. El backend está implementado en <strong>.NET 10</strong> siguiendo <strong>Clean Architecture</strong> con cuatro capas bien definidas. La seguridad multi-tenant es el principio rector de toda decisión de diseño.</p>
+
+        <div class="alert alert-red">
+          <strong>Regla de oro:</strong> Ningún endpoint puede exponer ni modificar datos de un tenant diferente al del usuario autenticado, bajo ninguna circunstancia.
+        </div>
+
+        <div class="card-grid">
+          <div class="layer-card domain">
+            <h3>🔷 Domain</h3>
+            <p>Entidades puras, sin dependencias externas. La fuente de verdad del modelo.</p>
+          </div>
+          <div class="layer-card app">
+            <h3>🔵 Application</h3>
+            <p>Casos de uso (CQRS con MediatR). Solo conoce abstracciones, nunca clases concretas de infraestructura.</p>
+          </div>
+          <div class="layer-card infra">
+            <h3>🟢 Infrastructure</h3>
+            <p>EF Core, SQL Server, JWT, BCrypt. Implementa los contratos de Application.</p>
+          </div>
+          <div class="layer-card api">
+            <h3>🟡 API</h3>
+            <p>Controllers delgados, Middleware, DI wiring. Orquesta sin lógica de negocio.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STACK -->
+      <section id="stack">
+        <h2>Stack Tecnológico</h2>
+        <table>
+          <tr><th>Componente</th><th>Tecnología</th><th>Versión</th></tr>
+          <tr><td>Runtime</td><td>.NET</td><td>10.0</td></tr>
+          <tr><td>CQRS</td><td>MediatR</td><td>12.4.1</td></tr>
+          <tr><td>Validación</td><td>FluentValidation</td><td>11.10.0</td></tr>
+          <tr><td>ORM</td><td>Entity Framework Core (SQL Server)</td><td>9.0.0</td></tr>
+          <tr><td>Autenticación</td><td>JWT Bearer</td><td>9.0.0</td></tr>
+          <tr><td>Hash contraseñas</td><td>BCrypt.Net-Next</td><td>4.0.3</td></tr>
+          <tr><td>Documentación API</td><td>Swashbuckle (Swagger)</td><td>7.2.0</td></tr>
+          <tr><td>Base de datos</td><td>SQL Server 2022 / Azure SQL</td><td>—</td></tr>
+        </table>
+      </section>
+
+      <!-- CAPAS -->
+      <section id="capas">
+        <h2>Capas y Proyectos</h2>
+
+        <div class="alert alert-blue">
+          <strong>Regla de dependencias:</strong> <code>OPT.API → OPT.Infrastructure → OPT.Application → OPT.Domain</code>. Nunca en sentido contrario.
+        </div>
+
+        <h3>OPT.Domain</h3>
+        <p>Contiene exclusivamente entidades de dominio. No tiene ninguna dependencia de NuGet ni de otros proyectos.</p>
+        <table>
+          <tr><th>Entidad</th><th>PK</th><th>TenantId</th><th>Descripción</th></tr>
+          <tr><td><code>Cliente</code></td><td>ClienteId</td><td>✓</td><td>Persona o Empresa. Campo TipoCliente diferencia el tipo.</td></tr>
+          <tr><td><code>Usuario</code></td><td>UsuarioId</td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña.</td></tr>
+        </table>
+
+        <h3>OPT.Application</h3>
+        <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
+        <table>
+          <tr><th>Carpeta</th><th>Contenido</th></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IUsuarioRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Auth/</code></td><td>LoginCommand, LoginCommandHandler, LoginCommandValidator</td></tr>
+          <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers</td></tr>
+          <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById + handlers</td></tr>
+          <tr><td><code>Clientes/DTOs/</code></td><td>ClienteDto, ClienteMappingExtensions</td></tr>
+          <tr><td><code>Clientes/Validators/</code></td><td>CreateClienteCommandValidator, UpdateClienteCommandValidator</td></tr>
+          <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt;</td></tr>
+        </table>
+
+        <h3>OPT.Infrastructure</h3>
+        <table>
+          <tr><th>Carpeta</th><th>Contenido</th></tr>
+          <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted)</td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, UsuarioRepository</td></tr>
+          <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService, BcryptPasswordHasher</td></tr>
+          <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
+        </table>
+
+        <h3>OPT.API</h3>
+        <table>
+          <tr><th>Carpeta</th><th>Contenido</th></tr>
+          <tr><td><code>Controllers/</code></td><td>AuthController, ClienteController</td></tr>
+          <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
+          <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
+        </table>
+      </section>
+
+      <!-- ESTRUCTURA -->
+      <section id="estructura">
+        <h2>Estructura de Archivos</h2>
+        <div class="tree">
+<span class="dir">src/backend/</span>
+├── <span class="dir">OPT.Domain/</span>
+│   └── <span class="dir">Entities/</span>
+│       ├── <span class="file">Cliente.cs</span>
+│       └── <span class="file">Usuario.cs</span>
+│
+├── <span class="dir">OPT.Application/</span>
+│   ├── <span class="dir">Interfaces/</span>   <span class="comment">← contratos (nunca implementaciones)</span>
+│   ├── <span class="dir">Auth/</span>           <span class="comment">← Login command/handler/validator</span>
+│   ├── <span class="dir">Clientes/</span>
+│   │   ├── <span class="dir">Commands/</span>   <span class="comment">← Create, Update, Delete</span>
+│   │   ├── <span class="dir">Queries/</span>    <span class="comment">← GetClientes, GetClienteById</span>
+│   │   ├── <span class="dir">DTOs/</span>       <span class="comment">← ClienteDto, mappings</span>
+│   │   └── <span class="dir">Validators/</span>
+│   └── <span class="dir">Common/</span>         <span class="comment">← PagedResult&lt;T&gt;</span>
+│
+├── <span class="dir">OPT.Infrastructure/</span>
+│   ├── <span class="dir">Persistence/</span>
+│   │   ├── <span class="file">OPTDbContext.cs</span>  <span class="comment">← EF Core + QueryFilters</span>
+│   │   └── <span class="dir">Repositories/</span>
+│   ├── <span class="dir">Auth/</span>             <span class="comment">← JwtService, BCrypt, CurrentTenant</span>
+│   └── <span class="file">DependencyInjection.cs</span>
+│
+└── <span class="dir">OPT.API/</span>
+    ├── <span class="dir">Controllers/</span>
+    ├── <span class="dir">Middleware/</span>       <span class="comment">← 3 middleware personalizados</span>
+    ├── <span class="file">Program.cs</span>
+    └── <span class="file">appsettings.json</span>
+        </div>
+      </section>
+
+      <!-- INTERFACES -->
+      <section id="interfaces">
+        <h2>Interfaces Clave</h2>
+        <p>Todas las interfaces viven en <code>OPT.Application/Interfaces/</code>. Application solo depende de estas abstracciones.</p>
+        <table>
+          <tr><th>Interface</th><th>Implementación</th><th>Responsabilidad</th></tr>
+          <tr><td><code>IClienteRepository</code></td><td>ClienteRepository</td><td>CRUD + paginación. Siempre filtra por TenantId.</td></tr>
+          <tr><td><code>IUsuarioRepository</code></td><td>UsuarioRepository</td><td>Busca usuario activo por RUT + TenantId.</td></tr>
+          <tr><td><code>IJwtService</code></td><td>JwtService</td><td>Genera token JWT firmado con claims de tenant.</td></tr>
+          <tr><td><code>ICurrentTenantService</code></td><td>CurrentTenantService</td><td>Extrae TenantId y RutUsuario del HttpContext.</td></tr>
+          <tr><td><code>IPasswordHasher</code></td><td>BcryptPasswordHasher</td><td>Verifica y hashea contraseñas con BCrypt.</td></tr>
+        </table>
+      </section>
+
+      <!-- MIDDLEWARE -->
+      <section id="middleware">
+        <h2>Middleware Personalizados</h2>
+
+        <h3>1. CorrelationIdMiddleware</h3>
+        <p>Genera o reutiliza el header <code>X-Correlation-Id</code> de cada request. Lo inyecta en el scope del logger para que todos los logs del request (en cualquier capa) compartan el mismo ID. Esencial para rastrear errores en producción multi-tenant.</p>
+        <pre>// El cliente puede enviar: X-Correlation-Id: mi-id-personalizado
+// Si no lo envía, se genera: X-Correlation-Id: a3f2b1c0d4e5f6a7...
+// Aparece en la respuesta y en todos los logs del request</pre>
+
+        <h3>2. ExceptionHandlingMiddleware</h3>
+        <p>Captura TODAS las excepciones no controladas. Las convierte en respuestas <strong>RFC 7807 ProblemDetails</strong>. Los controllers no necesitan try/catch.</p>
+        <table>
+          <tr><th>Excepción lanzada</th><th>HTTP</th><th>Cuándo usarla</th></tr>
+          <tr><td><code>ValidationException</code></td><td><span class="badge badge-amber">400</span></td><td>FluentValidation falla en el command</td></tr>
+          <tr><td><code>UnauthorizedAccessException</code></td><td><span class="badge badge-red">401</span></td><td>Credenciales incorrectas en login</td></tr>
+          <tr><td><code>KeyNotFoundException</code></td><td><span class="badge badge-amber">404</span></td><td>Entidad no encontrada o de otro tenant</td></tr>
+          <tr><td><code>InvalidOperationException</code></td><td><span class="badge badge-amber">409</span></td><td>Regla de negocio violada (ej. RUT duplicado)</td></tr>
+          <tr><td><code>Exception</code> (resto)</td><td><span class="badge badge-red">500</span></td><td>Error inesperado — detalle NO expuesto al cliente</td></tr>
+        </table>
+        <pre>// Ejemplo de respuesta 409 ProblemDetails:
+{
+  "status": 409,
+  "title": "Operación inválida",
+  "detail": "Ya existe un cliente con el documento '12345678-9' en este tenant.",
+  "instance": "/api/cliente"
+}</pre>
+
+        <h3>3. TenantValidationMiddleware</h3>
+        <p>Segunda línea de defensa multi-tenant. Se ejecuta después de <code>UseAuthorization()</code>, cuando los claims del JWT ya están disponibles. Valida que <code>tenant_id</code> sea un entero mayor a 0.</p>
+        <div class="alert alert-amber">
+          <strong>¿Por qué es necesario si JWT ya valida la firma?</strong> JwtBearer verifica la firma criptográfica pero no el contenido semántico. Un token firmado con <code>tenant_id: 0</code> o sin el claim pasaría la verificación. Este middleware rechaza esos casos con <strong>403 Forbidden</strong>.
+        </div>
+      </section>
+
+      <!-- PIPELINE -->
+      <section id="pipeline">
+        <h2>Orden del Pipeline</h2>
+        <p>El orden en <code>Program.cs</code> es determinante. Alterar este orden puede romper la seguridad o el funcionamiento.</p>
+
+        <div class="pipeline">
+          <div class="pipe-step highlight">CorrelationId</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">ExceptionHandling</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">Swagger (dev)</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">CORS</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">HttpsRedirection</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">Authentication</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">Authorization</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">TenantValidation</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">Controllers</div>
+        </div>
+
+        <table>
+          <tr><th>Paso</th><th>Razón del orden</th></tr>
+          <tr><td>CorrelationId primero</td><td>Todos los logs del request llevan el mismo ID desde el inicio</td></tr>
+          <tr><td>ExceptionHandling segundo</td><td>Envuelve todo el pipeline; captura excepciones de cualquier etapa siguiente</td></tr>
+          <tr><td>CORS antes de Auth</td><td>Los pre-flight OPTIONS no llevan token; deben responder sin autenticar</td></tr>
+          <tr><td>TenantValidation al final</td><td>Requiere que <code>context.User.Identity.IsAuthenticated</code> esté resuelto</td></tr>
+        </table>
+      </section>
+
+      <!-- MULTI-TENANT -->
+      <section id="multitenant">
+        <h2>Seguridad Multi-Tenant</h2>
+
+        <div class="alert alert-red">
+          <strong>Reglas no negociables:</strong> Todos los repositorios deben filtrar por <code>TenantId</code> explícitamente en cada consulta. Los query filters globales de EF son la segunda línea, no la primera.
+        </div>
+
+        <h3>Tres capas de protección</h3>
+        <table>
+          <tr><th>Capa</th><th>Mecanismo</th><th>Responsabilidad</th></tr>
+          <tr><td>1. Middleware</td><td>TenantValidationMiddleware</td><td>Rechaza tokens sin tenant_id válido antes de llegar a controllers</td></tr>
+          <tr><td>2. Repositorios</td><td>Parámetro TenantId explícito</td><td>Cada query incluye <code>WHERE TenantId = @tenantId</code></td></tr>
+          <tr><td>3. OPTDbContext</td><td>HasQueryFilter(e =&gt; !e.IsDeleted)</td><td>Excluye automáticamente registros con soft-delete</td></tr>
+        </table>
+
+        <h3>Soft-Delete obligatorio</h3>
+        <p>Nunca usar <code>DELETE</code> físico. Siempre marcar <code>IsDeleted = true</code>. El QueryFilter de EF excluye estos registros automáticamente en todas las consultas.</p>
+        <pre>// ✅ Correcto — soft delete
+cliente.IsDeleted = true;
+cliente.UpdatedAt = DateTime.UtcNow;
+await context.SaveChangesAsync();
+
+// ❌ Incorrecto — delete físico
+context.Clientes.Remove(cliente);</pre>
+      </section>
+
+      <!-- JWT -->
+      <section id="jwt">
+        <h2>JWT y Claims</h2>
+        <p>El token JWT incluye estos claims en cada autenticación exitosa:</p>
+        <pre>{
+  "sub":         "1",             // UsuarioId
+  "tenant_id":   "1",             // TenantId — claim personalizado
+  "rut_usuario": "12345678-9",    // RUT del usuario
+  "name":        "Juan Pérez",    // Nombre completo
+  "role":        "Operador",      // Rol: Admin | Operador | Lectura
+  "jti":         "guid-único",    // JWT ID para prevenir replay
+  "exp":         1746500000       // Expiración Unix timestamp
+}</pre>
+
+        <h3>Configuración en appsettings.json</h3>
+        <pre>{
+  "Jwt": {
+    "Secret":            "OPT-SecretKey-ChangeThis-InProduction-2026-SecureKey!",
+    "Issuer":            "OPT",
+    "Audience":          "OPT",
+    "ExpirationMinutes": 60
+  }
+}</pre>
+        <div class="alert alert-amber">
+          <strong>Producción:</strong> El <code>Secret</code> debe ser una cadena de al menos 32 caracteres aleatorios, almacenada en variables de entorno o Azure Key Vault, nunca en el repositorio.
+        </div>
+      </section>
+
+      <!-- NUEVO MÓDULO -->
+      <section id="nuevo-modulo">
+        <h2>Guía: Agregar un Nuevo Módulo</h2>
+        <p>Ejemplo: agregar el módulo <strong>Sucursal</strong>.</p>
+
+        <h3>Paso 1 — Domain</h3>
+        <pre>// OPT.Domain/Entities/Sucursal.cs
+public class Sucursal {
+    public int IdSucursal { get; set; }
+    public int TenantId { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    // ... campos + auditoría (CreatedAt, UpdatedAt, IsDeleted)
+}</pre>
+
+        <h3>Paso 2 — Application: Interfaces + Commands + Queries</h3>
+        <pre>// OPT.Application/Interfaces/ISucursalRepository.cs
+public interface ISucursalRepository {
+    Task&lt;PagedResult&lt;Sucursal&gt;&gt; GetPagedAsync(int tenantId, ...);
+    Task&lt;Sucursal?&gt; GetByIdAsync(int id, int tenantId, ...);
+    Task&lt;Sucursal&gt; AddAsync(Sucursal s, ...);
+    // ...
+}</pre>
+
+        <h3>Paso 3 — Infrastructure: Repository + DbContext</h3>
+        <pre>// En OPTDbContext.OnModelCreating:
+modelBuilder.Entity&lt;Sucursal&gt;(e => {
+    e.ToTable("OPT_Sucursal");
+    e.HasQueryFilter(s => !s.IsDeleted);
+    // ... configuración
+});</pre>
+
+        <h3>Paso 4 — API: Controller delgado</h3>
+        <pre>[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class SucursalController(IMediator mediator, ICurrentTenantService tenant) : ControllerBase {
+    [HttpGet]
+    public async Task&lt;IActionResult&gt; Get([FromQuery] int page = 1) {
+        var result = await mediator.Send(new GetSucursalesQuery(tenant.TenantId, page));
+        return Ok(result);
+    }
+}</pre>
+
+        <h3>Paso 5 — Script SQL</h3>
+        <pre>-- src/basedatos/009_OPT_Sucursal_ajuste.sql
+-- Script incremental si hay cambios de esquema
+ALTER TABLE [dbo].[OPT_Sucursal] ADD [NuevoCampo] NVARCHAR(100) NULL;
+GO</pre>
+
+        <div class="alert alert-green">
+          <strong>Tip:</strong> La tabla OPT_Sucursal ya existe en el script <code>004_OPT_Sucursal.sql</code>. Solo necesitas implementar las capas de código.
+        </div>
+      </section>
+
+      <!-- ANTI-PATRONES -->
+      <section id="antipatrones">
+        <h2>Anti-patrones a Evitar</h2>
+        <table>
+          <tr><th>❌ Anti-patrón</th><th>✅ Alternativa correcta</th></tr>
+          <tr><td>Lógica de negocio en Controller</td><td>Mover al Command/Query handler en Application</td></tr>
+          <tr><td>Acceder a OPTDbContext desde Application</td><td>Usar la interface de repositorio correspondiente</td></tr>
+          <tr><td>Hardcodear TenantId en queries</td><td>Siempre extraer de <code>ICurrentTenantService</code></td></tr>
+          <tr><td>DELETE físico en tabla de negocio</td><td>Soft-delete: <code>IsDeleted = true</code></td></tr>
+          <tr><td>try/catch en controllers</td><td>Lanzar excepción semántica; el middleware la maneja</td></tr>
+          <tr><td>Lanzar Exception genérica desde handler</td><td>Usar la excepción correcta: KeyNotFoundException, InvalidOperationException, etc.</td></tr>
+          <tr><td>Loguear PasswordHash o tokens JWT</td><td>Loguear solo IDs, timestamps y mensajes de error</td></tr>
+          <tr><td>Saltar capas (API → Infrastructure directo)</td><td>Respetar el flujo: API → Application → Infrastructure</td></tr>
+        </table>
+      </section>
+
+      <!-- COMANDOS -->
+      <section id="comandos">
+        <h2>Comandos de Desarrollo</h2>
+        <pre># Restaurar paquetes
+dotnet restore
+
+# Compilar solución
+dotnet build
+
+# Ejecutar API en desarrollo (puerto 5000/5001)
+dotnet run --project src/backend/OPT.API
+
+# Ejecutar tests
+dotnet test
+
+# Ver Swagger UI
+# http://localhost:5001/swagger</pre>
+
+        <h3>Connection String (desarrollo local)</h3>
+        <pre>"DefaultConnection": "Server=localhost;Database=dbOPT;
+  Trusted_Connection=True;TrustServerCertificate=True;"</pre>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

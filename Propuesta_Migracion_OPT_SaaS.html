@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT Ópticas — Propuesta de Migración a SaaS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 14px; color: #222; background: #f5f7fa; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* PORTADA */
+  .cover { background: #1F3864; color: #fff; border-radius: 8px; padding: 48px 40px 40px; margin-bottom: 32px; text-align: center; }
+  .cover h1 { font-size: 2.4em; margin-bottom: 10px; }
+  .cover h2 { font-size: 1.4em; font-weight: 400; margin-bottom: 20px; color: #aac4e8; }
+  .cover p  { font-size: 1em; color: #aac4e8; font-style: italic; }
+  .cover-meta { margin-top: 28px; display: inline-block; background: rgba(255,255,255,0.1); border-radius: 6px; padding: 16px 28px; text-align: left; }
+  .cover-meta table { border-collapse: collapse; }
+  .cover-meta td { padding: 5px 16px 5px 0; font-size: 0.92em; }
+  .cover-meta td:first-child { font-weight: bold; color: #aac4e8; }
+
+  /* SECCIONES */
+  .section { background: #fff; border-radius: 8px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  h2.sec-title {
+    font-size: 1.25em; font-weight: bold; color: #fff;
+    background: #1F3864; padding: 10px 16px; border-radius: 5px;
+    margin: -28px -32px 20px; letter-spacing: 0.3px;
+  }
+  h3.sub-title {
+    font-size: 1em; font-weight: bold; color: #2E75B6;
+    border-bottom: 2px solid #2E75B6; padding-bottom: 5px;
+    margin: 22px 0 12px;
+  }
+  p.txt { margin-bottom: 10px; line-height: 1.65; color: #333; }
+
+  ul.lst { margin: 6px 0 10px 22px; }
+  ul.lst li { margin-bottom: 5px; line-height: 1.6; }
+
+  ol.nlst { margin: 6px 0 10px 22px; }
+  ol.nlst li { margin-bottom: 6px; line-height: 1.6; }
+
+  /* TABLAS */
+  table.data { width: 100%; border-collapse: collapse; font-size: 0.88em; margin: 10px 0 16px; }
+  table.data th {
+    background: #1F3864; color: #fff; padding: 8px 10px;
+    text-align: left; font-weight: bold;
+  }
+  table.data td { padding: 7px 10px; border-bottom: 1px solid #e0e6f0; vertical-align: top; }
+  table.data tr:nth-child(even) td { background: #eef4fb; }
+  table.data tr:hover td { background: #ddeeff; }
+
+  /* DIAGRAMA DE CAPAS */
+  .layer-box { border-radius: 5px; padding: 10px 16px; margin: 4px 0; text-align: center; font-weight: bold; font-size: 0.93em; }
+  .l1 { background: #1F3864; color: #fff; }
+  .l2 { background: #c8d8ea; color: #1F3864; font-size: 0.82em; font-weight: normal; }
+  .l3 { background: #2E75B6; color: #fff; }
+  .l4 { background: #3a6ea5; color: #fff; }
+  .l5 { background: #4a7db5; color: #fff; }
+  .l6 { background: #6b9fcf; color: #fff; }
+
+  /* BADGES */
+  .badge { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 0.78em; font-weight: bold; }
+  .new  { background: #d5f0e0; color: #1e6b3e; }
+  .mod  { background: #d5e8f0; color: #1F3864; }
+  .del  { background: #fce4d6; color: #c55a11; }
+  .obs  { background: #fff3cd; color: #7d4e00; }
+
+  /* FASES */
+  .phase { border-left: 4px solid #2E75B6; padding-left: 14px; margin-bottom: 20px; }
+  .phase h4 { font-size: 1em; color: #2E75B6; margin-bottom: 8px; font-weight: bold; }
+
+  /* COMPARATIVA */
+  .cmp-old { background: #fce4d6; color: #7a3010; }
+  .cmp-new { background: #d5f0e0; color: #1e5030; }
+
+  /* FOOTER */
+  .footer { text-align: center; color: #999; font-size: 0.82em; margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; }
+
+  /* TOC */
+  .toc { background: #eef4fb; border-radius: 6px; padding: 18px 24px; margin-bottom: 24px; }
+  .toc h3 { color: #1F3864; margin-bottom: 10px; font-size: 1em; }
+  .toc ol { margin-left: 18px; }
+  .toc li { margin-bottom: 4px; }
+  .toc a { color: #2E75B6; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; }
+    .section { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- PORTADA -->
+  <div class="cover">
+    <h1>OPT Ópticas</h1>
+    <h2>Propuesta de Migración a SaaS</h2>
+    <p>.NET Core 10 &nbsp;·&nbsp; Angular 19 &nbsp;·&nbsp; SQL Server &nbsp;·&nbsp; Inteligencia Artificial</p>
+    <div class="cover-meta">
+      <table>
+        <tr><td>Versión</td><td>1.1</td></tr>
+        <tr><td>Fecha</td><td>Mayo 2026</td></tr>
+        <tr><td>Preparado por</td><td>Adrovez — Área de Tecnología</td></tr>
+        <tr><td>Clasificación</td><td>Confidencial</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ÍNDICE -->
+  <div class="toc">
+    <h3>Contenido</h3>
+    <ol>
+      <li><a href="#s1">Resumen Ejecutivo</a></li>
+      <li><a href="#s2">Diagnóstico del Sistema Actual</a></li>
+      <li><a href="#s3">Arquitectura Propuesta</a></li>
+      <li><a href="#s4">Rediseño de la Base de Datos</a></li>
+      <li><a href="#s5">Diseño de la API REST</a></li>
+      <li><a href="#s6">Frontend Angular 19</a></li>
+      <li><a href="#s7">Inteligencia Artificial</a></li>
+      <li><a href="#s8">Plan de Migración por Fases</a></li>
+      <li><a href="#s9">Comparativa Sistema Actual vs Nuevo</a></li>
+      <li><a href="#s10">Riesgos y Mitigaciones</a></li>
+      <li><a href="#s11">Estimación de Esfuerzo</a></li>
+      <li><a href="#s12">Próximos Pasos</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. RESUMEN EJECUTIVO -->
+  <div class="section" id="s1">
+    <h2 class="sec-title">1. Resumen Ejecutivo</h2>
+    <p class="txt">El sistema OPT para Ópticas está desarrollado en <strong>.NET Framework 4.8</strong> con ASP.NET MVC 5, Entity Framework 6 y SQL Server. Su arquitectura monolítica limita la escalabilidad, el acceso remoto seguro y la incorporación de nuevas funcionalidades.</p>
+    <p class="txt">Esta propuesta define la hoja de ruta tecnológica para transformar OPT en una plataforma <strong>SaaS multi-empresa y multi-sucursal</strong> construida sobre:</p>
+    <ul class="lst">
+      <li><strong>API REST</strong> en .NET Core 10 con Clean Architecture</li>
+      <li><strong>Frontend reactivo</strong> en Angular 19 con Signals</li>
+      <li><strong>Base de datos SQL Server</strong> rediseñada: FK formales, multi-tenant, auditoría completa</li>
+      <li><strong>Autenticación JWT + Refresh Tokens</strong> y control de roles granular</li>
+      <li><strong>Inteligencia Artificial</strong> (Microsoft Semantic Kernel + Claude API) para asistencia en recetas, inventario y reportes</li>
+      <li><strong>Integración mejorada con Defontana</strong> (ERP contable chileno)</li>
+    </ul>
+    <p class="txt" style="margin-top:10px">La migración se plantea en <strong>4 fases iterativas de 24 semanas</strong>, manteniendo el sistema legado operativo durante todo el proceso.</p>
+  </div>
+
+  <!-- 2. DIAGNÓSTICO -->
+  <div class="section" id="s2">
+    <h2 class="sec-title">2. Diagnóstico del Sistema Actual</h2>
+
+    <h3 class="sub-title">2.1 Stack Tecnológico Actual</h3>
+    <table class="data">
+      <thead><tr><th>Componente</th><th>Tecnología Actual</th><th>Limitación Principal</th></tr></thead>
+      <tbody>
+        <tr><td>Framework Backend</td><td>.NET Framework 4.8</td><td>Solo Windows, sin soporte a largo plazo, no cloud-native</td></tr>
+        <tr><td>Patrón de Arquitectura</td><td>ASP.NET MVC 5 (Monolítico)</td><td>Acoplamiento fuerte UI/Lógica, difícil de escalar</td></tr>
+        <tr><td>ORM / Acceso a Datos</td><td>Entity Framework 6 + EDMX</td><td>EDMX obsoleto, sin async nativo, migraciones manuales</td></tr>
+        <tr><td>Base de Datos</td><td>SQL Server (db_a25cfd_opt2)</td><td>Sin FK explícitas, estados como varchar, sin multi-tenant</td></tr>
+        <tr><td>Frontend</td><td>Razor .cshtml + Bootstrap 3 + jQuery + Ajax</td><td>Sin reactividad, difícil mantenimiento, UX desactualizado</td></tr>
+        <tr><td>Autenticación</td><td>FormsAuthentication + Session</td><td>Sin JWT, sin soporte API, sin 2FA</td></tr>
+        <tr><td>Reportes</td><td>Microsoft RDLC / ReportViewer</td><td>Solo funciona en Windows, sin exportación moderna</td></tr>
+        <tr><td>Integración Contable</td><td>Defontana (HTTP directo en DAL)</td><td>Acoplamiento fuerte, sin manejo de errores robusto</td></tr>
+        <tr><td>Despliegue</td><td>IIS / Windows Server</td><td>Sin containerización, sin CI/CD, escalado manual</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">2.2 Arquitectura en 3 Capas (Actual)</h3>
+    <ul class="lst">
+      <li><strong>OPT.Entidad</strong> — Modelos de dominio y DTOs (26 entidades, 5 DTOs, 6 resultados de SP mapeados)</li>
+      <li><strong>OPT.Dato</strong> — Capa de acceso a datos con patrón DAL (25 clases, Entity Framework EDMX)</li>
+      <li><strong>OPT.Web</strong> — Aplicación MVC con 9 Áreas funcionales, controllers y vistas Razor</li>
+    </ul>
+
+    <h3 class="sub-title">2.3 Tablas del Sistema Actual (26 tablas)</h3>
+    <p class="txt">Detalle oficial de tablas, con observaciones para el nuevo sistema:</p>
+    <table class="data">
+      <thead><tr><th>Tabla</th><th>Descripción</th><th>Acción en Migración</th></tr></thead>
+      <tbody>
+        <tr><td>OPT_Abono</td><td>Abono de Pago asociada a la Orden de Trabajo (OT)</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Anamnesis</td><td>Anamnesis asociado al Cliente — Preguntas de Salud</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Atencion</td><td>Fecha en que fue atendido el Cliente; saber quién realizó la Receta y si derivó a una OT</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_BitacoraOT</td><td>Historial de las etapas por las cuales pasa una Orden de Trabajo</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td><strong>OPT_Cliente</strong></td><td>Datos básicos del Cliente (Paciente)</td><td><span class="badge new">RENOMBRAR → OPT_Paciente</span></td></tr>
+        <tr><td>OPT_Comuna</td><td>Comunas de cada Región</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Cuota</td><td>Cuotas de pago de cada OT</td><td><span class="badge mod">MANTENER + mejorar</span></td></tr>
+        <tr><td><strong>OPT_Empresa</strong></td><td>Datos del Cliente Empresa (corporativo)</td><td><span class="badge new">RENOMBRAR → OPT_ClienteEmpresa</span></td></tr>
+        <tr><td><strong>OPT_EmpresaSucursal</strong></td><td>Relaciona al Cliente Empresa con la Sucursal de la Óptica</td><td><span class="badge del">ELIMINAR — No considerar para el futuro</span></td></tr>
+        <tr><td>OPT_EstadoOT</td><td>Estados de la Orden de Trabajo</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_FormaPago</td><td>Formas de pago: Efectivo, Débito, Crédito, Transferencia, Otros</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_OrdenDeTrabajo</td><td>Órdenes de Trabajo — asociadas al Cliente Empresa y Paciente; es la venta como tal</td><td><span class="badge mod">MANTENER + mejorar</span></td></tr>
+        <tr><td>OPT_OrdenDeTrabajoDetalle</td><td>Detalle de la Orden de Trabajo</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Pago</td><td>Pagos (cuotas) que realiza el Cliente de la OT adeudada</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Producto</td><td>Todos los productos que se venden en la óptica</td><td><span class="badge mod">MANTENER + mejorar</span></td></tr>
+        <tr><td>OPT_ProductoDocumento</td><td>Documento de compra del Producto (factura, boleta, nota crédito, nota débito, otros)</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_ProductoIngresoEgreso</td><td>Detalle del ProductoDocumento (líneas de ingreso/egreso)</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td><strong>OPT_ProductoSucursal</strong></td><td>Stock de productos por sucursal</td><td><span class="badge mod">MANTENER + agregar TenantId</span></td></tr>
+        <tr><td>OPT_RecetaCristales</td><td>Datos de la receta óptica por cada paciente, asociada a una OT</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Region</td><td>Regiones del país</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_RegularizaProducto</td><td>Historial de quien regularizó el stock de productos, además del precio</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Rol</td><td>Roles para Usuarios (quien ingresa al sistema)</td><td><span class="badge mod">MANTENER + ampliar</span></td></tr>
+        <tr><td>OPT_Sucursal</td><td>Sucursales de la Óptica</td><td><span class="badge mod">MANTENER + TenantId</span></td></tr>
+        <tr><td>OPT_TipoDocumento</td><td>Tipos de documentos del ProductoDocumento</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr><td>OPT_Usuario</td><td>Usuario que se conecta al sistema</td><td><span class="badge mod">MANTENER + mejorar auth</span></td></tr>
+        <tr><td>OPT_UsuarioSucursal</td><td>Usuario asociado a una o más sucursales de la óptica</td><td><span class="badge mod">MANTENER</span></td></tr>
+        <tr style="background:#eef4fb;font-weight:bold"><td colspan="2"><strong>NUEVA — Tenant</strong></td><td><span class="badge new">NUEVA — empresas cliente del SaaS (multi-tenancy)</span></td></tr>
+        <tr style="background:#eef4fb;font-weight:bold"><td colspan="2"><strong>NUEVA — OPT_AuditLog</strong></td><td><span class="badge new">NUEVA — trazabilidad de cambios críticos</span></td></tr>
+        <tr style="background:#eef4fb;font-weight:bold"><td colspan="2"><strong>NUEVA — OPT_EstadoPago</strong></td><td><span class="badge new">NUEVA — catálogo de estados de cuota (reemplaza varchar)</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">2.4 Problemas Críticos de la BD Actual</h3>
+    <table class="data">
+      <thead><tr><th>Problema</th><th>Tabla(s) Afectada(s)</th><th>Impacto</th></tr></thead>
+      <tbody>
+        <tr><td>Sin Foreign Keys explícitas declaradas</td><td>Todas</td><td>Integridad referencial nula</td></tr>
+        <tr><td>PK de OPT_Paciente como varchar (RUT)</td><td>OPT_Cliente → OPT_Paciente</td><td>Problemas en SaaS, joins lentos</td></tr>
+        <tr><td>Estados de cuota como varchar libre</td><td>OPT_Cuota</td><td>Sin validación, datos inconsistentes</td></tr>
+        <tr><td>Datos calculados desnormalizados</td><td>OPT_OrdenDeTrabajo (Abono, Saldo)</td><td>Inconsistencia en actualizaciones</td></tr>
+        <tr><td>FormaAbono como varchar</td><td>OPT_OrdenDeTrabajo</td><td>Debería ser FK a OPT_FormaPago</td></tr>
+        <tr><td>Sin campo TenantId</td><td>Todas</td><td>Imposibilita SaaS multi-empresa</td></tr>
+        <tr><td>Sin auditoría (CreatedAt, UpdatedAt)</td><td>Mayoría de tablas</td><td>Sin trazabilidad de cambios</td></tr>
+        <tr><td>OPT_EmpresaSucursal obsoleta</td><td>OPT_EmpresaSucursal</td><td>Lógica a eliminar en el nuevo sistema</td></tr>
+        <tr><td>Lógica de reportes en Stored Procedures</td><td>rpt_* (6+ SPs)</td><td>Lógica de negocio en BD, difícil evolucionar</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 3. ARQUITECTURA -->
+  <div class="section" id="s3">
+    <h2 class="sec-title">3. Arquitectura Propuesta (SaaS)</h2>
+
+    <h3 class="sub-title">3.1 Clean Architecture — Diagrama de Capas</h3>
+    <div style="max-width:600px;margin:0 auto 16px">
+      <div class="layer-box l1">CAPA DE PRESENTACIÓN — Angular 19 (SPA)</div>
+      <div class="layer-box l2">↕ &nbsp; HTTPS / REST API / JWT</div>
+      <div class="layer-box l3">CAPA DE API — ASP.NET Core 10 (Controllers, Middleware, Auth)</div>
+      <div class="layer-box l4">CAPA DE APLICACIÓN — CQRS · Commands · Queries · Handlers · DTOs</div>
+      <div class="layer-box l5">CAPA DE DOMINIO — Entidades · Interfaces · Value Objects · Domain Events</div>
+      <div class="layer-box l6">CAPA DE INFRAESTRUCTURA — EF Core · SQL Server · Defontana · Semantic Kernel · Email</div>
+    </div>
+
+    <h3 class="sub-title">3.2 Proyectos de la Solución (.NET Core 10)</h3>
+    <table class="data">
+      <thead><tr><th>Proyecto</th><th>Tipo</th><th>Responsabilidad</th></tr></thead>
+      <tbody>
+        <tr><td>OPT.Domain</td><td>Class Library</td><td>Entidades, interfaces de repositorio, domain events, value objects</td></tr>
+        <tr><td>OPT.Application</td><td>Class Library</td><td>CQRS (MediatR), Commands, Queries, Validators (FluentValidation), DTOs</td></tr>
+        <tr><td>OPT.Infrastructure</td><td>Class Library</td><td>EF Core 10, repositorios, servicios externos (Defontana, Email, IA)</td></tr>
+        <tr><td>OPT.API</td><td>ASP.NET Core 10</td><td>Controllers REST, middleware, autenticación JWT, Swagger/OpenAPI</td></tr>
+        <tr><td>OPT.Tests</td><td>MSTest + xUnit</td><td>Unit tests (dominio/aplicación), Integration tests (infraestructura)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">3.3 Stack Tecnológico Propuesto</h3>
+    <table class="data">
+      <thead><tr><th>Capa</th><th>Tecnología</th><th>Versión / Paquete</th></tr></thead>
+      <tbody>
+        <tr><td>Backend Framework</td><td>.NET Core</td><td>10.0 LTS</td></tr>
+        <tr><td>API</td><td>ASP.NET Core Web API</td><td>10.0</td></tr>
+        <tr><td>ORM</td><td>Entity Framework Core</td><td>10.x + Migrations</td></tr>
+        <tr><td>CQRS / Mediator</td><td>MediatR</td><td>13.x</td></tr>
+        <tr><td>Validaciones</td><td>FluentValidation</td><td>12.x</td></tr>
+        <tr><td>Autenticación</td><td>JWT Bearer + Refresh Tokens</td><td>Microsoft.AspNetCore.Authentication.JwtBearer</td></tr>
+        <tr><td>Mapeo de objetos</td><td>AutoMapper</td><td>14.x</td></tr>
+        <tr><td>Documentación API</td><td>Swagger / Scalar</td><td>OpenAPI 3.1</td></tr>
+        <tr><td>IA / LLM</td><td>Microsoft Semantic Kernel</td><td>1.x + Claude API / OpenAI</td></tr>
+        <tr><td>Logging</td><td>Serilog</td><td>4.x → Seq / Azure Monitor</td></tr>
+        <tr><td>Frontend Framework</td><td>Angular</td><td>19 (Standalone Components, Signals)</td></tr>
+        <tr><td>UI Components</td><td>Angular Material + PrimeNG</td><td>17.x</td></tr>
+        <tr><td>Estilos</td><td>Tailwind CSS</td><td>4.x</td></tr>
+        <tr><td>Gestión de Estado</td><td>Angular Signals + RxJS</td><td>Integrado</td></tr>
+        <tr><td>Base de Datos</td><td>SQL Server</td><td>2022 (Azure SQL compatible)</td></tr>
+        <tr><td>Cache</td><td>Redis</td><td>Opcional en Fase 2</td></tr>
+        <tr><td>Contenedores</td><td>Docker + Docker Compose</td><td>Desarrollo y despliegue</td></tr>
+        <tr><td>CI/CD</td><td>GitHub Actions</td><td>Pipelines automatizados</td></tr>
+        <tr><td>Hosting</td><td>Azure App Service / AKS</td><td>Escalable según demanda</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4. BASE DE DATOS -->
+  <div class="section" id="s4">
+    <h2 class="sec-title">4. Rediseño de la Base de Datos</h2>
+
+    <h3 class="sub-title">4.1 Principios del Nuevo Modelo</h3>
+    <ul class="lst">
+      <li><strong>Multi-tenancy</strong> — columna <code>TenantId</code> en todas las tablas de negocio</li>
+      <li><strong>Foreign Keys explícitas</strong> con <code>ON DELETE</code> / <code>ON UPDATE</code> correctamente definido</li>
+      <li><strong>Renombres semánticos</strong> — <code>OPT_Cliente → OPT_Paciente</code> y <code>OPT_Empresa → OPT_ClienteEmpresa</code></li>
+      <li><strong>Eliminación de OPT_EmpresaSucursal</strong> — relación empresa/sucursal manejada directamente en OT</li>
+      <li><strong>Catálogos</strong> — estados de cuota pasan de varchar a tabla <code>OPT_EstadoPago</code></li>
+      <li><strong>Auditoría estándar</strong> — <code>CreatedAt</code>, <code>UpdatedAt</code>, <code>CreatedBy</code>, <code>UpdatedBy</code>, <code>IsDeleted</code> (soft delete)</li>
+      <li><strong>PK unificada</strong> — <code>OPT_Paciente</code> obtiene PK int autoincremental; <code>RutPaciente</code> queda como campo único</li>
+      <li><strong>Índices</strong> en columnas de búsqueda frecuente: RutPaciente, idOT, idSucursal, FechaAtencion</li>
+    </ul>
+
+    <h3 class="sub-title">4.2 Mapa de Cambios por Tabla</h3>
+    <table class="data">
+      <thead><tr><th>Tabla Actual</th><th>Tabla Nueva</th><th>Cambios Principales</th></tr></thead>
+      <tbody>
+        <tr><td>OPT_Cliente</td><td><strong>OPT_Paciente</strong></td><td>Renombrar + PK int + RutPaciente único + TenantId + auditoría</td></tr>
+        <tr><td>OPT_Empresa</td><td><strong>OPT_ClienteEmpresa</strong></td><td>Renombrar + TenantId + auditoría</td></tr>
+        <tr><td>OPT_EmpresaSucursal</td><td><em>Eliminada</em></td><td>No considerar para el futuro — relación directa en OT</td></tr>
+        <tr><td>OPT_OrdenDeTrabajo</td><td>OPT_OrdenDeTrabajo</td><td>TenantId + FK idFormaPagoAbono + auditoría + eliminar FormaAbono varchar</td></tr>
+        <tr><td>OPT_Cuota</td><td>OPT_Cuota</td><td>TenantId + FK idEstadoPago (nueva tabla) + auditoría</td></tr>
+        <tr><td>OPT_ProductoSucursal</td><td>OPT_ProductoSucursal</td><td>TenantId + auditoría + StockMinimo</td></tr>
+        <tr><td>OPT_Producto</td><td>OPT_Producto</td><td>TenantId + auditoría completa</td></tr>
+        <tr><td>OPT_Usuario</td><td>OPT_Usuario</td><td>TenantId + PasswordHash + RefreshToken + 2FA fields</td></tr>
+        <tr><td>OPT_RecetaCristales</td><td>OPT_RecetaCristales</td><td>FK formal a OPT_Atencion + TenantId + auditoría</td></tr>
+        <tr><td>OPT_Sucursal</td><td>OPT_Sucursal</td><td>TenantId + auditoría</td></tr>
+        <tr><td>—</td><td><strong>Tenant (NUEVA)</strong></td><td>Empresas clientes del SaaS (multi-tenancy raíz)</td></tr>
+        <tr><td>—</td><td><strong>OPT_EstadoPago (NUEVA)</strong></td><td>Catálogo: Pendiente / Pagado / Vencido — reemplaza varchar en OPT_Cuota</td></tr>
+        <tr><td>—</td><td><strong>OPT_AuditLog (NUEVA)</strong></td><td>Trazabilidad de cambios críticos (OT, Pagos, Stock)</td></tr>
+        <tr><td>Resto de tablas</td><td>Sin cambio de nombre</td><td>Agregar TenantId + auditoría + FK formales</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">4.3 Estrategia de Migración de Datos</h3>
+    <ol class="nlst">
+      <li>Script de limpieza: normalizar estados varchar, purgar registros sin referencia válida</li>
+      <li>Crear nueva BD <code>OPT_v2</code> con esquema modernizado (EF Core Migrations)</li>
+      <li>Script Python/SSIS de migración con transformación: RUT → PacienteId (int) + RutPaciente (campo único)</li>
+      <li>Período de ejecución paralela: ambas BDs activas durante las pruebas</li>
+      <li>Validación de integridad: conteos, saldos totales, historial de OTs</li>
+      <li>Cutover con ventana de mantenimiento máxima de 2 horas</li>
+    </ol>
+  </div>
+
+  <!-- 5. API REST -->
+  <div class="section" id="s5">
+    <h2 class="sec-title">5. Diseño de la API REST</h2>
+
+    <h3 class="sub-title">5.1 Endpoints por Módulo</h3>
+    <table class="data">
+      <thead><tr><th>Módulo</th><th>Endpoint Base</th><th>Operaciones Principales</th></tr></thead>
+      <tbody>
+        <tr><td>Autenticación</td><td><code>/api/auth</code></td><td>POST login, POST refresh, POST logout, POST change-password</td></tr>
+        <tr><td>Tenants</td><td><code>/api/tenants</code></td><td>CRUD (solo SuperAdmin SaaS)</td></tr>
+        <tr><td>Usuarios</td><td><code>/api/usuarios</code></td><td>CRUD, asignar sucursal, cambiar rol</td></tr>
+        <tr><td>Pacientes</td><td><code>/api/pacientes</code></td><td>CRUD, buscar por RUT, ficha médica completa</td></tr>
+        <tr><td>Clientes Empresa</td><td><code>/api/clientes-empresa</code></td><td>CRUD empresas corporativas</td></tr>
+        <tr><td>Anamnesis</td><td><code>/api/anamnesis</code></td><td>CRUD por paciente, historial</td></tr>
+        <tr><td>Atenciones</td><td><code>/api/atenciones</code></td><td>CRUD, quién atendió, derivación a OT</td></tr>
+        <tr><td>Recetas</td><td><code>/api/recetas</code></td><td>CRUD cristales, historial por paciente</td></tr>
+        <tr><td>Órdenes de Trabajo</td><td><code>/api/ordenes</code></td><td>CRUD, cambio estado, bitácora, imprimir ticket</td></tr>
+        <tr><td>Pagos</td><td><code>/api/pagos</code></td><td>Registrar abono, pago masivo, historial</td></tr>
+        <tr><td>Cuotas</td><td><code>/api/cuotas</code></td><td>CRUD, calcular vencimientos, listar deudores</td></tr>
+        <tr><td>Productos</td><td><code>/api/productos</code></td><td>CRUD, stock por sucursal, regularización</td></tr>
+        <tr><td>Inventario</td><td><code>/api/inventario</code></td><td>Movimientos (ProductoIngresoEgreso), nota de traslado, kardex</td></tr>
+        <tr><td>Sucursales</td><td><code>/api/sucursales</code></td><td>CRUD sucursales por tenant</td></tr>
+        <tr><td>Reportes</td><td><code>/api/reportes</code></td><td>Consolidado anual, tipo pago, inventario, cuotas — exportar Excel/PDF</td></tr>
+        <tr><td>IA</td><td><code>/api/ia</code></td><td>Sugerir receta, alertas stock, resumen OT, chatbot</td></tr>
+        <tr><td>Defontana</td><td><code>/api/defontana</code></td><td>Sync facturas, notas de crédito, estado conexión</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">5.2 Seguridad y Autenticación</h3>
+    <ul class="lst">
+      <li>JWT Bearer Tokens con expiración corta (15 min) + Refresh Tokens (7 días)</li>
+      <li>Roles: <code>SuperAdmin</code>, <code>AdminTenant</code>, <code>Supervisor</code>, <code>Cajero</code>, <code>Vendedor</code>, <code>SoloLectura</code></li>
+      <li>Policies basadas en Claims: por sucursal, por empresa, por módulo</li>
+      <li>Rate Limiting por IP y por tenant (ASP.NET Core Rate Limiting)</li>
+      <li>HTTPS obligatorio, CORS configurado por tenant</li>
+      <li>Contraseñas con BCrypt; datos de recetas cifrados en tránsito y reposo</li>
+      <li>Auditoría de accesos en <code>OPT_AuditLog</code></li>
+    </ul>
+  </div>
+
+  <!-- 6. ANGULAR -->
+  <div class="section" id="s6">
+    <h2 class="sec-title">6. Frontend Angular 19</h2>
+
+    <h3 class="sub-title">6.1 Módulos del Proyecto Angular</h3>
+    <table class="data">
+      <thead><tr><th>Módulo</th><th>Componentes Principales</th><th>Notas</th></tr></thead>
+      <tbody>
+        <tr><td>auth</td><td>LoginComponent, ForgotPasswordComponent, ChangePasswordComponent</td><td>Standalone + guards</td></tr>
+        <tr><td>dashboard</td><td>DashboardComponent, KPIWidgets, ResumenDiario</td><td>Signals para reactividad</td></tr>
+        <tr><td>pacientes</td><td>PacienteListComponent, PacienteFormComponent, FichaMedicaComponent</td><td>Búsqueda RUT en tiempo real</td></tr>
+        <tr><td>atenciones</td><td>AtencionListComponent, AtencionFormComponent</td><td>Vincula anamnesis + receta + OT</td></tr>
+        <tr><td>ordenes</td><td>OTListComponent, OTFormComponent, OTFlujoComponent, TicketComponent</td><td>CRUD completo + impresión</td></tr>
+        <tr><td>pagos</td><td>PagoListComponent, AbonoFormComponent, PagoMasivoComponent</td><td>Integración FormaPago</td></tr>
+        <tr><td>productos</td><td>ProductoListComponent, StockSucursalComponent, KardexComponent</td><td>Alertas stock mínimo</td></tr>
+        <tr><td>reportes</td><td>ReporteConsolidadoComponent, ReporteInventarioComponent</td><td>Exportación Excel/PDF</td></tr>
+        <tr><td>administracion</td><td>UsuarioListComponent, SucursalFormComponent, ClienteEmpresaListComponent</td><td>Solo roles Admin</td></tr>
+        <tr><td>ia-asistente</td><td>ChatbotComponent, SugerenciaRecetaComponent</td><td>Integración con API IA</td></tr>
+        <tr><td>shared</td><td>NavbarComponent, SidebarComponent, TableComponent, ModalComponent</td><td>Reutilizables</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">6.2 Características Técnicas</h3>
+    <ul class="lst">
+      <li>Standalone Components — sin NgModules (Angular 19)</li>
+      <li>Angular Signals para gestión de estado reactivo sin Redux</li>
+      <li>Lazy Loading por módulo funcional (reduce bundle inicial)</li>
+      <li>Interceptors HTTP: auth token, manejo de errores global, loading spinner</li>
+      <li>Guards funcionales para rutas protegidas por rol</li>
+      <li>Tailwind CSS + Angular Material para UI consistente y responsive</li>
+      <li>PWA habilitado: acceso básico offline y notificaciones push</li>
+      <li>Responsive optimizado para tablets (uso en mostrador)</li>
+      <li>Generación de tickets PDF en navegador (jsPDF)</li>
+    </ul>
+  </div>
+
+  <!-- 7. IA -->
+  <div class="section" id="s7">
+    <h2 class="sec-title">7. Integración de Inteligencia Artificial</h2>
+
+    <h3 class="sub-title">7.1 Casos de Uso con IA</h3>
+    <table class="data">
+      <thead><tr><th>Funcionalidad</th><th>Descripción</th><th>Tecnología</th></tr></thead>
+      <tbody>
+        <tr><td>Asistente de Receta</td><td>Sugerir graduación basada en historial óptico del paciente y anamnesis</td><td>Semantic Kernel + Claude</td></tr>
+        <tr><td>Alerta de Stock Inteligente</td><td>Predecir quiebre por sucursal basado en tendencia de ventas de OTs</td><td>Semantic Kernel + ML.NET</td></tr>
+        <tr><td>Resumen de OT</td><td>Generar resumen para el paciente con detalles de su pedido (email automático)</td><td>Claude API</td></tr>
+        <tr><td>Chatbot de Consultas</td><td>Estado de OT, saldo pendiente, citas — en lenguaje natural</td><td>Claude API + RAG</td></tr>
+        <tr><td>Detección de Deudores</td><td>Identificar patrones de morosidad y recomendar acciones de cobranza</td><td>Semantic Kernel + SQL</td></tr>
+        <tr><td>Análisis en Lenguaje Natural</td><td>"¿Cuáles fueron las ventas del mes por sucursal?" → SQL generado automáticamente</td><td>Semantic Kernel + NL2SQL</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">7.2 Arquitectura IA</h3>
+    <ul class="lst">
+      <li>Microsoft Semantic Kernel como orquestador de IA (plugins por dominio)</li>
+      <li>Plugins: <code>PacientePlugin</code>, <code>OTPlugin</code>, <code>InventarioPlugin</code>, <code>ReportePlugin</code></li>
+      <li>Embeddings para búsqueda semántica en historial de recetas ópticas</li>
+      <li>Multi-modelo: Claude Sonnet (razonamiento complejo), Claude Haiku (respuestas rápidas)</li>
+      <li>Rate limiting por tenant para control de costos de API</li>
+      <li>Logs de uso en <code>OPT_AuditLog</code> con tokens consumidos por operación</li>
+    </ul>
+  </div>
+
+  <!-- 8. PLAN DE MIGRACIÓN -->
+  <div class="section" id="s8">
+    <h2 class="sec-title">8. Plan de Migración por Fases</h2>
+
+    <div class="phase">
+      <h4>Fase 1 — Fundamentos (Semanas 1–4)</h4>
+      <table class="data">
+        <thead><tr><th>Tarea</th><th>Responsable</th><th>Entregable</th></tr></thead>
+        <tbody>
+          <tr><td>Crear solución .NET Core 10 con Clean Architecture</td><td>Backend Dev</td><td>Solución base compilando</td></tr>
+          <tr><td>Diseñar y crear nueva BD con EF Core Migrations</td><td>DBA + Dev</td><td>BD OPT_v2 con FK y auditoría</td></tr>
+          <tr><td>Implementar autenticación JWT + roles</td><td>Backend Dev</td><td>Endpoint /api/auth funcional</td></tr>
+          <tr><td>Crear proyecto Angular con estructura base</td><td>Frontend Dev</td><td>Scaffolding Angular 19 + rutas</td></tr>
+          <tr><td>Configurar CI/CD con GitHub Actions</td><td>DevOps</td><td>Pipeline build + test automático</td></tr>
+          <tr><td>Script de migración de datos (lectura y mapeo)</td><td>DBA</td><td>Script validado en BD dev</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="phase">
+      <h4>Fase 2 — Módulos Core (Semanas 5–10)</h4>
+      <table class="data">
+        <thead><tr><th>Tarea</th><th>Responsable</th><th>Entregable</th></tr></thead>
+        <tbody>
+          <tr><td>API + UI: Pacientes, Anamnesis, Atenciones, Recetas</td><td>Full Stack</td><td>Módulo Paciente completo</td></tr>
+          <tr><td>API + UI: Orden de Trabajo completa (flujo + bitácora)</td><td>Full Stack</td><td>CRUD OT con estados</td></tr>
+          <tr><td>API + UI: Pagos, Abonos, Cuotas</td><td>Full Stack</td><td>Módulo cobranza funcional</td></tr>
+          <tr><td>API + UI: Productos, Stock por Sucursal, Regularización</td><td>Full Stack</td><td>Kardex y stock en tiempo real</td></tr>
+          <tr><td>Migración de datos a BD nueva (en paralelo)</td><td>DBA</td><td>Datos migrados y validados</td></tr>
+          <tr><td>Impresión de tickets (PDF en navegador)</td><td>Frontend Dev</td><td>Ticket imprimible desde Angular</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="phase">
+      <h4>Fase 3 — Reportes, Admin e IA (Semanas 11–16)</h4>
+      <table class="data">
+        <thead><tr><th>Tarea</th><th>Responsable</th><th>Entregable</th></tr></thead>
+        <tbody>
+          <tr><td>API + UI: Módulo Reportes (Excel/PDF)</td><td>Full Stack</td><td>Todos los reportes migrados</td></tr>
+          <tr><td>API + UI: Administración (usuarios, sucursales, ClienteEmpresa)</td><td>Full Stack</td><td>Gestión multi-sucursal</td></tr>
+          <tr><td>Integración Defontana refactorizada (servicio independiente)</td><td>Backend Dev</td><td>Sync contable con retry + circuit breaker</td></tr>
+          <tr><td>Implementar módulo IA (Semantic Kernel + Claude)</td><td>IA Dev</td><td>Chatbot + asistente receta</td></tr>
+          <tr><td>Multi-tenancy: onboarding nuevo tenant</td><td>Backend Dev</td><td>Alta de tenant en &lt;5 min</td></tr>
+          <tr><td>Pruebas de carga y penetración</td><td>QA</td><td>Reporte de seguridad y performance</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="phase">
+      <h4>Fase 4 — Go-Live y Estabilización (Semanas 17–24)</h4>
+      <table class="data">
+        <thead><tr><th>Tarea</th><th>Responsable</th><th>Entregable</th></tr></thead>
+        <tbody>
+          <tr><td>UAT con usuarios clave de la óptica</td><td>QA + Negocio</td><td>Casos de prueba aprobados</td></tr>
+          <tr><td>Capacitación a operadores y administradores</td><td>Funcional</td><td>Material de training + videos</td></tr>
+          <tr><td>Cutover: migración final de datos a producción</td><td>DBA + DevOps</td><td>BD producción migrada</td></tr>
+          <tr><td>Despliegue en Azure App Service</td><td>DevOps</td><td>Ambiente producción activo</td></tr>
+          <tr><td>Monitoreo post-go-live (2 semanas)</td><td>DevOps + Dev</td><td>Alertas Serilog / Azure Monitor</td></tr>
+          <tr><td>Documentación técnica final</td><td>Tech Lead</td><td>Wiki actualizada + Swagger publicado</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 9. COMPARATIVA -->
+  <div class="section" id="s9">
+    <h2 class="sec-title">9. Comparativa: Sistema Actual vs. Sistema Nuevo</h2>
+    <table class="data">
+      <thead><tr><th>Aspecto</th><th class="cmp-old">Sistema Actual (Legacy)</th><th class="cmp-new">Sistema Nuevo (SaaS)</th></tr></thead>
+      <tbody>
+        <tr><td>Acceso</td><td>Solo red local / VPN</td><td>Navegador web desde cualquier lugar</td></tr>
+        <tr><td>Multi-empresa</td><td>Sin soporte real</td><td>Multi-tenant nativo con TenantId</td></tr>
+        <tr><td>Autenticación</td><td>Forms Auth + Session</td><td>JWT + Refresh + 2FA</td></tr>
+        <tr><td>API</td><td>No expone API</td><td>REST API completa + Swagger</td></tr>
+        <tr><td>Frontend</td><td>Razor + jQuery (MVC)</td><td>Angular 19 SPA (reactivo)</td></tr>
+        <tr><td>Escalabilidad</td><td>IIS single server</td><td>Contenedores / Azure (auto-scale)</td></tr>
+        <tr><td>Reportes</td><td>RDLC (solo Windows)</td><td>Excel/PDF en cualquier SO</td></tr>
+        <tr><td>Auditoría</td><td>Sin trazabilidad</td><td>Auditoría completa (quién/qué/cuándo)</td></tr>
+        <tr><td>IA</td><td>No disponible</td><td>Asistente recetas, chatbot, alertas stock</td></tr>
+        <tr><td>Integridad BD</td><td>Sin FK, estados varchar</td><td>FK formales, catálogos, Migrations</td></tr>
+        <tr><td>Nombres de tablas</td><td>OPT_Cliente / OPT_Empresa</td><td>OPT_Paciente / OPT_ClienteEmpresa</td></tr>
+        <tr><td>CI/CD</td><td>Despliegue manual</td><td>GitHub Actions automatizado</td></tr>
+        <tr><td>Costo hosting</td><td>Servidor Windows dedicado</td><td>Pay-as-you-go cloud (Azure)</td></tr>
+        <tr><td>Soporte .NET</td><td>Framework 4.8 (sin nuevas features)</td><td>Core 10 LTS (soporte 3+ años)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 10. RIESGOS -->
+  <div class="section" id="s10">
+    <h2 class="sec-title">10. Riesgos y Mitigaciones</h2>
+    <table class="data">
+      <thead><tr><th>Riesgo</th><th>Prob.</th><th>Impacto</th><th>Mitigación</th></tr></thead>
+      <tbody>
+        <tr><td>Pérdida de datos en migración</td><td>Baja</td><td>Crítico</td><td>Backup full + ejecución paralela + rollback plan documentado</td></tr>
+        <tr><td>Resistencia al cambio de usuarios</td><td>Media</td><td>Alto</td><td>Capacitación temprana + período piloto con usuarios clave</td></tr>
+        <tr><td>Migración RUT → PacienteId (int)</td><td>Media</td><td>Alto</td><td>Mantener RutPaciente como campo único; script validado en dev</td></tr>
+        <tr><td>Integración Defontana inestable</td><td>Media</td><td>Medio</td><td>Retry policy + circuit breaker + fallback a log para sync posterior</td></tr>
+        <tr><td>Scope creep en desarrollo</td><td>Alta</td><td>Medio</td><td>Sprints de 2 semanas con backlog priorizado y demo al final de cada fase</td></tr>
+        <tr><td>Costos IA superan presupuesto</td><td>Baja</td><td>Medio</td><td>Rate limiting por tenant + monitoreo de tokens en OPT_AuditLog</td></tr>
+        <tr><td>Rendimiento BD con multi-tenant</td><td>Baja</td><td>Alto</td><td>Índices compuestos por TenantId + Row-Level Security en SQL Server</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 11. ESFUERZO -->
+  <div class="section" id="s11">
+    <h2 class="sec-title">11. Estimación de Esfuerzo</h2>
+    <table class="data">
+      <thead><tr><th>Rol</th><th>Fase 1</th><th>Fase 2</th><th>Fase 3</th><th>Fase 4</th><th>Total (sem.)</th></tr></thead>
+      <tbody>
+        <tr><td>Tech Lead / Arquitecto</td><td>4</td><td>6</td><td>4</td><td>2</td><td><strong>16</strong></td></tr>
+        <tr><td>Backend Developer (.NET)</td><td>4</td><td>6</td><td>6</td><td>3</td><td><strong>19</strong></td></tr>
+        <tr><td>Frontend Developer (Angular)</td><td>3</td><td>6</td><td>6</td><td>3</td><td><strong>18</strong></td></tr>
+        <tr><td>DBA / Data Engineer</td><td>4</td><td>3</td><td>2</td><td>2</td><td><strong>11</strong></td></tr>
+        <tr><td>QA / Tester</td><td>1</td><td>3</td><td>4</td><td>4</td><td><strong>12</strong></td></tr>
+        <tr><td>DevOps / Cloud</td><td>4</td><td>2</td><td>2</td><td>3</td><td><strong>11</strong></td></tr>
+        <tr><td>IA Developer</td><td>0</td><td>0</td><td>6</td><td>1</td><td><strong>7</strong></td></tr>
+        <tr style="font-weight:bold;background:#dde8f5"><td>TOTAL (personas-semana)</td><td>20</td><td>26</td><td>30</td><td>18</td><td>94</td></tr>
+      </tbody>
+    </table>
+    <p class="txt" style="margin-top:12px">Duración total estimada: <strong>24 semanas (6 meses)</strong> con equipo completo. El sistema legado se mantiene operativo durante todo el proceso.</p>
+  </div>
+
+  <!-- 12. PRÓXIMOS PASOS -->
+  <div class="section" id="s12">
+    <h2 class="sec-title">12. Próximos Pasos Recomendados</h2>
+    <ol class="nlst">
+      <li>Revisar y aprobar la presente propuesta con los stakeholders técnicos y de negocio</li>
+      <li>Conformar el equipo de proyecto (Tech Lead, 2 devs, DBA, QA, DevOps)</li>
+      <li>Definir ambiente de desarrollo: repositorio GitHub, Azure DevOps, suscripción Azure</li>
+      <li>Kick-off de Fase 1: crear solución base y establecer estándares de código (.NET + Angular)</li>
+      <li>Primera demo funcional al finalizar Fase 2 (semana 10)</li>
+      <li>Definir plan de capacitación y comunicación a usuarios finales</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    Adrovez &nbsp;·&nbsp; adrovez@gmail.com &nbsp;·&nbsp; Mayo 2026 &nbsp;·&nbsp; Confidencial
+  </div>
+
+</div>
+</body>
+</html>
