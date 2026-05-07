@@ -11,6 +11,9 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Region> Regiones => Set<Region>();
+    public DbSet<Comuna> Comunas => Set<Comuna>();
+    public DbSet<Contacto> Contactos => Set<Contacto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,6 +65,81 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 
             // Filtro global: excluye eliminados lógicamente
             e.HasQueryFilter(u => !u.IsDeleted);
+        });
+
+        // ── Region ─────────────────────────────────────────────────────────
+        modelBuilder.Entity<Region>(e =>
+        {
+            e.ToTable("OPT_Region");
+            e.HasKey(r => r.IdRegion);
+
+            e.Property(r => r.Nombre)
+                .HasColumnName("Region")
+                .HasMaxLength(100)
+                .IsRequired();
+            e.Property(r => r.Codigo).HasMaxLength(10);
+            e.Property(r => r.CreatedBy).HasMaxLength(100);
+            e.Property(r => r.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(r => r.Codigo)
+             .HasFilter("[IsDeleted] = 0")
+             .IsUnique();
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(r => !r.IsDeleted);
+        });
+
+        // ── Comuna ─────────────────────────────────────────────────────────
+        modelBuilder.Entity<Comuna>(e =>
+        {
+            e.ToTable("OPT_Comuna");
+            e.HasKey(c => c.IdComuna);
+
+            e.Property(c => c.Nombre)
+                .HasColumnName("Comuna")
+                .HasMaxLength(100)
+                .IsRequired();
+            e.Property(c => c.Codigo).HasMaxLength(10);
+            e.Property(c => c.CreatedBy).HasMaxLength(100);
+            e.Property(c => c.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(c => c.IdRegion);
+            e.HasIndex(c => c.Codigo)
+             .HasFilter("[IsDeleted] = 0")
+             .IsUnique();
+
+            e.HasOne(c => c.Region)
+             .WithMany(r => r.Comunas)
+             .HasForeignKey(c => c.IdRegion)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(c => !c.IsDeleted);
+        });
+
+        // ── Contacto ───────────────────────────────────────────────────────
+        modelBuilder.Entity<Contacto>(e =>
+        {
+            e.ToTable("OPT_Contacto");
+            e.HasKey(c => c.ContactoId);
+
+            e.Property(c => c.Nombre).HasMaxLength(150).IsRequired();
+            e.Property(c => c.Email).HasMaxLength(150);
+            e.Property(c => c.Telefono).HasMaxLength(50);
+            e.Property(c => c.Cargo).HasMaxLength(100);
+            e.Property(c => c.CreatedBy).HasMaxLength(100);
+            e.Property(c => c.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(c => c.TenantId);
+            e.HasIndex(c => c.ClienteId);
+
+            e.HasOne(c => c.Cliente)
+             .WithMany()
+             .HasForeignKey(c => c.ClienteId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(c => !c.IsDeleted);
         });
     }
 }

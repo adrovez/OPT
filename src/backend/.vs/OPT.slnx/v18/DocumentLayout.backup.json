@@ -3,12 +3,24 @@
   "WorkspaceRootPath": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|solutionrelative:opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|solutionrelative:opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -22,21 +34,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "BcryptPasswordHasher.cs",
-              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
-              "RelativeDocumentMoniker": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
-              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs*",
-              "RelativeToolTip": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs*",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-06T02:11:56.16Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
@@ -51,20 +50,72 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ClienteController.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\ClienteController.cs",
+              "RelativeDocumentMoniker": "OPT.API\\Controllers\\ClienteController.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\ClienteController.cs",
+              "RelativeToolTip": "OPT.API\\Controllers\\ClienteController.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAowGAAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-07T15:23:13.761Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "OPT.API\\appsettings.Development.json",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\appsettings.Development.json",
+              "RelativeToolTip": "OPT.API\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-07T15:00:51.329Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\appsettings.json",
+              "RelativeDocumentMoniker": "OPT.API\\appsettings.json",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\appsettings.json",
+              "RelativeToolTip": "OPT.API\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-07T15:00:43.311Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BcryptPasswordHasher.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "RelativeDocumentMoniker": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "RelativeToolTip": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T02:11:56.16Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
               "Title": "AuthController.cs",
               "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\AuthController.cs",
               "RelativeDocumentMoniker": "OPT.API\\Controllers\\AuthController.cs",
               "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\AuthController.cs",
               "RelativeToolTip": "OPT.API\\Controllers\\AuthController.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAQwBwAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAABsAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-06T02:04:53.77Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Program.cs",
               "RelativeDocumentMoniker": "OPT.API\\Program.cs",
@@ -72,8 +123,7 @@
               "RelativeToolTip": "OPT.API\\Program.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-06T01:21:55.975Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-06T01:21:55.975Z"
             }
           ]
         }

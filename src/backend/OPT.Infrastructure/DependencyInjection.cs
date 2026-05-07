@@ -53,6 +53,9 @@ public static class DependencyInjection
         // ── Repositorios ───────────────────────────────────────────────────
         services.AddScoped<IClienteRepository, ClienteRepository>();
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IRegionRepository, RegionRepository>();
+        services.AddScoped<IComunaRepository, ComunaRepository>();
+        services.AddScoped<IContactoRepository, ContactoRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

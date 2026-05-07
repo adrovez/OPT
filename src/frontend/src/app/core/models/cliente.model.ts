@@ -1,3 +1,10 @@
+export interface Contacto {
+  nombre: string;
+  cargo?: string;
+  email?: string;
+  telefono?: string;
+}
+
 export interface Cliente {
   clienteId: number;
   tenantId: number;
@@ -11,6 +18,7 @@ export interface Cliente {
   fechaNacimiento?: string;
   tipoPrevision?: string;
   giro?: string;
+  contactos?: Contacto[];
 }
 
 export interface CreateClienteDto {
@@ -25,6 +33,7 @@ export interface CreateClienteDto {
   fechaNacimiento?: string;
   tipoPrevision?: string;
   giro?: string;
+  contactos?: Contacto[];
 }
 
 export interface UpdateClienteDto {
@@ -38,6 +47,7 @@ export interface UpdateClienteDto {
   fechaNacimiento?: string;
   tipoPrevision?: string;
   giro?: string;
+  contactos?: Contacto[];
 }
 
 export interface PaginatedResponse<T> {

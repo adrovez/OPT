@@ -4,6 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { Cliente } from '../../../core/models/cliente.model';
 import { ClienteFormComponent } from '../cliente-form/cliente-form.component';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-clientes-list',
@@ -285,14 +286,42 @@ export class ClientesListComponent implements OnInit {
   }
 
   eliminarCliente(cliente: Cliente): void {
-    const confirmed = window.confirm(
-      `¿Está seguro que desea eliminar al cliente "${cliente.nombre}"?\nEsta acción no se puede deshacer.`,
-    );
-    if (!confirmed) return;
+    Swal.fire({
+      icon: 'warning',
+      title: '¿Eliminar cliente?',
+      html: `¿Está seguro que desea eliminar a <strong>${cliente.nombre}</strong>?<br>
+             <span class="text-sm text-gray-500">Esta acción no se puede deshacer.</span>`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: true,
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-    this.clienteService.deleteCliente(cliente.clienteId).subscribe({
-      next: () => this.cargarClientes(),
-      error: () => window.alert('Error al eliminar el cliente. Intente nuevamente.'),
+      this.clienteService.deleteCliente(cliente.clienteId).subscribe({
+        next: () => {
+          this.cargarClientes();
+          Swal.fire({
+            icon: 'success',
+            title: 'Cliente eliminado',
+            text: `"${cliente.nombre}" fue eliminado correctamente.`,
+            confirmButtonColor: '#2563eb',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+          });
+        },
+        error: () =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al eliminar',
+            text: 'No se pudo eliminar el cliente. Intente nuevamente.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Cerrar',
+          }),
+      });
     });
   }
 

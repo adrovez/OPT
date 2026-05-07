@@ -16,7 +16,7 @@ namespace OPT.API.Controllers;
 /// Las excepciones no controladas son capturadas por ExceptionHandlingMiddleware.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Clientes")]
 [Authorize]
 public class ClienteController(IMediator mediator, ICurrentTenantService tenantService) : ControllerBase
 {
