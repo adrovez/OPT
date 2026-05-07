@@ -22,375 +22,603 @@ ELSE
 BEGIN
     SET IDENTITY_INSERT [dbo].[OPT_Comuna] ON;
 
-    -- Se usa JOIN con OPT_Region por Codigo para obtener idRegion real,
-    -- independiente del valor IDENTITY asignado al crear las regiones.
-    INSERT INTO [dbo].[OPT_Comuna]
-        ([idComuna], [idRegion], [Comuna], [CreatedBy])
-    SELECT v.[idComuna], r.[idRegion], v.[Comuna], 'SYSTEM'
-    FROM (VALUES
-        -- ── XV Arica y Parinacota (1-4) ──────────────────────────────────
-        ( 1,  'XV',  'Arica'),
-        ( 2,  'XV',  'Camarones'),
-        ( 3,  'XV',  'Putre'),
-        ( 4,  'XV',  'General Lagos'),
-        -- ── I Tarapacá (5-11) ────────────────────────────────────────────
-        ( 5,  'I',   'Iquique'),
-        ( 6,  'I',   'Alto Hospicio'),
-        ( 7,  'I',   'Pozo Almonte'),
-        ( 8,  'I',   'Camiña'),
-        ( 9,  'I',   'Colchane'),
-        (10,  'I',   'Huara'),
-        (11,  'I',   'Pica'),
-        -- ── II Antofagasta (12-20) ───────────────────────────────────────
-        (12,  'II',  'Antofagasta'),
-        (13,  'II',  'Mejillones'),
-        (14,  'II',  'Sierra Gorda'),
-        (15,  'II',  'Taltal'),
-        (16,  'II',  'Calama'),
-        (17,  'II',  'Ollagüe'),
-        (18,  'II',  'San Pedro de Atacama'),
-        (19,  'II',  'Tocopilla'),
-        (20,  'II',  'María Elena'),
-        -- ── III Atacama (21-29) ──────────────────────────────────────────
-        (21,  'III', 'Copiapó'),
-        (22,  'III', 'Caldera'),
-        (23,  'III', 'Tierra Amarilla'),
-        (24,  'III', 'Chañaral'),
-        (25,  'III', 'Diego de Almagro'),
-        (26,  'III', 'Vallenar'),
-        (27,  'III', 'Alto del Carmen'),
-        (28,  'III', 'Freirina'),
-        (29,  'III', 'Huasco'),
-        -- ── IV Coquimbo (30-44) ──────────────────────────────────────────
-        (30,  'IV',  'La Serena'),
-        (31,  'IV',  'Coquimbo'),
-        (32,  'IV',  'Andacollo'),
-        (33,  'IV',  'La Higuera'),
-        (34,  'IV',  'Paiguano'),
-        (35,  'IV',  'Vicuña'),
-        (36,  'IV',  'Illapel'),
-        (37,  'IV',  'Canela'),
-        (38,  'IV',  'Los Vilos'),
-        (39,  'IV',  'Salamanca'),
-        (40,  'IV',  'Ovalle'),
-        (41,  'IV',  'Combarbalá'),
-        (42,  'IV',  'Monte Patria'),
-        (43,  'IV',  'Punitaqui'),
-        (44,  'IV',  'Río Hurtado'),
-        -- ── V Valparaíso (45-82) ─────────────────────────────────────────
-        (45,  'V',   'Valparaíso'),
-        (46,  'V',   'Casablanca'),
-        (47,  'V',   'Concón'),
-        (48,  'V',   'Juan Fernández'),
-        (49,  'V',   'Puchuncaví'),
-        (50,  'V',   'Quintero'),
-        (51,  'V',   'Viña del Mar'),
-        (52,  'V',   'Isla de Pascua'),
-        (53,  'V',   'Los Andes'),
-        (54,  'V',   'Calle Larga'),
-        (55,  'V',   'Rinconada'),
-        (56,  'V',   'San Esteban'),
-        (57,  'V',   'La Ligua'),
-        (58,  'V',   'Cabildo'),
-        (59,  'V',   'Papudo'),
-        (60,  'V',   'Petorca'),
-        (61,  'V',   'Zapallar'),
-        (62,  'V',   'Quillota'),
-        (63,  'V',   'Calera'),
-        (64,  'V',   'Hijuelas'),
-        (65,  'V',   'La Cruz'),
-        (66,  'V',   'Nogales'),
-        (67,  'V',   'San Antonio'),
-        (68,  'V',   'Algarrobo'),
-        (69,  'V',   'Cartagena'),
-        (70,  'V',   'El Quisco'),
-        (71,  'V',   'El Tabo'),
-        (72,  'V',   'Santo Domingo'),
-        (73,  'V',   'San Felipe'),
-        (74,  'V',   'Catemu'),
-        (75,  'V',   'Llaillay'),
-        (76,  'V',   'Panquehue'),
-        (77,  'V',   'Putaendo'),
-        (78,  'V',   'Santa María'),
-        (79,  'V',   'Quilpué'),
-        (80,  'V',   'Limache'),
-        (81,  'V',   'Olmué'),
-        (82,  'V',   'Villa Alemana'),
-        -- ── RM Metropolitana de Santiago (83-134) ────────────────────────
-        ( 83, 'RM',  'Santiago'),
-        ( 84, 'RM',  'Cerrillos'),
-        ( 85, 'RM',  'Cerro Navia'),
-        ( 86, 'RM',  'Conchalí'),
-        ( 87, 'RM',  'El Bosque'),
-        ( 88, 'RM',  'Estación Central'),
-        ( 89, 'RM',  'Huechuraba'),
-        ( 90, 'RM',  'Independencia'),
-        ( 91, 'RM',  'La Cisterna'),
-        ( 92, 'RM',  'La Florida'),
-        ( 93, 'RM',  'La Granja'),
-        ( 94, 'RM',  'La Pintana'),
-        ( 95, 'RM',  'La Reina'),
-        ( 96, 'RM',  'Las Condes'),
-        ( 97, 'RM',  'Lo Barnechea'),
-        ( 98, 'RM',  'Lo Espejo'),
-        ( 99, 'RM',  'Lo Prado'),
-        (100, 'RM',  'Macul'),
-        (101, 'RM',  'Maipú'),
-        (102, 'RM',  'Ñuñoa'),
-        (103, 'RM',  'Pedro Aguirre Cerda'),
-        (104, 'RM',  'Peñalolén'),
-        (105, 'RM',  'Providencia'),
-        (106, 'RM',  'Pudahuel'),
-        (107, 'RM',  'Quilicura'),
-        (108, 'RM',  'Quinta Normal'),
-        (109, 'RM',  'Recoleta'),
-        (110, 'RM',  'Renca'),
-        (111, 'RM',  'San Joaquín'),
-        (112, 'RM',  'San Miguel'),
-        (113, 'RM',  'San Ramón'),
-        (114, 'RM',  'Vitacura'),
-        (115, 'RM',  'Puente Alto'),
-        (116, 'RM',  'Pirque'),
-        (117, 'RM',  'San José de Maipo'),
-        (118, 'RM',  'Colina'),
-        (119, 'RM',  'Lampa'),
-        (120, 'RM',  'Tiltil'),
-        (121, 'RM',  'San Bernardo'),
-        (122, 'RM',  'Buin'),
-        (123, 'RM',  'Calera de Tango'),
-        (124, 'RM',  'Paine'),
-        (125, 'RM',  'Melipilla'),
-        (126, 'RM',  'Alhué'),
-        (127, 'RM',  'Curacaví'),
-        (128, 'RM',  'María Pinto'),
-        (129, 'RM',  'San Pedro'),
-        (130, 'RM',  'Talagante'),
-        (131, 'RM',  'El Monte'),
-        (132, 'RM',  'Isla de Maipo'),
-        (133, 'RM',  'Padre Hurtado'),
-        (134, 'RM',  'Peñaflor'),
-        -- ── VI O'Higgins (135-167) ───────────────────────────────────────
-        (135, 'VI',  'Rancagua'),
-        (136, 'VI',  'Codegua'),
-        (137, 'VI',  'Coinco'),
-        (138, 'VI',  'Coltauco'),
-        (139, 'VI',  'Doñihue'),
-        (140, 'VI',  'Graneros'),
-        (141, 'VI',  'Las Cabras'),
-        (142, 'VI',  'Machalí'),
-        (143, 'VI',  'Malloa'),
-        (144, 'VI',  'Mostazal'),
-        (145, 'VI',  'Olivar'),
-        (146, 'VI',  'Peumo'),
-        (147, 'VI',  'Pichidegua'),
-        (148, 'VI',  'Quinta de Tilcoco'),
-        (149, 'VI',  'Rengo'),
-        (150, 'VI',  'Requínoa'),
-        (151, 'VI',  'San Vicente'),
-        (152, 'VI',  'Pichilemu'),
-        (153, 'VI',  'La Estrella'),
-        (154, 'VI',  'Litueche'),
-        (155, 'VI',  'Marchihue'),
-        (156, 'VI',  'Navidad'),
-        (157, 'VI',  'Paredones'),
-        (158, 'VI',  'San Fernando'),
-        (159, 'VI',  'Chépica'),
-        (160, 'VI',  'Chimbarongo'),
-        (161, 'VI',  'Lolol'),
-        (162, 'VI',  'Nancagua'),
-        (163, 'VI',  'Palmilla'),
-        (164, 'VI',  'Peralillo'),
-        (165, 'VI',  'Placilla'),
-        (166, 'VI',  'Pumanque'),
-        (167, 'VI',  'Santa Cruz'),
-        -- ── VII Maule (168-197) ──────────────────────────────────────────
-        (168, 'VII', 'Talca'),
-        (169, 'VII', 'Constitución'),
-        (170, 'VII', 'Curepto'),
-        (171, 'VII', 'Empedrado'),
-        (172, 'VII', 'Maule'),
-        (173, 'VII', 'Pelarco'),
-        (174, 'VII', 'Pencahue'),
-        (175, 'VII', 'Río Claro'),
-        (176, 'VII', 'San Clemente'),
-        (177, 'VII', 'San Rafael'),
-        (178, 'VII', 'Cauquenes'),
-        (179, 'VII', 'Chanco'),
-        (180, 'VII', 'Pelluhue'),
-        (181, 'VII', 'Curicó'),
-        (182, 'VII', 'Hualañé'),
-        (183, 'VII', 'Licantén'),
-        (184, 'VII', 'Molina'),
-        (185, 'VII', 'Rauco'),
-        (186, 'VII', 'Romeral'),
-        (187, 'VII', 'Sagrada Familia'),
-        (188, 'VII', 'Teno'),
-        (189, 'VII', 'Vichuquén'),
-        (190, 'VII', 'Linares'),
-        (191, 'VII', 'Colbún'),
-        (192, 'VII', 'Longaví'),
-        (193, 'VII', 'Parral'),
-        (194, 'VII', 'Retiro'),
-        (195, 'VII', 'San Javier'),
-        (196, 'VII', 'Villa Alegre'),
-        (197, 'VII', 'Yerbas Buenas'),
-        -- ── XVI Ñuble (198-218) ──────────────────────────────────────────
-        (198, 'XVI', 'Chillán'),
-        (199, 'XVI', 'Bulnes'),
-        (200, 'XVI', 'Cobquecura'),
-        (201, 'XVI', 'Coelemu'),
-        (202, 'XVI', 'Coihueco'),
-        (203, 'XVI', 'Chillán Viejo'),
-        (204, 'XVI', 'El Carmen'),
-        (205, 'XVI', 'Ninhue'),
-        (206, 'XVI', 'Ñiquén'),
-        (207, 'XVI', 'Pemuco'),
-        (208, 'XVI', 'Pinto'),
-        (209, 'XVI', 'Portezuelo'),
-        (210, 'XVI', 'Quillón'),
-        (211, 'XVI', 'Quirihue'),
-        (212, 'XVI', 'Ránquil'),
-        (213, 'XVI', 'San Carlos'),
-        (214, 'XVI', 'San Fabián'),
-        (215, 'XVI', 'San Ignacio'),
-        (216, 'XVI', 'San Nicolás'),
-        (217, 'XVI', 'Treguaco'),
-        (218, 'XVI', 'Yungay'),
-        -- ── VIII Biobío (219-250) ────────────────────────────────────────
-        (219, 'VIII','Concepción'),
-        (220, 'VIII','Coronel'),
-        (221, 'VIII','Chiguayante'),
-        (222, 'VIII','Florida'),
-        (223, 'VIII','Hualpén'),
-        (224, 'VIII','Hualqui'),
-        (225, 'VIII','Lota'),
-        (226, 'VIII','Penco'),
-        (227, 'VIII','San Pedro de la Paz'),
-        (228, 'VIII','Santa Juana'),
-        (229, 'VIII','Talcahuano'),
-        (230, 'VIII','Tomé'),
-        (231, 'VIII','Cabrero'),
-        (232, 'VIII','Laja'),
-        (233, 'VIII','Los Ángeles'),
-        (234, 'VIII','Mulchén'),
-        (235, 'VIII','Nacimiento'),
-        (236, 'VIII','Negrete'),
-        (237, 'VIII','Quilaco'),
-        (238, 'VIII','Quilleco'),
-        (239, 'VIII','San Rosendo'),
-        (240, 'VIII','Santa Bárbara'),
-        (241, 'VIII','Tucapel'),
-        (242, 'VIII','Yumbel'),
-        (243, 'VIII','Alto Biobío'),
-        (244, 'VIII','Arauco'),
-        (245, 'VIII','Cañete'),
-        (246, 'VIII','Contulmo'),
-        (247, 'VIII','Curanilahue'),
-        (248, 'VIII','Lebu'),
-        (249, 'VIII','Los Álamos'),
-        (250, 'VIII','Tirúa'),
-        -- ── IX La Araucanía (251-282) ────────────────────────────────────
-        (251, 'IX',  'Temuco'),
-        (252, 'IX',  'Carahue'),
-        (253, 'IX',  'Cunco'),
-        (254, 'IX',  'Curarrehue'),
-        (255, 'IX',  'Freire'),
-        (256, 'IX',  'Galvarino'),
-        (257, 'IX',  'Gorbea'),
-        (258, 'IX',  'Lautaro'),
-        (259, 'IX',  'Loncoche'),
-        (260, 'IX',  'Melipeuco'),
-        (261, 'IX',  'Nueva Imperial'),
-        (262, 'IX',  'Padre Las Casas'),
-        (263, 'IX',  'Perquenco'),
-        (264, 'IX',  'Pitrufquén'),
-        (265, 'IX',  'Pucón'),
-        (266, 'IX',  'Saavedra'),
-        (267, 'IX',  'Teodoro Schmidt'),
-        (268, 'IX',  'Toltén'),
-        (269, 'IX',  'Vilcún'),
-        (270, 'IX',  'Villarrica'),
-        (271, 'IX',  'Cholchol'),
-        (272, 'IX',  'Angol'),
-        (273, 'IX',  'Collipulli'),
-        (274, 'IX',  'Curacautín'),
-        (275, 'IX',  'Ercilla'),
-        (276, 'IX',  'Lonquimay'),
-        (277, 'IX',  'Los Sauces'),
-        (278, 'IX',  'Lumaco'),
-        (279, 'IX',  'Purén'),
-        (280, 'IX',  'Renaico'),
-        (281, 'IX',  'Traiguén'),
-        (282, 'IX',  'Victoria'),
-        -- ── XIV Los Ríos (283-294) ───────────────────────────────────────
-        (283, 'XIV', 'Valdivia'),
-        (284, 'XIV', 'Corral'),
-        (285, 'XIV', 'Futrono'),
-        (286, 'XIV', 'La Unión'),
-        (287, 'XIV', 'Lago Ranco'),
-        (288, 'XIV', 'Lanco'),
-        (289, 'XIV', 'Los Lagos'),
-        (290, 'XIV', 'Máfil'),
-        (291, 'XIV', 'Mariquina'),
-        (292, 'XIV', 'Paillaco'),
-        (293, 'XIV', 'Panguipulli'),
-        (294, 'XIV', 'Río Bueno'),
-        -- ── X Los Lagos (295-324) ────────────────────────────────────────
-        (295, 'X',   'Puerto Montt'),
-        (296, 'X',   'Calbuco'),
-        (297, 'X',   'Cochamó'),
-        (298, 'X',   'Fresia'),
-        (299, 'X',   'Frutillar'),
-        (300, 'X',   'Los Muermos'),
-        (301, 'X',   'Llanquihue'),
-        (302, 'X',   'Maullín'),
-        (303, 'X',   'Puerto Varas'),
-        (304, 'X',   'Castro'),
-        (305, 'X',   'Ancud'),
-        (306, 'X',   'Chonchi'),
-        (307, 'X',   'Curaco de Vélez'),
-        (308, 'X',   'Dalcahue'),
-        (309, 'X',   'Puqueldón'),
-        (310, 'X',   'Queilén'),
-        (311, 'X',   'Quellón'),
-        (312, 'X',   'Quemchi'),
-        (313, 'X',   'Quinchao'),
-        (314, 'X',   'Osorno'),
-        (315, 'X',   'Puerto Octay'),
-        (316, 'X',   'Purranque'),
-        (317, 'X',   'Puyehue'),
-        (318, 'X',   'Río Negro'),
-        (319, 'X',   'San Juan de la Costa'),
-        (320, 'X',   'San Pablo'),
-        (321, 'X',   'Chaitén'),
-        (322, 'X',   'Futaleufú'),
-        (323, 'X',   'Hualaihué'),
-        (324, 'X',   'Palena'),
-        -- ── XI Aysén (325-334) ───────────────────────────────────────────
-        (325, 'XI',  'Coyhaique'),
-        (326, 'XI',  'Lago Verde'),
-        (327, 'XI',  'Aysén'),
-        (328, 'XI',  'Cisnes'),
-        (329, 'XI',  'Guaitecas'),
-        (330, 'XI',  'Chile Chico'),
-        (331, 'XI',  'Río Ibáñez'),
-        (332, 'XI',  'Cochrane'),
-        (333, 'XI',  'O''Higgins'),
-        (334, 'XI',  'Tortel'),
-        -- ── XII Magallanes (335-345) ─────────────────────────────────────
-        (335, 'XII', 'Punta Arenas'),
-        (336, 'XII', 'Laguna Blanca'),
-        (337, 'XII', 'Río Verde'),
-        (338, 'XII', 'San Gregorio'),
-        (339, 'XII', 'Cabo de Hornos'),
-        (340, 'XII', 'Antártica'),
-        (341, 'XII', 'Porvenir'),
-        (342, 'XII', 'Primavera'),
-        (343, 'XII', 'Timaukel'),
-        (344, 'XII', 'Natales'),
-        (345, 'XII', 'Torres del Paine')
-    ) AS v ([idComuna], [regionCodigo], [Comuna])
-    JOIN [dbo].[OPT_Region] r ON r.[Codigo] = v.[regionCodigo] AND r.[IsDeleted] = 0;
+   -- =======================================================================
+-- Script para INSERTAR las comunas de Chile en SQL SERVER
+-- Basado en la división político-administrativa oficial (16 regiones, 56 provincias, 346 comunas)
+-- Fuente: SUBDERE / CUT 2018 (actualizado con creación de la Región de Ñuble)
+-- =======================================================================
+
+
+
+-- =======================================================================
+-- 2. Inserción de comunas de Chile
+-- =======================================================================
+-- Se usa SET IDENTITY_INSERT ON solo si deseas insertar valores específicos en idComuna
+-- En este caso, dejamos que SQL Server autoincremente el idComuna.
+
+-- -----------------------------------------------------------------------
+-- REGIÓN I: TARAPACÁ (idRegion = 2 según tu archivo)
+-- -----------------------------------------------------------------------
+-- Provincia de Iquique
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Iquique', '01101', 2, 'SYSTEM'),
+('Alto Hospicio', '01107', 2, 'SYSTEM');
+
+-- Provincia del Tamarugal
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Pozo Almonte', '01401', 2, 'SYSTEM'),
+('Camiña', '01402', 2, 'SYSTEM'),
+('Colchane', '01403', 2, 'SYSTEM'),
+('Huara', '01404', 2, 'SYSTEM'),
+('Pica', '01405', 2, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN II: ANTOFAGASTA (idRegion = 3)
+-- -----------------------------------------------------------------------
+-- Provincia de Antofagasta
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Antofagasta', '02101', 3, 'SYSTEM'),
+('Mejillones', '02102', 3, 'SYSTEM'),
+('Sierra Gorda', '02103', 3, 'SYSTEM'),
+('Taltal', '02104', 3, 'SYSTEM');
+
+-- Provincia de El Loa
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Calama', '02201', 3, 'SYSTEM'),
+('Ollagüe', '02202', 3, 'SYSTEM'),
+('San Pedro de Atacama', '02203', 3, 'SYSTEM');
+
+-- Provincia de Tocopilla
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Tocopilla', '02301', 3, 'SYSTEM'),
+('María Elena', '02302', 3, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN III: ATACAMA (idRegion = 4)
+-- -----------------------------------------------------------------------
+-- Provincia de Chañaral
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Chañaral', '03101', 4, 'SYSTEM'),
+('Diego de Almagro', '03102', 4, 'SYSTEM');
+
+-- Provincia de Copiapó
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Copiapó', '03201', 4, 'SYSTEM'),
+('Caldera', '03202', 4, 'SYSTEM'),
+('Tierra Amarilla', '03203', 4, 'SYSTEM');
+
+-- Provincia de Huasco
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Vallenar', '03301', 4, 'SYSTEM'),
+('Alto del Carmen', '03302', 4, 'SYSTEM'),
+('Freirina', '03303', 4, 'SYSTEM'),
+('Huasco', '03304', 4, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN IV: COQUIMBO (idRegion = 5)
+-- -----------------------------------------------------------------------
+-- Provincia de Elqui
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('La Serena', '04101', 5, 'SYSTEM'),
+('Coquimbo', '04102', 5, 'SYSTEM'),
+('Andacollo', '04103', 5, 'SYSTEM'),
+('La Higuera', '04104', 5, 'SYSTEM'),
+('Paiguano', '04105', 5, 'SYSTEM'),
+('Vicuña', '04106', 5, 'SYSTEM');
+
+-- Provincia de Limarí
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Ovalle', '04201', 5, 'SYSTEM'),
+('Combarbalá', '04202', 5, 'SYSTEM'),
+('Monte Patria', '04203', 5, 'SYSTEM'),
+('Punitaqui', '04204', 5, 'SYSTEM'),
+('Río Hurtado', '04205', 5, 'SYSTEM');
+
+-- Provincia de Choapa
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Illapel', '04301', 5, 'SYSTEM'),
+('Canela', '04302', 5, 'SYSTEM'),
+('Los Vilos', '04303', 5, 'SYSTEM'),
+('Salamanca', '04304', 5, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN V: VALPARAÍSO (idRegion = 6)
+-- -----------------------------------------------------------------------
+-- Provincia de Isla de Pascua
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Isla de Pascua', '05101', 6, 'SYSTEM');
+
+-- Provincia de Los Andes
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Los Andes', '05201', 6, 'SYSTEM'),
+('Calle Larga', '05202', 6, 'SYSTEM'),
+('Rinconada', '05203', 6, 'SYSTEM'),
+('San Esteban', '05204', 6, 'SYSTEM');
+
+-- Provincia de Petorca
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('La Ligua', '05301', 6, 'SYSTEM'),
+('Cabildo', '05302', 6, 'SYSTEM'),
+('Papudo', '05303', 6, 'SYSTEM'),
+('Petorca', '05304', 6, 'SYSTEM'),
+('Zapallar', '05305', 6, 'SYSTEM');
+
+-- Provincia de Quillota
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Quillota', '05401', 6, 'SYSTEM'),
+('La Calera', '05402', 6, 'SYSTEM'),
+('Hijuelas', '05403', 6, 'SYSTEM'),
+('La Cruz', '05404', 6, 'SYSTEM'),
+('Nogales', '05405', 6, 'SYSTEM');
+
+-- Provincia de San Antonio
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('San Antonio', '05501', 6, 'SYSTEM'),
+('Algarrobo', '05502', 6, 'SYSTEM'),
+('Cartagena', '05503', 6, 'SYSTEM'),
+('El Quisco', '05504', 6, 'SYSTEM'),
+('El Tabo', '05505', 6, 'SYSTEM'),
+('Santo Domingo', '05506', 6, 'SYSTEM');
+
+-- Provincia de San Felipe de Aconcagua
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('San Felipe', '05601', 6, 'SYSTEM'),
+('Llaillay', '05602', 6, 'SYSTEM'),
+('Putaendo', '05603', 6, 'SYSTEM'),
+('Santa María', '05604', 6, 'SYSTEM'),
+('Catemu', '05605', 6, 'SYSTEM'),
+('Panquehue', '05606', 6, 'SYSTEM');
+
+-- Provincia de Marga Marga
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Quilpué', '05701', 6, 'SYSTEM'),
+('Limache', '05702', 6, 'SYSTEM'),
+('Olmué', '05703', 6, 'SYSTEM'),
+('Villa Alemana', '05704', 6, 'SYSTEM');
+
+-- Provincia de Valparaíso
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Valparaíso', '05801', 6, 'SYSTEM'),
+('Casablanca', '05802', 6, 'SYSTEM'),
+('Concón', '05803', 6, 'SYSTEM'),
+('Juan Fernández', '05804', 6, 'SYSTEM'),
+('Puchuncaví', '05805', 6, 'SYSTEM'),
+('Quintero', '05806', 6, 'SYSTEM'),
+('Viña del Mar', '05807', 6, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN VI: LIBERTADOR GENERAL BERNARDO O'HIGGINS (idRegion = 8)
+-- -----------------------------------------------------------------------
+-- Provincia de Cachapoal
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Rancagua', '06101', 8, 'SYSTEM'),
+('Codegua', '06102', 8, 'SYSTEM'),
+('Coinco', '06103', 8, 'SYSTEM'),
+('Coltauco', '06104', 8, 'SYSTEM'),
+('Doñihue', '06105', 8, 'SYSTEM'),
+('Graneros', '06106', 8, 'SYSTEM'),
+('Las Cabras', '06107', 8, 'SYSTEM'),
+('Machalí', '06108', 8, 'SYSTEM'),
+('Malloa', '06109', 8, 'SYSTEM'),
+('Mostazal', '06110', 8, 'SYSTEM'),
+('Olivar', '06111', 8, 'SYSTEM'),
+('Peumo', '06112', 8, 'SYSTEM'),
+('Pichidegua', '06113', 8, 'SYSTEM'),
+('Quinta de Tilcoco', '06114', 8, 'SYSTEM'),
+('Rengo', '06115', 8, 'SYSTEM'),
+('Requínoa', '06116', 8, 'SYSTEM'),
+('San Vicente', '06117', 8, 'SYSTEM');
+
+-- Provincia de Cardenal Caro
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Pichilemu', '06201', 8, 'SYSTEM'),
+('La Estrella', '06202', 8, 'SYSTEM'),
+('Litueche', '06203', 8, 'SYSTEM'),
+('Marchihue', '06204', 8, 'SYSTEM'),
+('Navidad', '06205', 8, 'SYSTEM'),
+('Paredones', '06206', 8, 'SYSTEM');
+
+-- Provincia de Colchagua
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('San Fernando', '06301', 8, 'SYSTEM'),
+('Chépica', '06302', 8, 'SYSTEM'),
+('Chimbarongo', '06303', 8, 'SYSTEM'),
+('Lolol', '06304', 8, 'SYSTEM'),
+('Nancagua', '06305', 8, 'SYSTEM'),
+('Palmilla', '06306', 8, 'SYSTEM'),
+('Peralillo', '06307', 8, 'SYSTEM'),
+('Placilla', '06308', 8, 'SYSTEM'),
+('Pumanque', '06309', 8, 'SYSTEM'),
+('Santa Cruz', '06310', 8, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN VII: MAULE (idRegion = 9)
+-- -----------------------------------------------------------------------
+-- Provincia de Curicó
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Curicó', '07101', 9, 'SYSTEM'),
+('Hualañé', '07102', 9, 'SYSTEM'),
+('Licantén', '07103', 9, 'SYSTEM'),
+('Molina', '07104', 9, 'SYSTEM'),
+('Rauco', '07105', 9, 'SYSTEM'),
+('Romeral', '07106', 9, 'SYSTEM'),
+('Sagrada Familia', '07107', 9, 'SYSTEM'),
+('Teno', '07108', 9, 'SYSTEM'),
+('Vichuquén', '07109', 9, 'SYSTEM');
+
+-- Provincia de Talca
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Talca', '07201', 9, 'SYSTEM'),
+('San Clemente', '07202', 9, 'SYSTEM'),
+('Pelarco', '07203', 9, 'SYSTEM'),
+('Pencahue', '07204', 9, 'SYSTEM'),
+('Maule', '07205', 9, 'SYSTEM'),
+('San Rafael', '07206', 9, 'SYSTEM'),
+('Curepto', '07207', 9, 'SYSTEM'),
+('Constitución', '07208', 9, 'SYSTEM'),
+('Empedrado', '07209', 9, 'SYSTEM'),
+('Río Claro', '07210', 9, 'SYSTEM');
+
+-- Provincia de Linares
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Linares', '07301', 9, 'SYSTEM'),
+('San Javier', '07302', 9, 'SYSTEM'),
+('Parral', '07303', 9, 'SYSTEM'),
+('Villa Alegre', '07304', 9, 'SYSTEM'),
+('Longaví', '07305', 9, 'SYSTEM'),
+('Colbún', '07306', 9, 'SYSTEM'),
+('Retiro', '07307', 9, 'SYSTEM'),
+('Yerbas Buenas', '07308', 9, 'SYSTEM');
+
+-- Provincia de Cauquenes
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Cauquenes', '07401', 9, 'SYSTEM'),
+('Chanco', '07402', 9, 'SYSTEM'),
+('Pelluhue', '07403', 9, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN XVI: ÑUBLE (idRegion = 10)
+-- -----------------------------------------------------------------------
+-- Provincia de Diguillín
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Bulnes', '16101', 10, 'SYSTEM'),
+('Chillán', '16102', 10, 'SYSTEM'),
+('Chillán Viejo', '16103', 10, 'SYSTEM'),
+('El Carmen', '16104', 10, 'SYSTEM'),
+('Pemuco', '16105', 10, 'SYSTEM'),
+('Pinto', '16106', 10, 'SYSTEM'),
+('Quillón', '16107', 10, 'SYSTEM'),
+('San Ignacio', '16108', 10, 'SYSTEM'),
+('Yungay', '16109', 10, 'SYSTEM');
+
+-- Provincia de Itata
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Cobquecura', '16201', 10, 'SYSTEM'),
+('Coelemu', '16202', 10, 'SYSTEM'),
+('Ninhue', '16203', 10, 'SYSTEM'),
+('Portezuelo', '16204', 10, 'SYSTEM'),
+('Quirihue', '16205', 10, 'SYSTEM'),
+('Ránquil', '16206', 10, 'SYSTEM'),
+('Treguaco', '16207', 10, 'SYSTEM');
+
+-- Provincia de Punilla
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('San Carlos', '16301', 10, 'SYSTEM'),
+('Coihueco', '16302', 10, 'SYSTEM'),
+('San Nicolás', '16303', 10, 'SYSTEM'),
+('Ñiquén', '16304', 10, 'SYSTEM'),
+('San Fabián', '16305', 10, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN VIII: BIOBÍO (idRegion = 11)
+-- -----------------------------------------------------------------------
+-- Provincia de Concepción
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Concepción', '08101', 11, 'SYSTEM'),
+('Coronel', '08102', 11, 'SYSTEM'),
+('Chiguayante', '08103', 11, 'SYSTEM'),
+('Florida', '08104', 11, 'SYSTEM'),
+('Hualqui', '08105', 11, 'SYSTEM'),
+('Lota', '08106', 11, 'SYSTEM'),
+('Penco', '08107', 11, 'SYSTEM'),
+('San Pedro de la Paz', '08108', 11, 'SYSTEM'),
+('Santa Juana', '08109', 11, 'SYSTEM'),
+('Talcahuano', '08110', 11, 'SYSTEM'),
+('Tomé', '08111', 11, 'SYSTEM'),
+('Hualpén', '08112', 11, 'SYSTEM');
+
+-- Provincia de Biobío
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Los Ángeles', '08201', 11, 'SYSTEM'),
+('Antuco', '08202', 11, 'SYSTEM'),
+('Cabrero', '08203', 11, 'SYSTEM'),
+('Laja', '08204', 11, 'SYSTEM'),
+('Mulchén', '08205', 11, 'SYSTEM'),
+('Nacimiento', '08206', 11, 'SYSTEM'),
+('Negrete', '08207', 11, 'SYSTEM'),
+('Quilaco', '08208', 11, 'SYSTEM'),
+('Quilleco', '08209', 11, 'SYSTEM'),
+('San Rosendo', '08210', 11, 'SYSTEM'),
+('Santa Bárbara', '08211', 11, 'SYSTEM'),
+('Tucapel', '08212', 11, 'SYSTEM'),
+('Alto Biobío', '08213', 11, 'SYSTEM');
+
+-- Provincia de Arauco
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Lebu', '08301', 11, 'SYSTEM'),
+('Arauco', '08302', 11, 'SYSTEM'),
+('Cañete', '08303', 11, 'SYSTEM'),
+('Contulmo', '08304', 11, 'SYSTEM'),
+('Curanilahue', '08305', 11, 'SYSTEM'),
+('Los Álamos', '08306', 11, 'SYSTEM'),
+('Tirúa', '08307', 11, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN IX: LA ARAUCANÍA (idRegion = 12)
+-- -----------------------------------------------------------------------
+-- Provincia de Cautín
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Temuco', '09101', 12, 'SYSTEM'),
+('Carahue', '09102', 12, 'SYSTEM'),
+('Cunco', '09103', 12, 'SYSTEM'),
+('Curarrehue', '09104', 12, 'SYSTEM'),
+('Freire', '09105', 12, 'SYSTEM'),
+('Galvarino', '09106', 12, 'SYSTEM'),
+('Gorbea', '09107', 12, 'SYSTEM'),
+('Lautaro', '09108', 12, 'SYSTEM'),
+('Loncoche', '09109', 12, 'SYSTEM'),
+('Melipeuco', '09110', 12, 'SYSTEM'),
+('Nueva Imperial', '09111', 12, 'SYSTEM'),
+('Padre las Casas', '09112', 12, 'SYSTEM'),
+('Perquenco', '09113', 12, 'SYSTEM'),
+('Pitrufquén', '09114', 12, 'SYSTEM'),
+('Pucón', '09115', 12, 'SYSTEM'),
+('Saavedra', '09116', 12, 'SYSTEM'),
+('Teodoro Schmidt', '09117', 12, 'SYSTEM'),
+('Toltén', '09118', 12, 'SYSTEM'),
+('Vilcún', '09119', 12, 'SYSTEM'),
+('Villarrica', '09120', 12, 'SYSTEM'),
+('Cholchol', '09121', 12, 'SYSTEM');
+
+-- Provincia de Malleco
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Angol', '09201', 12, 'SYSTEM'),
+('Collipulli', '09202', 12, 'SYSTEM'),
+('Curacautín', '09203', 12, 'SYSTEM'),
+('Ercilla', '09204', 12, 'SYSTEM'),
+('Lonquimay', '09205', 12, 'SYSTEM'),
+('Los Sauces', '09206', 12, 'SYSTEM'),
+('Lumaco', '09207', 12, 'SYSTEM'),
+('Purén', '09208', 12, 'SYSTEM'),
+('Renaico', '09209', 12, 'SYSTEM'),
+('Traiguén', '09210', 12, 'SYSTEM'),
+('Victoria', '09211', 12, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN XIV: LOS RÍOS (idRegion = 13)
+-- -----------------------------------------------------------------------
+-- Provincia de Valdivia
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Valdivia', '14101', 13, 'SYSTEM'),
+('Corral', '14102', 13, 'SYSTEM'),
+('Lanco', '14103', 13, 'SYSTEM'),
+('Los Lagos', '14104', 13, 'SYSTEM'),
+('Máfil', '14105', 13, 'SYSTEM'),
+('Mariquina', '14106', 13, 'SYSTEM'),
+('Paillaco', '14107', 13, 'SYSTEM'),
+('Panguipulli', '14108', 13, 'SYSTEM');
+
+-- Provincia del Ranco
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('La Unión', '14201', 13, 'SYSTEM'),
+('Futrono', '14202', 13, 'SYSTEM'),
+('Lago Ranco', '14203', 13, 'SYSTEM'),
+('Río Bueno', '14204', 13, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN X: LOS LAGOS (idRegion = 14)
+-- -----------------------------------------------------------------------
+-- Provincia de Llanquihue
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Puerto Montt', '10101', 14, 'SYSTEM'),
+('Calbuco', '10102', 14, 'SYSTEM'),
+('Cochamó', '10103', 14, 'SYSTEM'),
+('Frutillar', '10104', 14, 'SYSTEM'),
+('Los Muermos', '10105', 14, 'SYSTEM'),
+('Llanquihue', '10106', 14, 'SYSTEM'),
+('Maullín', '10107', 14, 'SYSTEM'),
+('Puerto Varas', '10108', 14, 'SYSTEM');
+
+-- Provincia de Chiloé
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Castro', '10201', 14, 'SYSTEM'),
+('Ancud', '10202', 14, 'SYSTEM'),
+('Chonchi', '10203', 14, 'SYSTEM'),
+('Curaco de Vélez', '10204', 14, 'SYSTEM'),
+('Dalcahue', '10205', 14, 'SYSTEM'),
+('Puqueldón', '10206', 14, 'SYSTEM'),
+('Queilén', '10207', 14, 'SYSTEM'),
+('Quellón', '10208', 14, 'SYSTEM'),
+('Quemchi', '10209', 14, 'SYSTEM'),
+('Quinchao', '10210', 14, 'SYSTEM');
+
+-- Provincia de Osorno
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Osorno', '10301', 14, 'SYSTEM'),
+('Puerto Octay', '10302', 14, 'SYSTEM'),
+('Purranque', '10303', 14, 'SYSTEM'),
+('Puyehue', '10304', 14, 'SYSTEM'),
+('Río Negro', '10305', 14, 'SYSTEM'),
+('San Juan de la Costa', '10306', 14, 'SYSTEM'),
+('San Pablo', '10307', 14, 'SYSTEM');
+
+-- Provincia de Palena
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Chaitén', '10401', 14, 'SYSTEM'),
+('Futaleufú', '10402', 14, 'SYSTEM'),
+('Hualaihué', '10403', 14, 'SYSTEM'),
+('Palena', '10404', 14, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN XI: AYSÉN (idRegion = 15)
+-- -----------------------------------------------------------------------
+-- Provincia de Coyhaique
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Coyhaique', '11101', 15, 'SYSTEM'),
+('Lago Verde', '11102', 15, 'SYSTEM');
+
+-- Provincia de Aysén
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Puerto Aysén', '11201', 15, 'SYSTEM'),
+('Cisnes', '11202', 15, 'SYSTEM'),
+('Guaitecas', '11203', 15, 'SYSTEM');
+
+-- Provincia de Capitán Prat
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Cochrane', '11301', 15, 'SYSTEM'),
+('O''Higgins', '11302', 15, 'SYSTEM'),
+('Tortel', '11303', 15, 'SYSTEM');
+
+-- Provincia de General Carrera
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Chile Chico', '11401', 15, 'SYSTEM'),
+('Río Ibáñez', '11402', 15, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN XII: MAGALLANES (idRegion = 16)
+-- -----------------------------------------------------------------------
+-- Provincia de Magallanes
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Punta Arenas', '12101', 16, 'SYSTEM'),
+('Laguna Blanca', '12102', 16, 'SYSTEM'),
+('Río Verde', '12103', 16, 'SYSTEM'),
+('San Gregorio', '12104', 16, 'SYSTEM');
+
+-- Provincia de la Antártica Chilena
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Cabo de Hornos', '12201', 16, 'SYSTEM'),
+('Antártica', '12202', 16, 'SYSTEM');
+
+-- Provincia de Tierra del Fuego
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Porvenir', '12301', 16, 'SYSTEM'),
+('Primavera', '12302', 16, 'SYSTEM'),
+('Timaukel', '12303', 16, 'SYSTEM');
+
+-- Provincia de Última Esperanza
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Natales', '12401', 16, 'SYSTEM'),
+('Torres del Paine', '12402', 16, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN METROPOLITANA DE SANTIAGO (RM) (idRegion = 7)
+-- -----------------------------------------------------------------------
+-- Provincia de Santiago
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Santiago', '13101', 7, 'SYSTEM'),
+('Cerrillos', '13102', 7, 'SYSTEM'),
+('Cerro Navia', '13103', 7, 'SYSTEM'),
+('Conchalí', '13104', 7, 'SYSTEM'),
+('El Bosque', '13105', 7, 'SYSTEM'),
+('Estación Central', '13106', 7, 'SYSTEM'),
+('Huechuraba', '13107', 7, 'SYSTEM'),
+('Independencia', '13108', 7, 'SYSTEM'),
+('La Cisterna', '13109', 7, 'SYSTEM'),
+('La Florida', '13110', 7, 'SYSTEM'),
+('La Granja', '13111', 7, 'SYSTEM'),
+('La Pintana', '13112', 7, 'SYSTEM'),
+('La Reina', '13113', 7, 'SYSTEM'),
+('Las Condes', '13114', 7, 'SYSTEM'),
+('Lo Barnechea', '13115', 7, 'SYSTEM'),
+('Lo Espejo', '13116', 7, 'SYSTEM'),
+('Lo Prado', '13117', 7, 'SYSTEM'),
+('Macul', '13118', 7, 'SYSTEM'),
+('Maipú', '13119', 7, 'SYSTEM'),
+('Ñuñoa', '13120', 7, 'SYSTEM'),
+('Pedro Aguirre Cerda', '13121', 7, 'SYSTEM'),
+('Peñalolén', '13122', 7, 'SYSTEM'),
+('Providencia', '13123', 7, 'SYSTEM'),
+('Pudahuel', '13124', 7, 'SYSTEM'),
+('Quilicura', '13125', 7, 'SYSTEM'),
+('Quinta Normal', '13126', 7, 'SYSTEM'),
+('Recoleta', '13127', 7, 'SYSTEM'),
+('Renca', '13128', 7, 'SYSTEM'),
+('San Joaquín', '13129', 7, 'SYSTEM'),
+('San Miguel', '13130', 7, 'SYSTEM'),
+('San Ramón', '13131', 7, 'SYSTEM'),
+('Vitacura', '13132', 7, 'SYSTEM');
+
+-- Provincia de Cordillera
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Puente Alto', '13201', 7, 'SYSTEM'),
+('Pirque', '13202', 7, 'SYSTEM'),
+('San José de Maipo', '13203', 7, 'SYSTEM');
+
+-- Provincia de Chacabuco
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Colina', '13301', 7, 'SYSTEM'),
+('Lampa', '13302', 7, 'SYSTEM'),
+('Tiltil', '13303', 7, 'SYSTEM');
+
+-- Provincia de Maipo
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('San Bernardo', '13401', 7, 'SYSTEM'),
+('Buin', '13402', 7, 'SYSTEM'),
+('Calera de Tango', '13403', 7, 'SYSTEM'),
+('Paine', '13404', 7, 'SYSTEM');
+
+-- Provincia de Melipilla
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Melipilla', '13501', 7, 'SYSTEM'),
+('Alhué', '13502', 7, 'SYSTEM'),
+('Curacaví', '13503', 7, 'SYSTEM'),
+('María Pinto', '13504', 7, 'SYSTEM'),
+('San Pedro', '13505', 7, 'SYSTEM');
+
+-- Provincia de Talagante
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Talagante', '13601', 7, 'SYSTEM'),
+('El Monte', '13602', 7, 'SYSTEM'),
+('Isla de Maipo', '13603', 7, 'SYSTEM'),
+('Padre Hurtado', '13604', 7, 'SYSTEM'),
+('Peñaflor', '13605', 7, 'SYSTEM');
+
+-- -----------------------------------------------------------------------
+-- REGIÓN XV: ARICA Y PARINACOTA (idRegion = 1)
+-- -----------------------------------------------------------------------
+-- Provincia de Arica
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Arica', '15101', 1, 'SYSTEM'),
+('Camarones', '15102', 1, 'SYSTEM');
+
+-- Provincia de Parinacota
+INSERT INTO OPT_Comuna (Comuna, Codigo, idRegion, CreatedBy) VALUES
+('Putre', '15201', 1, 'SYSTEM'),
+('General Lagos', '15202', 1, 'SYSTEM');
+
+-- =======================================================================
+-- 4. Verificación de datos insertados
+-- =======================================================================
+
+-- Mostrar total de comunas por región (debe sumar 346)
+SELECT 
+    r.Region,
+    COUNT(c.idComuna) AS TotalComunas
+FROM OPT_Region r
+LEFT JOIN OPT_Comuna c ON r.idRegion = c.idRegion AND c.IsDeleted = 0
+WHERE r.IsDeleted = 0
+GROUP BY r.Region, r.idRegion
+ORDER BY r.idRegion;
+
+-- Mostrar listado completo de comunas (opcional)
+-- SELECT c.idComuna, c.Comuna, c.Codigo, r.Region
+-- FROM OPT_Comuna c
+-- INNER JOIN OPT_Region r ON c.idRegion = r.idRegion AND r.IsDeleted = 0
+-- WHERE c.IsDeleted = 0
+-- ORDER BY r.idRegion, c.Comuna;
+
+PRINT 'Inserción de comunas completada exitosamente.';
+GO
 
     SET IDENTITY_INSERT [dbo].[OPT_Comuna] OFF;
 

@@ -21,4 +21,11 @@ public class RegionRepository(OPTDbContext context) : IRegionRepository
         int idRegion, CancellationToken cancellationToken = default)
         => await context.Regiones
             .FirstOrDefaultAsync(r => r.IdRegion == idRegion, cancellationToken);
+
+    public async Task<IReadOnlyList<Region>> GetAllWithComunasAsync(
+        CancellationToken cancellationToken = default)
+        => await context.Regiones
+            .Include(r => r.Comunas.OrderBy(c => c.Nombre))
+            .OrderBy(r => r.Nombre)
+            .ToListAsync(cancellationToken);
 }

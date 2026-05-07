@@ -1,66 +1,102 @@
-# Technical Manual
+# Manual Técnico — OPT SaaS
 
-Documentation for developers working on OPT.
+> **Última actualización:** 2026-05-07 (Sesión 5)
+> Documentación para desarrolladores que trabajan en el proyecto OPT.
 
-## Manuales Disponibles
+---
 
-### [Manual Tecnico Completo (HTML)](backend-api.html)
-Documento HTML completo con toda la documentacion del backend API, incluyendo:
-- Arquitectura Clean Architecture (4 capas)
-- Stack tecnologico y paquetes NuGet
-- Modelo de dominio y entidades
-- Documentacion completa de todos los endpoints API
-- Patrones de diseno (CQRS, MediatR, Result Pattern)
-- Seguridad multi-tenant
-- Setup y ejecucion
-- Guia de migracion desde legacy
+## Manuales disponibles
 
-## Estructura Esperada
+| Archivo | Contenido |
+|---------|-----------|
+| [backend-arquitectura.html](backend-arquitectura.html) | Arquitectura Clean Architecture (.NET 10), capas, patrones CQRS/MediatR, seguridad multi-tenant, middleware pipeline |
+| [base-datos.html](base-datos.html) | Esquema de base de datos, descripción de tablas, scripts, convenciones de auditoría y soft-delete |
+| [backend-api-reference.html](../api/backend-api-reference.html) *(en docs/api/)* | Referencia de endpoints Auth y Clientes con ejemplos de request/response |
+| [frontend-setup.md](frontend-setup.md) | Configuración del entorno Angular 21, comandos y estructura del proyecto |
+
+> **Nota:** `backend-api.html` es un archivo anterior — usar `backend-arquitectura.html` como fuente de verdad.
+
+---
+
+## Estructura actual de este directorio
 
 ```
 docs/technical-manual/
-├── README.md                 # Este archivo
-├── backend-api.html          # Manual tecnico completo (HTML)
-├── setup.md                  # Development environment setup
-├── coding-standards.md       # Code style and conventions
-├── testing-guide.md          # Testing strategy and patterns
-└── troubleshooting.md        # Common issues and solutions
+├── README.md                   # Este archivo
+├── backend-arquitectura.html   # Manual de arquitectura backend (fuente de verdad)
+├── base-datos.html             # Esquema BD, scripts, convenciones
+└── frontend-setup.md           # Setup del entorno Angular
 ```
 
-## Contenido por Modulo
+---
 
-### Backend (src/backend/)
+## Estado del sistema (Mayo 2026)
+
+### Backend — src/backend/
 - **Framework:** .NET 10
-- **Arquitectura:** Clean Architecture (Domain, Application, Infrastructure, API)
-- **Patron:** CQRS con MediatR, Vertical Slices
-- **Auth:** JWT + BCrypt
-- **Base de datos:** SQL Server 2022 via EF Core 9.0
-- **Validacion:** FluentValidation
+- **Arquitectura:** Clean Architecture (Domain → Application → Infrastructure → API)
+- **Patrón:** CQRS con MediatR 12.4.1, Vertical Slices
+- **Auth:** JWT Bearer + BCrypt (BCrypt.Net-Next 4.0.3)
+- **ORM:** EF Core 9.0 con SQL Server
+- **Validación:** FluentValidation 11.10.0
+- **Errores:** RFC 7807 ProblemDetails via ExceptionHandlingMiddleware
 
-### Modulos Implementados
-| Modulo | Estado | Endpoints |
-|--------|--------|-----------|
-| Tenant | Completo | CRUD (GET, POST, PUT, DELETE) |
-| Auth | Completo | Login, Register |
-| Clientes | Completo | CRUD + paginado + busqueda |
-| Contactos | Completo | CRUD por cliente |
+### Frontend — src/frontend/
+- **Framework:** Angular 21.0.5 (standalone components)
+- **Estilos:** Tailwind CSS 4.2.4
+- **Formularios:** Signal Forms
+- **HTTP:** HttpClient + auth.interceptor.ts (JWT automático)
+- **Routing:** Lazy loading por feature + auth.guard.ts
+- **Testing:** Vitest
 
-### Base de Datos
-- Scripts en `src/basedatos/` (000 a 008)
-- 8 tablas: Tenant, Region, Comuna, Sucursal, Cliente, Contacto, Usuario
-- Multi-tenant: TenantId en todas las tablas de negocio
-- Soft-delete: IsDeleted en todas las tablas
+### Base de Datos — src/basedatos/
+- Scripts `000_` a `008_` — 8 tablas: Tenant, Region, Comuna, Sucursal, Cliente, Contacto, Usuario
+- Multi-tenant: `TenantId` en todas las tablas de negocio
+- Soft-delete: `IsDeleted` en todas las tablas
+- Auditoría: `CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`
 
-## Comandos de Desarrollo
+### Módulos implementados
+| Módulo | Backend | Frontend |
+|--------|---------|---------|
+| Auth (Login/Register) | ✅ | ✅ |
+| Tenant | ✅ | — |
+| Clientes | ✅ | ✅ |
+| Contactos | ✅ | ⏳ pendiente |
+| Sucursales | ⏳ | ⏳ |
+| Usuarios (gestión) | ⏳ | ⏳ |
 
+---
+
+## Comandos de desarrollo
+
+### Backend
 ```bash
 cd src/backend
-dotnet restore          # Restaurar paquetes
-dotnet build            # Compilar
-dotnet run --project OPT.API  # Ejecutar API
+dotnet restore
+dotnet build
+dotnet run --project OPT.API   # API: http://localhost:5005 | Swagger: /swagger
+dotnet test
 ```
 
-## Links Relacionados
-- [API Documentation](../api/README.md) - Referencia de endpoints
-- [Backend AGENTS.md](../../src/backend/AGENTS.md) - Instrucciones para agentes
-- [Progress Log](../../.agents/progress.md) - Historial de sesiones
+### Frontend
+```bash
+cd src/frontend
+ng serve                        # http://localhost:4200
+npm run build
+npm run lint
+npm run test
+```
+
+---
+
+## Referencias cruzadas
+
+| Recurso | Ruta |
+|---------|------|
+| API Documentation completa | [docs/api/README.md](../api/README.md) |
+| Contratos frontend ↔ API | [docs/api/frontend-api-contracts.md](../api/frontend-api-contracts.md) |
+| Instrucciones para agentes (backend) | [src/backend/AGENTS.md](../../src/backend/AGENTS.md) |
+| Instrucciones para agentes (frontend) | [src/frontend/AGENTS.md](../../src/frontend/AGENTS.md) |
+| ADR Middleware | [.agents/decisions/2026-05-05-backend-middleware.md](../../.agents/decisions/2026-05-05-backend-middleware.md) |
+| ADR Base de datos | [.agents/decisions/2026-05-05-diseno-base-datos-inicial.md](../../.agents/decisions/2026-05-05-diseno-base-datos-inicial.md) |
+| Historial de sesiones | [.agents/progress.md](../../.agents/progress.md) |

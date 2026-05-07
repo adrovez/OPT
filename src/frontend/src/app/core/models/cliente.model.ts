@@ -19,6 +19,12 @@ export interface Cliente {
   tipoPrevision?: string;
   giro?: string;
   contactos?: Contacto[];
+  // Auditoría
+  fechaIngreso?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateClienteDto {

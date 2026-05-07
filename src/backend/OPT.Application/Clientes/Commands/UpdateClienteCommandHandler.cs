@@ -1,9 +1,12 @@
 using MediatR;
 using OPT.Application.Interfaces;
+using OPT.Domain.Entities;
 
 namespace OPT.Application.Clientes.Commands;
 
-public class UpdateClienteCommandHandler(IClienteRepository clienteRepository)
+public class UpdateClienteCommandHandler(
+    IClienteRepository clienteRepository,
+    IContactoRepository contactoRepository)
     : IRequestHandler<UpdateClienteCommand>
 {
     public async Task Handle(UpdateClienteCommand request, CancellationToken cancellationToken)
@@ -26,5 +29,27 @@ public class UpdateClienteCommandHandler(IClienteRepository clienteRepository)
         cliente.UpdatedAt = DateTime.UtcNow;
 
         await clienteRepository.UpdateAsync(cliente, cancellationToken);
+
+        // Sincronizar contactos: reemplazar lista completa (soft-delete + re-crear)
+        await contactoRepository.SoftDeleteByClienteAsync(
+            request.ClienteId, request.TenantId, request.UpdatedBy, cancellationToken);
+
+        if (request.Contactos is { Count: > 0 })
+        {
+            var nuevosContactos = request.Contactos.Select(c => new Contacto
+            {
+                TenantId = request.TenantId,
+                ClienteId = request.ClienteId,
+                Nombre = c.Nombre,
+                Cargo = c.Cargo,
+                Email = c.Email,
+                Telefono = c.Telefono,
+                Activo = true,
+                CreatedBy = request.UpdatedBy,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await contactoRepository.AddRangeAsync(nuevosContactos, cancellationToken);
+        }
     }
 }

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { Cliente } from '../../../core/models/cliente.model';
 import { ClienteFormComponent } from '../cliente-form/cliente-form.component';
@@ -142,6 +143,22 @@ import Swal from 'sweetalert2';
                     </td>
                     <td class="px-5 py-3.5 text-right">
                       <div class="flex items-center justify-end gap-1">
+                        <!-- Ver -->
+                        <button
+                          (click)="ver(c)"
+                          class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          [attr.aria-label]="'Ver detalle de ' + c.nombre"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7
+                                 -1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                          </svg>
+                        </button>
+                        <!-- Editar -->
                         <button
                           (click)="abrirFormulario(c)"
                           class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors
@@ -154,6 +171,7 @@ import Swal from 'sweetalert2';
                                  m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                           </svg>
                         </button>
+                        <!-- Eliminar -->
                         <button
                           (click)="eliminarCliente(c)"
                           class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors
@@ -219,6 +237,7 @@ import Swal from 'sweetalert2';
 })
 export class ClientesListComponent implements OnInit {
   private readonly clienteService = inject(ClienteService);
+  private readonly router = inject(Router);
 
   readonly clientes = signal<Cliente[]>([]);
   readonly loading = signal(false);
@@ -235,6 +254,12 @@ export class ClientesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarClientes();
+
+    // Si venimos del detalle con "Editar", abrir el formulario directamente
+    const state = window.history.state as { editarClienteId?: number };
+    if (state?.editarClienteId) {
+      this.abrirFormulario({ clienteId: state.editarClienteId } as Cliente);
+    }
   }
 
   cargarClientes(): void {
@@ -270,9 +295,33 @@ export class ClientesListComponent implements OnInit {
     this.cargarClientes();
   }
 
+  ver(cliente: Cliente): void {
+    this.router.navigate(['/clientes', cliente.clienteId]);
+  }
+
   abrirFormulario(cliente: Cliente | null): void {
-    this.clienteSeleccionado.set(cliente);
-    this.showForm.set(true);
+    if (!cliente) {
+      // Nuevo cliente: abrir directamente
+      this.clienteSeleccionado.set(null);
+      this.showForm.set(true);
+      return;
+    }
+
+    // Editar: cargar el detalle completo desde la API (incluye contactos)
+    this.clienteService.getCliente(cliente.clienteId).subscribe({
+      next: (detalle) => {
+        this.clienteSeleccionado.set(detalle);
+        this.showForm.set(true);
+      },
+      error: () =>
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo cargar el detalle del cliente.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'Cerrar',
+        }),
+    });
   }
 
   cerrarFormulario(): void {

@@ -134,7 +134,7 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.HasIndex(c => c.ClienteId);
 
             e.HasOne(c => c.Cliente)
-             .WithMany()
+             .WithMany(cl => cl.Contactos)
              .HasForeignKey(c => c.ClienteId)
              .OnDelete(DeleteBehavior.Cascade);
 

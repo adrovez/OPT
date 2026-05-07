@@ -1,3 +1,4 @@
+using OPT.Application.Contactos.DTOs;
 using OPT.Domain.Entities;
 
 namespace OPT.Application.Clientes.DTOs;
@@ -19,6 +20,7 @@ public static class ClienteMappingExtensions
         FechaNacimiento: c.FechaNacimiento,
         TipoPrevision: c.TipoPrevision,
         Giro: c.Giro,
+        Contactos: c.Contactos.Select(ct => ct.ToDto()).ToList(),
         CreatedAt: c.CreatedAt,
         UpdatedAt: c.UpdatedAt,
         CreatedBy: c.CreatedBy,

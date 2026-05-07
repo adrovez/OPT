@@ -1,3 +1,5 @@
+using OPT.Application.Contactos.DTOs;
+
 namespace OPT.Application.Clientes.DTOs;
 
 /// <summary>DTO de respuesta para listado y detalle de clientes.</summary>
@@ -17,6 +19,7 @@ public record ClienteDto(
     string? TipoPrevision,
     // Empresa
     string? Giro,
+    IReadOnlyList<ContactoDto> Contactos,
     // Auditoría
     DateTime CreatedAt,
     DateTime? UpdatedAt,

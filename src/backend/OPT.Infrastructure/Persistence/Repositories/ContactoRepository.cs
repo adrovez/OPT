@@ -33,6 +33,13 @@ public class ContactoRepository(OPTDbContext context) : IContactoRepository
         return contacto;
     }
 
+    public async Task AddRangeAsync(
+        IEnumerable<Contacto> contactos, CancellationToken cancellationToken = default)
+    {
+        context.Contactos.AddRange(contactos);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task UpdateAsync(
         Contacto contacto, CancellationToken cancellationToken = default)
     {
@@ -54,6 +61,29 @@ public class ContactoRepository(OPTDbContext context) : IContactoRepository
         contacto.IsDeleted = true;
         contacto.UpdatedAt = DateTime.UtcNow;
         contacto.UpdatedBy = deletedBy;
+
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task SoftDeleteByClienteAsync(
+        int clienteId, int tenantId, string deletedBy,
+        CancellationToken cancellationToken = default)
+    {
+        // IgnoreQueryFilters para acceder también a los ya soft-deleted (idempotente)
+        var contactos = await context.Contactos
+            .IgnoreQueryFilters()
+            .Where(c => c.ClienteId == clienteId && c.TenantId == tenantId && !c.IsDeleted)
+            .ToListAsync(cancellationToken);
+
+        if (contactos.Count == 0) return;
+
+        var now = DateTime.UtcNow;
+        foreach (var c in contactos)
+        {
+            c.IsDeleted = true;
+            c.UpdatedAt = now;
+            c.UpdatedBy = deletedBy;
+        }
 
         await context.SaveChangesAsync(cancellationToken);
     }

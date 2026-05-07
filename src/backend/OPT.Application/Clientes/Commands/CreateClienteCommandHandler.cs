@@ -4,7 +4,9 @@ using OPT.Domain.Entities;
 
 namespace OPT.Application.Clientes.Commands;
 
-public class CreateClienteCommandHandler(IClienteRepository clienteRepository)
+public class CreateClienteCommandHandler(
+    IClienteRepository clienteRepository,
+    IContactoRepository contactoRepository)
     : IRequestHandler<CreateClienteCommand, int>
 {
     public async Task<int> Handle(
@@ -36,6 +38,26 @@ public class CreateClienteCommandHandler(IClienteRepository clienteRepository)
         };
 
         var created = await clienteRepository.AddAsync(cliente, cancellationToken);
+
+        // Crear contactos si se proporcionaron (solo aplica para Empresa)
+        if (request.Contactos is { Count: > 0 })
+        {
+            var contactos = request.Contactos.Select(c => new Contacto
+            {
+                TenantId = request.TenantId,
+                ClienteId = created.ClienteId,
+                Nombre = c.Nombre,
+                Cargo = c.Cargo,
+                Email = c.Email,
+                Telefono = c.Telefono,
+                Activo = true,
+                CreatedBy = request.CreatedBy,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await contactoRepository.AddRangeAsync(contactos, cancellationToken);
+        }
+
         return created.ClienteId;
     }
 }

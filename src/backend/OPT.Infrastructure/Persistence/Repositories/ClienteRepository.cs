@@ -50,6 +50,7 @@ public class ClienteRepository(OPTDbContext context) : IClienteRepository
     public async Task<Cliente?> GetByIdAsync(
         int clienteId, int tenantId, CancellationToken cancellationToken = default)
         => await context.Clientes
+            .Include(c => c.Contactos.OrderBy(ct => ct.Nombre))
             .FirstOrDefaultAsync(c => c.ClienteId == clienteId && c.TenantId == tenantId,
                 cancellationToken);
 

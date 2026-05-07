@@ -25,6 +25,13 @@ export const routes: Routes = [
             (m) => m.ClientesListComponent,
           ),
       },
+      {
+        path: 'clientes/:id',
+        loadComponent: () =>
+          import('./features/clientes/cliente-detail/cliente-detail.component').then(
+            (m) => m.ClienteDetailComponent,
+          ),
+      },
     ],
   },
   {

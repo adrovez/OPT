@@ -1,20 +1,24 @@
-# OPT SaaS - API Documentation
+# OPT SaaS — API Documentation
+
+> **Última actualización:** 2026-05-07 (Sesión 5)
 
 ## Overview
 
-**Base URL:** `https://localhost:5001`
-**Version:** v1
-**Authentication:** JWT Bearer (except endpoints marcados como Publico)
+**Base URL (desarrollo):** `http://localhost:5005/api`
+**Swagger UI:** `http://localhost:5005/swagger`
+**Versión:** v1
+**Autenticación:** JWT Bearer — header `Authorization: Bearer <token>`
 **Content-Type:** `application/json`
+**Formato de errores:** RFC 7807 ProblemDetails (`status`, `title`, `detail`, `instance`)
 
-## Modulos Disponibles
+## Módulos Disponibles
 
-| Modulo | Base Path | Auth | Estado |
-|--------|-----------|------|--------|
-| Tenant | `/api/tenants` | No | Completo |
-| Auth | `/api/auth` | Parcial | Completo |
-| Clientes | `/api/clientes` | Si (JWT) | Completo |
-| Contactos | `/api/contactos` | Si (JWT) | Completo |
+| Módulo | Base Path | Auth requerida | Estado |
+|--------|-----------|---------------|--------|
+| Tenant | `/api/tenants` | No | ✅ Completo — CRUD |
+| Auth | `/api/auth` | No (login/register) | ✅ Completo |
+| Clientes | `/api/clientes` | JWT | ✅ Completo — CRUD + paginado + búsqueda |
+| Contactos | `/api/contactos` | JWT | ✅ Completo — CRUD por cliente |
 
 ---
 

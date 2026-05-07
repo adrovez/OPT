@@ -1,10 +1,12 @@
-import { Component, inject, input, output, OnInit, signal } from '@angular/core';
+import { Component, inject, input, output, OnInit, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Cliente, Contacto, CreateClienteDto, UpdateClienteDto } from '../../../core/models/cliente.model';
+import { RegionWithComunas } from '../../../core/models/region.model';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { RegionService } from '../../../core/services/region.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { rutValidator, formatRut } from '../../../core/validators/rut.validator';
-import { REGIONES_COMUNAS } from '../../../core/data/regiones-comunas.data';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -146,8 +148,8 @@ import Swal from 'sweetalert2';
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option [ngValue]="null">Seleccionar comuna</option>
-                @for (region of regionesConComunas; track region.idRegion) {
-                  <optgroup [label]="region.codigo + ' – ' + region.nombre">
+                @for (region of regionesConComunas(); track region.idRegion) {
+                  <optgroup [label]="(region.codigo ? region.codigo + ' – ' : '') + region.nombre">
                     @for (comuna of region.comunas; track comuna.idComuna) {
                       <option [ngValue]="comuna.idComuna">{{ comuna.nombre }}</option>
                     }
@@ -433,7 +435,9 @@ import Swal from 'sweetalert2';
 export class ClienteFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly clienteService = inject(ClienteService);
+  private readonly regionService = inject(RegionService);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // ── Inputs / Outputs ──────────────────────────────────────────────────────
   readonly cliente = input<Cliente | null>(null);
@@ -442,8 +446,8 @@ export class ClienteFormComponent implements OnInit {
 
   readonly loading = signal(false);
 
-  // ── Datos estáticos ───────────────────────────────────────────────────────
-  readonly regionesConComunas = REGIONES_COMUNAS;
+  // ── Catálogo de Regiones/Comunas (cargado desde la API) ───────────────────
+  readonly regionesConComunas = signal<RegionWithComunas[]>([]);
 
   readonly tiposCliente = [
     { value: 'Persona', label: 'Persona natural' },
@@ -473,6 +477,11 @@ export class ClienteFormComponent implements OnInit {
 
   // ── Ciclo de vida ─────────────────────────────────────────────────────────
   ngOnInit(): void {
+    // Cargar catálogo de regiones/comunas desde la API
+    this.regionService.getRegionesWithComunas()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(regiones => this.regionesConComunas.set(regiones));
+
     const c = this.cliente();
     if (!c) return;
 

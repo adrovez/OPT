@@ -13,4 +13,7 @@ public interface IRegionRepository
 
     /// <summary>Obtiene una región por su ID.</summary>
     Task<Region?> GetByIdAsync(int idRegion, CancellationToken cancellationToken = default);
+
+    /// <summary>Devuelve todas las regiones activas con sus comunas anidadas, ordenadas por nombre.</summary>
+    Task<IReadOnlyList<Region>> GetAllWithComunasAsync(CancellationToken cancellationToken = default);
 }

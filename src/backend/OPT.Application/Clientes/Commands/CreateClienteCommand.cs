@@ -1,4 +1,5 @@
 using MediatR;
+using OPT.Application.Clientes.DTOs;
 
 namespace OPT.Application.Clientes.Commands;
 
@@ -17,4 +18,5 @@ public record CreateClienteCommand(
     string? TipoPrevision,
     // Empresa
     string? Giro,
+    IReadOnlyList<ContactoInputDto>? Contactos,
     string CreatedBy) : IRequest<int>;

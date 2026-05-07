@@ -1,44 +1,63 @@
-# Source Code - Agent Instructions
+# Source Code — Agent Instructions
 
-This directory contains all **new development**. Legacy code lives in `old/` (root level) and must NOT be modified.
+> **Última actualización:** 2026-05-07 (Sesión 5)
 
-## Structure
+Este directorio contiene **todo el código nuevo**. El código legacy vive en `old/` (raíz del proyecto) y NO debe ser modificado.
+
+## Estructura
 
 ```
 src/
-├── frontend/    # Client-side application
-├── backend/     # Server-side API and services
-└── basedatos/   # Database scripts (SQL Server)
+├── frontend/      # Angular 21 standalone — ver frontend/AGENTS.md
+├── backend/       # .NET 10 Clean Architecture — ver backend/AGENTS.md
+└── basedatos/     # Scripts SQL Server (numerados secuencialmente)
     ├── 000_creacion_base_datos.sql
     ├── 001_OPT_Tenant.sql
     ├── 002_OPT_Region.sql
     ├── 003_OPT_Comuna.sql
     ├── 004_OPT_Sucursal.sql
     ├── 005_OPT_Cliente.sql
-    ├── 006_OPT_Contacto.sql
-    └── 007_datos_iniciales.sql
+    ├── 006_OPT_Contacto.sql   ← FKs corregidas (ON DELETE NO ACTION desde Tenant)
+    ├── 007_datos_iniciales.sql ← Idempotente: usa IF NOT EXISTS
+    └── 008_OPT_Usuario.sql    ← Rol NOT NULL DEFAULT 'Operador', índices TenantId+Email
 ```
 
-## Rules
+> El próximo script incremental debe ser `009_...`
 
-- All new code goes here, never in `old/`
-- Frontend and backend have their own `AGENTS.md` with specific conventions
-- When migrating from legacy, read `old/Fuente/` for reference, implement here
-- Coordinate frontend/backend contracts via `docs/api/`
+## Reglas
 
-## Database Context
+- Todo código nuevo va aquí, nunca en `old/`
+- Cada subcapa tiene su propio `AGENTS.md` con convenciones específicas
+- Al migrar lógica legacy, leer `old/Fuente/` para entender el comportamiento existente
+- Los contratos frontend ↔ backend se coordinan en `docs/api/`
 
-- **Database name**: `dbOPT`
-- **Base de datos creada**: Script `000_creacion_base_datos.sql`
-- **Tablas creadas** (Mayo 2026):
-  - `OPT_Tenant` — Multi-tenant raíz del SaaS
-  - `OPT_Region` — Catálogo de regiones de Chile (16 regiones)
-  - `OPT_Comuna` — Catálogo de comunas (FK a Region)
-  - `OPT_Sucursal` — Sucursales de la óptica (con TenantId, Matriz flag)
-  - `OPT_Cliente` — Unificada: Persona y Empresa (campo `TipoCliente`, PK `ClienteId`, `NumeroDocumento` único por Tenant)
-  - `OPT_Contacto` — Contactos de clientes tipo Empresa (Nombre, Email, Telefono, Cargo)
-- **No se considera**: `OPT_Empresa` (eliminada según propuesta de migración)
-- **Convención**: Cada tabla tiene su script individual numerado secuencialmente
-- **Nota**: El script `006_OPT_Contacto.sql` fue modificado manualmente después de su creación automática (se eliminó `ON DELETE CASCADE` / `ON UPDATE CASCADE` de las FKs)
-- **Patrones de auditoría**: Todas las tablas incluyen `CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`, `IsDeleted`
-- **Multi-tenant**: Columna `TenantId` en todas las tablas de negocio
+## Base de Datos — Contexto
+
+- **Nombre BD:** `dbOPT`
+- **Motor:** SQL Server 2022 (compatible con Azure SQL)
+- **Tablas implementadas (Mayo 2026):**
+
+| Tabla | Script | Notas clave |
+|-------|--------|-------------|
+| `OPT_Tenant` | `001_` | Raíz multi-tenant del SaaS |
+| `OPT_Region` | `002_` | Catálogo 16 regiones de Chile |
+| `OPT_Comuna` | `003_` | FK a OPT_Region |
+| `OPT_Sucursal` | `004_` | TenantId, flag Matriz |
+| `OPT_Cliente` | `005_` | Persona + Empresa unificados; `TipoCliente` ('Persona'\|'Empresa'); `NumeroDocumento` UNIQUE por Tenant |
+| `OPT_Contacto` | `006_` | Contactos de clientes Empresa; FK a Tenant con NO ACTION, FK a Cliente con CASCADE |
+| `OPT_Usuario` | `008_` | `Rol` NOT NULL DEFAULT 'Operador'; roles válidos: Admin, Operador, Lectura |
+
+- **No existe** tabla `OPT_Empresa` — eliminada en propuesta de migración (lógica absorbida por `OPT_Cliente`)
+- **Patrón de auditoría** en todas las tablas: `CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`, `IsDeleted`
+- **Multi-tenant:** columna `TenantId` en todas las tablas de negocio
+- **Soft-delete:** `IsDeleted = 1`, nunca DELETE físico
+- **Idempotencia:** scripts usan `IF NOT EXISTS` / `IF OBJECT_ID IS NULL` para ser re-ejecutables
+
+## Decisión de diseño importante — FKs en OPT_Contacto
+
+La FK desde `OPT_Contacto` hacia `OPT_Tenant` es `ON DELETE NO ACTION` (no CASCADE), porque `OPT_Cliente` ya tiene CASCADE desde Tenant. SQL Server prohíbe múltiples rutas de cascada hacia la misma tabla. La cadena correcta es:
+
+```
+OPT_Tenant → (CASCADE) → OPT_Cliente → (CASCADE) → OPT_Contacto
+OPT_Tenant → (NO ACTION) → OPT_Contacto
+```

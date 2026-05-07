@@ -31,6 +31,9 @@ public class Cliente
     // Campos específicos Empresa
     public string? Giro { get; set; }
 
+    // Navegación
+    public ICollection<Contacto> Contactos { get; set; } = [];
+
     // Auditoría
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

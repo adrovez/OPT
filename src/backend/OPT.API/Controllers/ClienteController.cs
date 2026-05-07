@@ -92,6 +92,7 @@ public class ClienteController(IMediator mediator, ICurrentTenantService tenantS
             FechaNacimiento: request.FechaNacimiento,
             TipoPrevision: request.TipoPrevision,
             Giro: request.Giro,
+            Contactos: request.Contactos,
             CreatedBy: tenantService.RutUsuario);
 
         var clienteId = await mediator.Send(command, cancellationToken);
@@ -121,6 +122,7 @@ public class ClienteController(IMediator mediator, ICurrentTenantService tenantS
             FechaNacimiento: request.FechaNacimiento,
             TipoPrevision: request.TipoPrevision,
             Giro: request.Giro,
+            Contactos: request.Contactos,
             UpdatedBy: tenantService.RutUsuario);
 
         await mediator.Send(command, cancellationToken);
@@ -156,7 +158,8 @@ public record CreateClienteRequest(
     string? Mail,
     DateOnly? FechaNacimiento,
     string? TipoPrevision,
-    string? Giro);
+    string? Giro,
+    IReadOnlyList<ContactoInputDto>? Contactos);
 
 /// <summary>Datos actualizables de un cliente (TipoCliente y NumeroDocumento son inmutables).</summary>
 public record UpdateClienteRequest(
@@ -167,4 +170,5 @@ public record UpdateClienteRequest(
     string? Mail,
     DateOnly? FechaNacimiento,
     string? TipoPrevision,
-    string? Giro);
+    string? Giro,
+    IReadOnlyList<ContactoInputDto>? Contactos);

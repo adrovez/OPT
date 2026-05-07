@@ -21,9 +21,23 @@ public interface IContactoRepository
         CancellationToken cancellationToken = default);
 
     Task<Contacto> AddAsync(Contacto contacto, CancellationToken cancellationToken = default);
+
+    /// <summary>Persiste múltiples contactos en una sola operación de base de datos.</summary>
+    Task AddRangeAsync(IEnumerable<Contacto> contactos, CancellationToken cancellationToken = default);
+
     Task UpdateAsync(Contacto contacto, CancellationToken cancellationToken = default);
     Task SoftDeleteAsync(
         int contactoId,
+        int tenantId,
+        string deletedBy,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Elimina lógicamente todos los contactos activos de un cliente en una sola operación.
+    /// Usado al reemplazar la lista completa de contactos en un update.
+    /// </summary>
+    Task SoftDeleteByClienteAsync(
+        int clienteId,
         int tenantId,
         string deletedBy,
         CancellationToken cancellationToken = default);

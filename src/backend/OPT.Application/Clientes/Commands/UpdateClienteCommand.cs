@@ -1,4 +1,5 @@
 using MediatR;
+using OPT.Application.Clientes.DTOs;
 
 namespace OPT.Application.Clientes.Commands;
 
@@ -16,4 +17,5 @@ public record UpdateClienteCommand(
     string? TipoPrevision,
     // Empresa
     string? Giro,
+    IReadOnlyList<ContactoInputDto>? Contactos,
     string UpdatedBy) : IRequest;

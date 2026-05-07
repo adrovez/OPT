@@ -29,6 +29,17 @@ public class RegionController(IMediator mediator) : ControllerBase
         return Ok(regiones);
     }
 
+    // ── GET /api/Regiones/WithComunas ───────────────────────────────────────
+
+    /// <summary>Devuelve todas las regiones activas con sus comunas anidadas.</summary>
+    [HttpGet("WithComunas")]
+    [ProducesResponseType(typeof(IReadOnlyList<RegionWithComunasDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRegionesWithComunas(CancellationToken cancellationToken)
+    {
+        var regiones = await mediator.Send(new GetRegionesWithComunasQuery(), cancellationToken);
+        return Ok(regiones);
+    }
+
     // ── GET /api/Regiones/{id} ──────────────────────────────────────────────
 
     /// <summary>Obtiene el detalle de una región por ID.</summary>

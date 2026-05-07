@@ -1,7 +1,7 @@
 # Backend - Agent Instructions
 > Alcance: **solo backend** `src/backend/`.
 > Objetivo: que cualquier agente contribuya sin romper arquitectura, seguridad multi-tenant ni calidad de entrega.
-> Última actualización: 2026-05-05 (Session 4)
+> Última actualización: 2026-05-07 (Sesión 6)
 
 ---
 
@@ -55,32 +55,59 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 
 | Interface | Implementación | Descripción |
 |-----------|---------------|-------------|
-| `IClienteRepository` | `ClienteRepository` | CRUD + paginación, siempre filtra por TenantId |
+| `IClienteRepository` | `ClienteRepository` | CRUD + paginación + `.Include(Contactos)` en GetByIdAsync, filtra por TenantId |
+| `IContactoRepository` | `ContactoRepository` | CRUD + `AddRangeAsync` + `SoftDeleteByClienteAsync`, filtra por TenantId + ClienteId |
+| `IRegionRepository` | `RegionRepository` | `GetAllWithComunasAsync` (sin filtro de tenant — son datos de catálogo) |
 | `IUsuarioRepository` | `UsuarioRepository` | Busca usuario por RUT+TenantId para auth |
+| `ITenantRepository` | `TenantRepository` | CRUD de tenants (sin filtro de tenant) |
 | `IJwtService` | `JwtService` | Genera tokens JWT con claims tenant_id, rut_usuario, rol |
 | `ICurrentTenantService` | `CurrentTenantService` | Extrae TenantId y RutUsuario del HttpContext actual |
 | `IPasswordHasher` | `BcryptPasswordHasher` | Verifica/hashea contraseñas con BCrypt |
 
 ---
 
-## 4) Módulos API implementados (estado: sesión 4)
+## 4) Módulos API implementados (estado: sesión 6)
 
-| Módulo | Controller | Auth | Endpoints |
-|--------|-----------|------|-----------|
-| **Auth** | `AuthController` | No (anónimo) | `POST /api/auth/login` |
-| **Clientes** | `ClienteController` | Sí (JWT) | `GET`, `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}` |
+| Módulo | Controller | Auth | Estado |
+|--------|-----------|------|--------|
+| **Tenant** | `TenantController` | No | ✅ CRUD completo |
+| **Auth** | `AuthController` | No (anónimo) | ✅ Login + Register |
+| **Clientes** | `ClienteController` | JWT | ✅ CRUD + paginado + búsqueda + contactos embebidos |
+| **Contactos** | `ContactoController` | JWT | ✅ CRUD por cliente |
+| **Regiones** | `RegionController` | JWT | ✅ WithComunas (catálogo anidado) |
 
 ### Endpoints detallados
 
+#### Tenant
+- `GET /api/tenants` → `List<TenantDto>`
+- `GET /api/tenants/{id}` → `TenantDto | 404`
+- `POST /api/tenants` → `201 Created`
+- `PUT /api/tenants/{id}` → `200 OK`
+- `DELETE /api/tenants/{id}` → soft delete → `204 No Content`
+
 #### Auth
-- `POST /api/auth/login` → `{ tenantId, rut, password }` → `{ token, nombre, rol, usuarioId, tenantId, expiracion }`
+- `POST /api/auth/login` → `{ rutUsuario, password, tenantId }` → `{ token, nombre, rol, userId, tenantId, expiresAt }`
+- `POST /api/auth/register` → crea usuario (requiere JWT) → `LoginResponse`
 
 #### Clientes
-- `GET /api/cliente?tipoCliente=&busqueda=&page=1&pageSize=20` → `PagedResult<ClienteDto>`
-- `GET /api/cliente/{id}` → `ClienteDto | 404`
-- `POST /api/cliente` → body `CreateClienteRequest` → `201 Created`
-- `PUT /api/cliente/{id}` → body `UpdateClienteRequest` → `204 No Content`
-- `DELETE /api/cliente/{id}` → soft delete → `204 No Content` *(roles: Admin, Operador)*
+- `GET /api/clientes?page=1&pageSize=20&search=` → `PagedResult<ClienteDto>` (sin contactos — performance)
+- `GET /api/clientes/{id}` → `ClienteDto` con `Contactos[]` incluidos | 404
+- `POST /api/clientes` → body `CreateClienteRequest` (incluye `Contactos?`) → `201 Created`
+- `PUT /api/clientes/{id}` → body `UpdateClienteRequest` (incluye `Contactos?`, replace completo) → `200 OK`
+- `DELETE /api/clientes/{id}` → soft delete → `204 No Content`
+
+> **Nota sobre Contactos en Clientes:** `CreateClienteRequest` y `UpdateClienteRequest` aceptan `IReadOnlyList<ContactoInputDto>? Contactos`.
+> En Update, la estrategia es **replace completo**: soft-delete todos los contactos existentes, luego crear los nuevos.
+> `ContactoInputDto` NO tiene `ContactoId` — si se añadiera en el futuro, cambiar a merge selectivo.
+
+#### Contactos (endpoint independiente — uso alternativo)
+- `GET /api/contactos/cliente/{clienteId}` → `List<ContactoDto>`
+- `POST /api/contactos` → body `CreateContactoRequest` → `200 OK`
+- `PUT /api/contactos/{id}` → body `UpdateContactoRequest` → `200 OK`
+- `DELETE /api/contactos/{id}` → soft delete → `204 No Content`
+
+#### Regiones (catálogo — sin filtro de tenant)
+- `GET /api/Regiones/WithComunas` → `IReadOnlyList<RegionWithComunasDto>` (regiones de Chile con comunas anidadas, ordenadas por nombre)
 
 ---
 
@@ -132,10 +159,30 @@ CorrelationId → ExceptionHandling → Swagger(dev) → CORS
 
 ## 7) Entidades de dominio actuales
 
-| Entidad | Archivo | PK | TenantId |
-|---------|---------|-----|---------|
-| `Cliente` | `OPT.Domain/Entities/Cliente.cs` | `ClienteId` | Sí |
-| `Usuario` | `OPT.Domain/Entities/Usuario.cs` | `UsuarioId` | Sí |
+| Entidad | Archivo | PK | TenantId | Notas |
+|---------|---------|-----|---------|-------|
+| `Tenant` | `OPT.Domain/Entities/Tenant.cs` | `TenantId` | No (es la raíz) | — |
+| `Cliente` | `OPT.Domain/Entities/Cliente.cs` | `ClienteId` | Sí | TipoCliente: Persona\|Empresa; tiene `ICollection<Contacto> Contactos` |
+| `Contacto` | `OPT.Domain/Entities/Contacto.cs` | `ContactoId` | Sí | Solo para clientes Empresa; FK a Cliente |
+| `Region` | `OPT.Domain/Entities/Region.cs` | `IdRegion` | No (catálogo) | Tiene `ICollection<Comuna> Comunas` |
+| `Comuna` | `OPT.Domain/Entities/Comuna.cs` | `IdComuna` | No (catálogo) | FK a Region |
+| `Usuario` | `OPT.Domain/Entities/Usuario.cs` | `UsuarioId` | Sí | Roles: Admin, Operador, Lectura |
+
+### Advertencia EF Core — relación Cliente ↔ Contacto
+
+En `OPTDbContext.OnModelCreating`, la configuración de Contacto **debe** especificar la propiedad de navegación en ambos lados:
+
+```csharp
+// ✅ CORRECTO
+entity.HasOne(ct => ct.Cliente)
+      .WithMany(cl => cl.Contactos)   // ← nombre de la colección en Cliente
+      .HasForeignKey(ct => ct.ClienteId);
+
+// ❌ INCORRECTO — genera shadow FK "ClienteId1" → error en runtime
+entity.HasOne(ct => ct.Cliente).WithMany()...
+```
+
+**Causa real:** al agregar `ICollection<Contacto> Contactos` a `Cliente` sin actualizar `WithMany()`, EF Core creó una segunda FK shadow. Esto generó el error `Invalid column name 'ClienteId1'` en producción.
 
 ---
 

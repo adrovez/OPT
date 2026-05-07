@@ -1,157 +1,257 @@
 # OPT - Project Agent Instructions
 
+> **Última actualización:** 2026-05-07 (Sesión 6 — RegionService, contactos embebidos, vista detalle cliente)
+
 ## About This Project
-OPT is a legacy application undergoing migration to a modern SaaS architecture. The project contains both legacy code (`old/`) and new development (`src/`).
+
+OPT es una aplicación legacy en migración a arquitectura SaaS moderna. El proyecto contiene código legacy (`old/`) y nuevo desarrollo (`src/`).
+
+**Contexto de negocio:** Sistema de gestión de ópticas (clientes, contactos, sucursales, usuarios). Modelo SaaS multi-tenant donde cada óptica es un tenant independiente con aislamiento estricto de datos.
+
+---
 
 ## Directory Structure
 
 ```
 OPT/
-├── src/                    # NEW CODE - Active development
-│   ├── frontend/           # New frontend application
-│   ├── backend/            # New backend API/services
-│   └── basedatos/          # Database scripts (SQL Server)
+├── src/                        # CÓDIGO NUEVO — desarrollo activo
+│   ├── frontend/               # Angular 21 standalone (feature-based, lazy loading)
+│   ├── backend/                # .NET 10 Clean Architecture (4 capas)
+│   └── basedatos/              # Scripts SQL Server (numerados 000–008)
 │
-├── old/                    # LEGACY CODE - Reference only (READ-ONLY)
-│   ├── Fuente/             # Legacy source code
-│   └── BD/                 # Legacy database scripts
+├── old/                        # CÓDIGO LEGACY — solo referencia (SOLO LECTURA)
+│   ├── Fuente/                 # Código fuente legacy
+│   └── BD/                     # Scripts de BD legacy
 │
-├── docs/                   # Documentation
-│   ├── user-manual/        # End-user guides
-│   ├── technical-manual/   # Developer guides
-│   ├── architecture/       # Architecture decisions & diagrams
-│   ├── api/                # API documentation
-│   └── deployment/         # Deployment & infrastructure guides
+├── docs/                       # Documentación del proyecto
+│   ├── user-manual/            # Guías para usuarios finales
+│   ├── technical-manual/       # Manuales para desarrolladores
+│   ├── architecture/           # Decisiones de arquitectura (ADRs)
+│   ├── api/                    # Documentación de endpoints
+│   └── deployment/             # Infraestructura y CI/CD
 │
-├── .agents/                # AI agent working files
-│   ├── decisions/          # Architectural decision records
-│   └── skills/             # Reusable agent skills
+├── .agents/                    # Archivos de trabajo de agentes IA
+│   ├── decisions/              # Architectural Decision Records (ADRs)
+│   ├── progress.md             # Log de sesiones y estado actual
+│   └── skills/                 # Skills reutilizables de agentes
 │
-└── skills/                 # Installed agent skills
+└── skills/                     # Skills instalados para el agente
     ├── angular-developer/
     ├── angular-new-app/
-    ├── dotnet-best-practices/
-    └── ui-ux-pro-max/
+    └── dotnet-best-practices/
 ```
 
-## Critical Rules
+---
 
-- **NEVER modify files in `old/`** — this is reference-only legacy code
-- **ALWAYS write new code in `src/`** — never add to `old/`
-- **ALWAYS consult `old/`** when migrating logic to understand existing behavior
-- **NEVER commit secrets or API keys**
-- **ALWAYS update `.agents/progress.md`** after significant work sessions
-
-## Migration Workflow
-
-1. Read legacy code in `old/Fuente/` to understand current behavior
-2. Check `docs/architecture/` for target architecture patterns
-3. Implement new code in `src/frontend/` or `src/backend/`
-4. Record migration decisions in `.agents/decisions/`
-5. Update `docs/` with any new API or technical documentation
-
-## Coding Conventions
-
-### General
-- Use conventional commits: `feat(scope): description`, `fix(scope): description`
-- Functions must include type annotations and JSDoc comments
-- No `any` types — if unavoidable, add comment explaining why
-- Keep functions under 50 lines when possible
-
-### Frontend (src/frontend/)
-- Components: PascalCase, one component per file
-- Hooks/Services: camelCase with `use` prefix for hooks
-- Error handling: use centralized error service, never silent failures
-
-## Backend (src/backend/)
-
-### Stack
-- **.NET 10** con Clean Architecture (4 capas)
-- **Pattern**: CQRS con MediatR, Vertical Slices
-- **Auth**: JWT + BCrypt passwords
-- **Validacion**: FluentValidation
-- **ORM**: EF Core 9.0 con SQL Server
-
-### Estructura de proyectos
-| Proyecto | Responsabilidad |
-|----------|----------------|
-| `OPT.Domain` | Entidades, constantes, base entity |
-| `OPT.Application` | Commands, Queries, Handlers, DTOs, Validators, Interfaces |
-| `OPT.Infrastructure` | DbContext, EF Configurations, Repositories, JWT, PasswordHasher |
-| `OPT.API` | Controllers, Program.cs, appsettings |
-
-### API implementadas (Estado: Mayo 2026)
-| Modulo | Endpoints | Auth |
-|--------|-----------|------|
-| **Tenant** | CRUD completo | No |
-| **Auth** | Login, Register | No (Login anonimo) |
-| **Clientes** | CRUD + paginado + busqueda | Si (JWT) |
-| **Contactos** | CRUD por cliente | Si (JWT) |
-
-### Comandos de build
-| Comando | Descripcion |
-|---------|-------------|
-| `dotnet restore` | Restaurar paquetes NuGet |
-| `dotnet build` | Compilar solucion |
-| `dotnet run --project OPT.API` | Iniciar API en desarrollo |
-
-### Convenciones backend
-- Controllers delgados: delegan a MediatR handlers
-- Handlers usan interfaces de repositorio, nunca DbContext directo
-- Soft-delete obligatorio: `IsDeleted = true`, nunca DELETE fisico
-- Multi-tenant: `TenantId` en JWT claim, filter automatico en DbContext
-- DTOs usan `record` inmutables
-- Result pattern para errores: `Result<T>.Success()` / `Result<T>.Failure()`
-
-### Database (src/basedatos/)
-- SQL Server 2022 (Azure SQL compatible)
-- Scripts numbered sequentially: `000_`, `001_`, etc.
-- One script per table for maintainability
-- All tables include: `CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`, `IsDeleted`
-- Multi-tenant: `TenantId` column on all business tables
-- Foreign keys with explicit `ON DELETE` / `ON UPDATE` behavior
-- Unique indexes with `WHERE [IsDeleted] = 0` for soft-delete tables
-
-### Scripts de base de datos existentes
-| Script | Tabla |
-|--------|-------|
-| `000_creacion_base_datos.sql` | Base de datos `dbOPT` |
-| `001_OPT_Tenant.sql` | OPT_Tenant |
-| `002_OPT_Region.sql` | OPT_Region |
-| `003_OPT_Comuna.sql` | OPT_Comuna |
-| `004_OPT_Sucursal.sql` | OPT_Sucursal |
-| `005_OPT_Cliente.sql` | OPT_Cliente (unificada Persona/Empresa) |
-| `006_OPT_Contacto.sql` | OPT_Contacto |
-| `007_datos_iniciales.sql` | Datos semilla (regiones, tenant demo) |
-| `008_OPT_Usuario.sql` | OPT_Usuario |
-
-## Build & Test Commands
+## Stack Tecnológico
 
 ### Backend
-| Command     | Description              |
-|-------------|--------------------------|
-| `dotnet restore` | Restaurar paquetes NuGet |
-| `dotnet build` | Compilar solucion |
-| `dotnet run --project OPT.API` | Iniciar API en desarrollo |
+| Componente | Tecnología |
+|-----------|-----------|
+| Framework | .NET 10 + Clean Architecture (4 proyectos) |
+| Patrón | CQRS con MediatR 12.4.1 |
+| Auth | JWT Bearer + BCrypt (BCrypt.Net-Next 4.0.3) |
+| ORM | EF Core 9.0 con SQL Server |
+| Validación | FluentValidation 11.10.0 |
+| Docs | Swashbuckle (Swagger) 7.2.0 |
+| Errores | RFC 7807 ProblemDetails (ExceptionHandlingMiddleware) |
 
-## Documentation Guidelines
+### Frontend
+| Componente | Tecnología |
+|-----------|-----------|
+| Framework | Angular 21.0.5 standalone |
+| Estilos | Tailwind CSS 4.2.4 |
+| Formularios | Signal Forms (signals de Angular 21) |
+| HTTP | HttpClient con interceptor JWT |
+| Auth | AuthGuard (route guard) |
+| Testing | Vitest |
 
-- **User Manual** (`docs/user-manual/`): Written for end users, step-by-step guides with screenshots
-- **Technical Manual** (`docs/technical-manual/`): Developer onboarding, setup, coding standards
-- **Architecture** (`docs/architecture/`): System diagrams, ADRs, technology decisions
-- **API** (`docs/api/`): Endpoint documentation, request/response examples
-- **Deployment** (`docs/deployment/`): Infrastructure, CI/CD, environment configuration
+### Base de Datos
+| Componente | Tecnología |
+|-----------|-----------|
+| Motor | SQL Server 2022 (Azure SQL compatible) |
+| Nombre BD | `dbOPT` |
+| Scripts | Numerados secuencialmente (000–008) |
 
-## Agents
+---
 
-### migration-analyst
-Analyzes legacy code in `old/` and produces migration plans with dependency mapping.
+## Reglas Críticas (no negociables)
 
-### frontend-developer
-Implements new frontend features in `src/frontend/` following established patterns.
+1. **NUNCA modificar archivos en `old/`** — es código legacy de referencia.
+2. **SIEMPRE escribir código nuevo en `src/`** — nunca en `old/`.
+3. **CONSULTAR `old/Fuente/`** cuando se migra lógica, para entender el comportamiento existente.
+4. **NUNCA exponer datos cross-tenant** — toda query de negocio lleva `TenantId` explícito.
+5. **NUNCA hacer DELETE físico** — siempre soft-delete (`IsDeleted = true`).
+6. **NUNCA hardcodear** `TenantId`, roles ni secretos.
+7. **NUNCA lógica de negocio en controllers** — controllers delegan a handlers via MediatR.
+8. **NUNCA acceder a DbContext directamente desde Application** — usar repositorios.
+9. **NUNCA try/catch en controllers** — el `ExceptionHandlingMiddleware` lo maneja.
+10. **Si cambia el esquema DB**, crear script SQL incremental en `src/basedatos/` (siguiente número secuencial: `009_...`).
+11. **SIEMPRE actualizar `.agents/progress.md`** al finalizar sesiones significativas.
 
-### backend-developer
-Implements new backend services in `src/backend/` with proper validation and error handling.
+---
 
-### documentation-writer
-Updates documentation in `docs/` to reflect current system state.
+## Módulos Implementados (estado: Mayo 2026)
+
+### Backend (API endpoints disponibles)
+
+| Módulo | Controller | Auth | Estado |
+|--------|-----------|------|--------|
+| **Tenant** | `TenantController` | No | ✅ CRUD completo |
+| **Auth** | `AuthController` | No (anónimo) | ✅ Login + Register |
+| **Clientes** | `ClienteController` | JWT | ✅ CRUD + paginado + búsqueda + contactos embebidos |
+| **Contactos** | `ContactoController` | JWT | ✅ CRUD por cliente |
+| **Regiones** | `RegionController` | JWT | ✅ GET /WithComunas (catálogo anidado) |
+
+### Frontend (Angular)
+
+| Módulo | Componente / Archivo | Estado |
+|--------|---------------------|--------|
+| Auth | `features/auth/login/login.component.ts` | ✅ Implementado |
+| Clientes | `features/clientes/clientes-list/clientes-list.component.ts` | ✅ Implementado |
+| Clientes | `features/clientes/cliente-form/cliente-form.component.ts` | ✅ Implementado (comunas desde API) |
+| Clientes | `features/clientes/cliente-detail/cliente-detail.component.ts` | ✅ Implementado (solo lectura, ruta `/clientes/:id`) |
+| Layout | `layout/main-layout/main-layout.component.ts` | ✅ Implementado |
+| Core | `core/services/auth.service.ts` | ✅ Implementado |
+| Core | `core/services/cliente.service.ts` | ✅ Implementado |
+| Core | `core/services/region.service.ts` | ✅ Implementado (shareReplay cache) |
+| Core | `core/interceptors/auth.interceptor.ts` (JWT automático) | ✅ Implementado |
+| Core | `core/guards/auth.guard.ts` (protección de rutas) | ✅ Implementado |
+| Core | `core/validators/rut.validator.ts` (validación RUT chileno) | ✅ Implementado |
+| Core | `core/models/auth.model.ts`, `cliente.model.ts`, `region.model.ts` | ✅ Implementado |
+
+### Base de Datos (scripts SQL en `src/basedatos/`)
+
+| Script | Tabla / Acción |
+|--------|---------------|
+| `000_creacion_base_datos.sql` | Base de datos `dbOPT` |
+| `001_OPT_Tenant.sql` | OPT_Tenant |
+| `002_OPT_Region.sql` | OPT_Region (16 regiones de Chile) |
+| `003_OPT_Comuna.sql` | OPT_Comuna |
+| `004_OPT_Sucursal.sql` | OPT_Sucursal |
+| `005_OPT_Cliente.sql` | OPT_Cliente (Persona + Empresa unificados, campo `TipoCliente`) |
+| `006_OPT_Contacto.sql` | OPT_Contacto (FKs con ON DELETE corregidas — ver ADR) |
+| `007_datos_iniciales.sql` | Datos semilla idempotentes (regiones, tenant demo) |
+| `008_OPT_Usuario.sql` | OPT_Usuario (Rol NOT NULL DEFAULT 'Operador', índices TenantId+Email) |
+
+> El próximo script incremental debe ser `009_...`
+
+---
+
+## Pipeline de Middleware (orden crítico — backend)
+
+```
+CorrelationId → ExceptionHandling → Swagger(dev) → CORS
+→ HttpsRedirection → Authentication → Authorization
+→ TenantValidation → MapControllers
+```
+
+Ver ADR: `.agents/decisions/2026-05-05-backend-middleware.md`
+
+---
+
+## Workflow de Migración
+
+1. Leer código legacy en `old/Fuente/` para entender el comportamiento actual.
+2. Revisar `docs/architecture/` para patrones de arquitectura objetivo.
+3. Implementar código nuevo en `src/frontend/` o `src/backend/`.
+4. Registrar decisiones de arquitectura en `.agents/decisions/` (formato ADR).
+5. Actualizar `docs/` con cualquier nueva API o documentación técnica.
+6. Actualizar `.agents/progress.md` con el resumen de la sesión.
+
+---
+
+## Cómo Agregar un Nuevo Módulo
+
+### Backend (checklist)
+1. `OPT.Domain/Entities/` → crear entidad
+2. `OPT.Application/Interfaces/` → crear interfaz de repositorio
+3. `OPT.Application/<Modulo>/Commands/` y `Queries/` → crear handlers y DTOs
+4. `OPT.Infrastructure/Persistence/Repositories/` → implementar repositorio
+5. `OPT.Infrastructure/Persistence/OPTDbContext.cs` → agregar DbSet y configuración EF (con HasQueryFilter)
+6. `OPT.API/Controllers/` → crear controller delgado (sin try/catch)
+7. `src/basedatos/00X_...sql` → script incremental si hay cambios de esquema
+
+### Frontend (checklist)
+1. `src/app/core/models/<modulo>.model.ts` → definir interfaces TypeScript
+2. `src/app/core/services/<modulo>.service.ts` → crear servicio HTTP
+3. `src/app/features/<modulo>/` → implementar componentes standalone
+4. `src/app/app.routes.ts` → agregar ruta con lazy loading
+
+---
+
+## Anti-patrones (NUNCA hacer esto)
+
+### Backend
+- ❌ Lógica de negocio en controllers
+- ❌ Acceder a `OPTDbContext` directamente desde Application (usar interfaces de repositorio)
+- ❌ Hardcodear `TenantId` o roles en queries
+- ❌ `DELETE` físico en tablas con `IsDeleted`
+- ❌ `try/catch` en controllers (el `ExceptionHandlingMiddleware` lo maneja)
+- ❌ Lanzar `Exception` genérica desde handlers (usar excepción semántica: `KeyNotFoundException`, `InvalidOperationException`, etc.)
+- ❌ Loguear `PasswordHash`, tokens JWT, ni PII sensible
+- ❌ Saltar capas (Application no depende de Infrastructure; API no depende de Domain directamente)
+
+### Frontend
+- ❌ Llamar a la API directamente desde componentes (siempre usar servicios)
+- ❌ Guardar información sensible en `localStorage` (solo el JWT token)
+- ❌ Componentes con lógica de negocio compleja (extraer a servicios)
+- ❌ Módulos NgModule (el proyecto usa standalone components exclusivamente)
+- ❌ `any` types en TypeScript sin comentario explicativo
+- ❌ Acceder a endpoints sin pasar por el `auth.interceptor.ts`
+
+### Base de Datos
+- ❌ Scripts sin numeración secuencial
+- ❌ Scripts sin guards de idempotencia (`IF NOT EXISTS` / `IF OBJECT_ID IS NULL`)
+- ❌ Tablas de negocio sin `TenantId`
+- ❌ Tablas sin campos de auditoría (`CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`, `IsDeleted`)
+- ❌ FKs con comportamiento CASCADE ambiguo (puede generar rutas múltiples de cascada en SQL Server)
+
+---
+
+## Comandos de Validación
+
+### Backend
+```bash
+cd src/backend
+dotnet restore
+dotnet build
+dotnet test
+dotnet run --project OPT.API   # API en http://localhost:5005, Swagger en /swagger
+```
+
+### Frontend
+```bash
+cd src/frontend
+npm run lint
+npm run test
+npm run build
+ng serve                        # desarrollo local: http://localhost:4200
+```
+
+---
+
+## Documentación de Referencia
+
+| Documento | Ruta | Contenido |
+|-----------|------|-----------|
+| Arquitectura backend | `docs/technical-manual/backend-arquitectura.html` | Clean Architecture, capas, patrones |
+| Manual base de datos | `docs/technical-manual/base-datos.html` | Esquema, scripts, convenciones |
+| API Reference HTML | `docs/api/backend-api-reference.html` | Endpoints Auth + Cliente |
+| API Reference MD | `docs/api/README.md` | Todos los endpoints (Tenant, Auth, Clientes, Contactos) |
+| Contratos frontend-API | `docs/api/frontend-api-contracts.md` | DTOs y llamadas desde Angular |
+| Setup frontend | `docs/technical-manual/frontend-setup.md` | Configuración entorno Angular |
+| ADR Middleware | `.agents/decisions/2026-05-05-backend-middleware.md` | Decisiones de middleware |
+| ADR Base de Datos | `.agents/decisions/2026-05-05-diseno-base-datos-inicial.md` | Decisiones de esquema |
+| Progress log | `.agents/progress.md` | Historial completo de sesiones |
+
+---
+
+## Agentes Disponibles
+
+| Agente | Responsabilidad |
+|--------|----------------|
+| `migration-analyst` | Analiza código legacy en `old/` y produce planes de migración |
+| `frontend-developer` | Implementa features en `src/frontend/` (Angular 21) — ver `src/frontend/AGENTS.md` |
+| `backend-developer` | Implementa servicios en `src/backend/` (.NET 10) — ver `src/backend/AGENTS.md` |
+| `documentation-writer` | Actualiza `docs/` para reflejar el estado actual del sistema |
