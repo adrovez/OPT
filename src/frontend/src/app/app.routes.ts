@@ -32,6 +32,13 @@ export const routes: Routes = [
             (m) => m.ClienteDetailComponent,
           ),
       },
+      {
+        path: 'clientes/:id/anamnesis',
+        loadComponent: () =>
+          import('./features/anamnesis/anamnesis-list/anamnesis-list.component').then(
+            (m) => m.AnamnesisListComponent,
+          ),
+      },
     ],
   },
   {

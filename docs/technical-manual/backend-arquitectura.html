@@ -185,37 +185,51 @@
         <h3>OPT.Domain</h3>
         <p>Contiene exclusivamente entidades de dominio. No tiene ninguna dependencia de NuGet ni de otros proyectos.</p>
         <table>
-          <tr><th>Entidad</th><th>PK</th><th>TenantId</th><th>Descripción</th></tr>
-          <tr><td><code>Cliente</code></td><td>ClienteId</td><td>✓</td><td>Persona o Empresa. Campo TipoCliente diferencia el tipo.</td></tr>
-          <tr><td><code>Usuario</code></td><td>UsuarioId</td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña.</td></tr>
+          <tr><th>Entidad</th><th>PK (tipo)</th><th>TenantId</th><th>Descripción</th></tr>
+          <tr><td><code>Cliente</code></td><td>ClienteId <small>(Guid)</small></td><td>✓</td><td>Persona o Empresa. Campo TipoCliente diferencia el tipo.</td></tr>
+          <tr><td><code>Contacto</code></td><td>ContactoId <small>(Guid)</small></td><td>✓</td><td>Contactos de clientes Empresa.</td></tr>
+          <tr><td><code>Anamnesis</code></td><td>AnamnesisId <small>(Guid)</small></td><td>✓</td><td>Historial de salud del cliente.</td></tr>
+          <tr><td><code>RecetaCristales</code></td><td>RecetaCristalesId <small>(Guid)</small></td><td>✓</td><td>Receta óptica (lejos, cerca, DP, ADD). FK ClienteId.</td></tr>
+          <tr><td><code>Usuario</code></td><td>UsuarioId <small>(Guid)</small></td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña.</td></tr>
+          <tr><td><code>Region</code></td><td>IdRegion <small>(int)</small></td><td>—</td><td>Catálogo compartido. Solo lectura.</td></tr>
+          <tr><td><code>Comuna</code></td><td>IdComuna <small>(int)</small></td><td>—</td><td>Catálogo compartido. FK a Region.</td></tr>
         </table>
+        <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:10px 14px;margin-top:8px;border-radius:4px;font-size:0.88rem;">
+          <strong>Regla de tipos PK/FK:</strong> Las entidades de negocio (tenant-aware) usan <code>Guid</code> en C# / <code>UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()</code> en SQL.
+          Los catálogos (<code>Region</code>, <code>Comuna</code>) mantienen <code>int</code> / <code>INT IDENTITY</code>.
+          Nunca usar <code>int</code> como PK/FK de una entidad de negocio.
+        </div>
 
         <h3>OPT.Application</h3>
         <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IUsuarioRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
-          <tr><td><code>Auth/</code></td><td>LoginCommand, LoginCommandHandler, LoginCommandValidator</td></tr>
-          <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers</td></tr>
-          <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById + handlers</td></tr>
-          <tr><td><code>Clientes/DTOs/</code></td><td>ClienteDto, ClienteMappingExtensions</td></tr>
-          <tr><td><code>Clientes/Validators/</code></td><td>CreateClienteCommandValidator, UpdateClienteCommandValidator</td></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, IRegionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator</td></tr>
+          <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers → retornan <code>Guid</code></td></tr>
+          <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById (Guid) + handlers</td></tr>
+          <tr><td><code>Clientes/DTOs/</code></td><td>ClienteDto, ContactoDto, ContactoInputDto, ClienteMappingExtensions</td></tr>
+          <tr><td><code>Clientes/Validators/</code></td><td>CreateClienteCommandValidator, UpdateClienteCommandValidator — usan <code>.NotEmpty()</code> para IDs Guid</td></tr>
+          <tr><td><code>Contactos/</code></td><td>CRUD Commands + Queries + Validators</td></tr>
+          <tr><td><code>Anamnesis/</code></td><td>CRUD Commands + Queries + Validators</td></tr>
+          <tr><td><code>RecetaCristales/</code></td><td>CRUD Commands + Queries + Validators (campos de receta óptica)</td></tr>
+          <tr><td><code>Regiones/</code></td><td>GetRegionesWithComunasQuery + RegionWithComunasDto</td></tr>
           <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt;</td></tr>
         </table>
 
         <h3>OPT.Infrastructure</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted)</td></tr>
-          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, UsuarioRepository</td></tr>
-          <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService, BcryptPasswordHasher</td></tr>
+          <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted) y <code>HasDefaultValueSql("NEWSEQUENTIALID()")</code></td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, UsuarioRepository, RegionRepository</td></tr>
+          <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService (Guid.TryParse), BcryptPasswordHasher</td></tr>
           <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
         </table>
 
         <h3>OPT.API</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Controllers/</code></td><td>AuthController, ClienteController</td></tr>
+          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController (Guid), ContactoController (Guid), AnamnesisController (Guid), RecetaCristalesController (Guid), RegionController</td></tr>
           <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
           <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
         </table>
@@ -402,8 +416,8 @@ context.Clientes.Remove(cliente);</pre>
         <h3>Paso 1 — Domain</h3>
         <pre>// OPT.Domain/Entities/Sucursal.cs
 public class Sucursal {
-    public int IdSucursal { get; set; }
-    public int TenantId { get; set; }
+    public Guid IdSucursal { get; set; }   // UNIQUEIDENTIFIER (NEWSEQUENTIALID())
+    public Guid TenantId { get; set; }    // FK → OPT_Tenant
     public string Nombre { get; set; } = string.Empty;
     // ... campos + auditoría (CreatedAt, UpdatedAt, IsDeleted)
 }</pre>
@@ -411,8 +425,8 @@ public class Sucursal {
         <h3>Paso 2 — Application: Interfaces + Commands + Queries</h3>
         <pre>// OPT.Application/Interfaces/ISucursalRepository.cs
 public interface ISucursalRepository {
-    Task&lt;PagedResult&lt;Sucursal&gt;&gt; GetPagedAsync(int tenantId, ...);
-    Task&lt;Sucursal?&gt; GetByIdAsync(int id, int tenantId, ...);
+    Task&lt;PagedResult&lt;Sucursal&gt;&gt; GetPagedAsync(Guid tenantId, ...);
+    Task&lt;Sucursal?&gt; GetByIdAsync(Guid id, Guid tenantId, ...);
     Task&lt;Sucursal&gt; AddAsync(Sucursal s, ...);
     // ...
 }</pre>

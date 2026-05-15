@@ -6,13 +6,13 @@ export interface Contacto {
 }
 
 export interface Cliente {
-  clienteId: number;
-  tenantId: number;
+  clienteId: string;   // UUID — UNIQUEIDENTIFIER en SQL Server
+  tenantId: string;    // UUID — UNIQUEIDENTIFIER en SQL Server
   tipoCliente: 'Persona' | 'Empresa';
   numeroDocumento: string;
   nombre: string;
   direccion?: string;
-  idComuna?: number;
+  idComuna?: number;   // INT — catálogo compartido (no es GUID)
   celular?: string;
   mail?: string;
   fechaNacimiento?: string;
@@ -28,12 +28,12 @@ export interface Cliente {
 }
 
 export interface CreateClienteDto {
-  tenantId: number;
+  tenantId: string;    // UUID
   tipoCliente: string;
   numeroDocumento: string;
   nombre: string;
   direccion?: string;
-  idComuna?: number;
+  idComuna?: number;   // INT — catálogo
   celular?: string;
   mail?: string;
   fechaNacimiento?: string;

@@ -14,6 +14,8 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Region> Regiones => Set<Region>();
     public DbSet<Comuna> Comunas => Set<Comuna>();
     public DbSet<Contacto> Contactos => Set<Contacto>();
+    public DbSet<Anamnesis> Anamnesis => Set<Anamnesis>();
+    public DbSet<RecetaCristales> RecetasCristales => Set<RecetaCristales>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +26,11 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
         {
             e.ToTable("OPT_Cliente");
             e.HasKey(c => c.ClienteId);
+
+            e.Property(c => c.ClienteId)
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(c => c.TenantId)
+             .IsRequired();
 
             e.Property(c => c.TipoCliente).HasMaxLength(20).IsRequired();
             e.Property(c => c.NumeroDocumento).HasMaxLength(20).IsRequired();
@@ -50,6 +57,11 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
         {
             e.ToTable("OPT_Usuario");
             e.HasKey(u => u.UsuarioId);
+
+            e.Property(u => u.UsuarioId)
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(u => u.TenantId)
+             .IsRequired();
 
             e.Property(u => u.RutUsuario).HasMaxLength(20).IsRequired();
             e.Property(u => u.Nombre).HasMaxLength(150).IsRequired();
@@ -123,6 +135,11 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.ToTable("OPT_Contacto");
             e.HasKey(c => c.ContactoId);
 
+            e.Property(c => c.ContactoId)
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(c => c.TenantId)
+             .IsRequired();
+
             e.Property(c => c.Nombre).HasMaxLength(150).IsRequired();
             e.Property(c => c.Email).HasMaxLength(150);
             e.Property(c => c.Telefono).HasMaxLength(50);
@@ -140,6 +157,87 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 
             // Filtro global: excluye eliminados lógicamente
             e.HasQueryFilter(c => !c.IsDeleted);
+        });
+
+        // ── Anamnesis ──────────────────────────────────────────────────────
+        modelBuilder.Entity<Anamnesis>(e =>
+        {
+            e.ToTable("OPT_Anamnesis");
+            e.HasKey(a => a.AnamnesisId);
+
+            e.Property(a => a.AnamnesisId)
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(a => a.TenantId)
+             .IsRequired();
+
+            e.Property(a => a.Observacion).HasMaxLength(1000);
+            e.Property(a => a.CreatedBy).HasMaxLength(100);
+            e.Property(a => a.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(a => new { a.TenantId, a.ClienteId })
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasOne(a => a.Cliente)
+             .WithMany()
+             .HasForeignKey(a => a.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(a => !a.IsDeleted);
+        });
+
+        // ── RecetaCristales ────────────────────────────────────────────────
+        modelBuilder.Entity<RecetaCristales>(e =>
+        {
+            e.ToTable("OPT_RecetaCristales");
+            e.HasKey(r => r.RecetaCristalesId);
+
+            e.Property(r => r.RecetaCristalesId)
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(r => r.TenantId)
+             .IsRequired();
+
+            e.Property(r => r.LejosODEsferico).HasMaxLength(10);
+            e.Property(r => r.LejosODCilindro).HasMaxLength(10);
+            e.Property(r => r.LejosODEje).HasMaxLength(10);
+            e.Property(r => r.LejosODObservacion).HasMaxLength(200);
+
+            e.Property(r => r.LejosOIEsferico).HasMaxLength(10);
+            e.Property(r => r.LejosOICilindro).HasMaxLength(10);
+            e.Property(r => r.LejosOIEje).HasMaxLength(10);
+            e.Property(r => r.LejosOIObservacion).HasMaxLength(200);
+
+            e.Property(r => r.LejosDPEsferico).HasMaxLength(10);
+            e.Property(r => r.LejosDPObservacion).HasMaxLength(200);
+
+            e.Property(r => r.CercaODEsferico).HasMaxLength(10);
+            e.Property(r => r.CercaODCilindro).HasMaxLength(10);
+            e.Property(r => r.CercaODEje).HasMaxLength(10);
+            e.Property(r => r.CercaODObservacion).HasMaxLength(200);
+
+            e.Property(r => r.CercaOIEsferico).HasMaxLength(10);
+            e.Property(r => r.CercaOICilindro).HasMaxLength(10);
+            e.Property(r => r.CercaOIEje).HasMaxLength(10);
+            e.Property(r => r.CercaOIObservacion).HasMaxLength(200);
+
+            e.Property(r => r.CercaDPEsferico).HasMaxLength(10);
+            e.Property(r => r.CercaDPObservacion).HasMaxLength(200);
+
+            e.Property(r => r.LejosADDEsfera).HasMaxLength(10);
+
+            e.Property(r => r.CreatedBy).HasMaxLength(100);
+            e.Property(r => r.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(r => new { r.TenantId, r.ClienteId })
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasOne(r => r.Cliente)
+             .WithMany()
+             .HasForeignKey(r => r.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(r => !r.IsDeleted);
         });
     }
 }

@@ -10,14 +10,14 @@ public interface IContactoRepository
 {
     /// <summary>Lista todos los contactos activos de un cliente del tenant.</summary>
     Task<IReadOnlyList<Contacto>> GetByClienteAsync(
-        int clienteId,
-        int tenantId,
+        Guid clienteId,
+        Guid tenantId,
         CancellationToken cancellationToken = default);
 
     /// <summary>Obtiene un contacto por ID validando que pertenezca al tenant.</summary>
     Task<Contacto?> GetByIdAsync(
-        int contactoId,
-        int tenantId,
+        Guid contactoId,
+        Guid tenantId,
         CancellationToken cancellationToken = default);
 
     Task<Contacto> AddAsync(Contacto contacto, CancellationToken cancellationToken = default);
@@ -27,8 +27,8 @@ public interface IContactoRepository
 
     Task UpdateAsync(Contacto contacto, CancellationToken cancellationToken = default);
     Task SoftDeleteAsync(
-        int contactoId,
-        int tenantId,
+        Guid contactoId,
+        Guid tenantId,
         string deletedBy,
         CancellationToken cancellationToken = default);
 
@@ -37,8 +37,8 @@ public interface IContactoRepository
     /// Usado al reemplazar la lista completa de contactos en un update.
     /// </summary>
     Task SoftDeleteByClienteAsync(
-        int clienteId,
-        int tenantId,
+        Guid clienteId,
+        Guid tenantId,
         string deletedBy,
         CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-07 (Sesión 5)
+> **Última actualización:** 2026-05-15 (Sesión 10)
 
 ## Overview
 
@@ -19,6 +19,9 @@
 | Auth | `/api/auth` | No (login/register) | ✅ Completo |
 | Clientes | `/api/clientes` | JWT | ✅ Completo — CRUD + paginado + búsqueda |
 | Contactos | `/api/contactos` | JWT | ✅ Completo — CRUD por cliente |
+| Regiones | `/api/Regiones` | JWT | ✅ GET /WithComunas (catálogo Chile) |
+| Anamnesis | `/api/Anamnesis` | JWT | ✅ Completo — CRUD por clienteId |
+| RecetaCristales | `/api/RecetaCristales` | JWT | ✅ Completo — CRUD por clienteId |
 
 ---
 
@@ -32,7 +35,7 @@
 ```bash
 curl -X POST https://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"rutUsuario":"12345678-9","password":"MiClave123!","tenantId":1}'
+  -d '{"rutUsuario":"12345678-9","password":"MiClave123!","tenantId":"550e8400-e29b-41d4-a716-446655440000"}'
 ```
 
 ### Claims incluidos en el JWT
@@ -153,7 +156,7 @@ Soft-delete de tenant.
 {
   "rutUsuario": "12345678-9",
   "password": "MiClaveSegura123!",
-  "tenantId": 1
+  "tenantId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -161,8 +164,8 @@ Soft-delete de tenant.
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "userId": 1,
-  "tenantId": 1,
+  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "tenantId": "550e8400-e29b-41d4-a716-446655440000",
   "nombre": "Admin Demo",
   "email": "admin@opticademo.cl",
   "rol": "TenantAdmin",
@@ -183,7 +186,7 @@ Soft-delete de tenant.
 **Request:**
 ```json
 {
-  "tenantId": 1,
+  "tenantId": "550e8400-e29b-41d4-a716-446655440000",
   "rutUsuario": "98765432-1",
   "nombre": "Nuevo Usuario",
   "email": "usuario@opticademo.cl",
@@ -228,7 +231,7 @@ GET /api/clientes?page=1&pageSize=10&search=juan
   "items": [
     {
       "id": 1,
-      "tenantId": 1,
+      "tenantId": "550e8400-e29b-41d4-a716-446655440000",
       "tipoCliente": "Persona",
       "numeroDocumento": "12345678-9",
       "nombre": "Juan Perez",
@@ -342,8 +345,8 @@ Listar contactos de un cliente especifico.
 [
   {
     "id": 1,
-    "tenantId": 1,
-    "clienteId": 5,
+    "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+    "clienteId": "3f2e4a1c-8b5d-4e6f-a9c2-1d7e3f4a5b6c",
     "nombre": "Maria Gonzalez",
     "email": "maria@empresaabc.cl",
     "telefono": "+56 9 8765 4321",
@@ -360,7 +363,7 @@ Crear contacto para cliente empresa.
 **Request:**
 ```json
 {
-  "clienteId": 5,
+  "clienteId": "3f2e4a1c-8b5d-4e6f-a9c2-1d7e3f4a5b6c",
   "nombre": "Carlos Rodriguez",
   "email": "carlos@empresaabc.cl",
   "telefono": "+56 9 1111 2222",
@@ -398,6 +401,175 @@ Soft-delete de contacto.
 
 ---
 
+## 5. Anamnesis API
+
+**Auth:** Requiere JWT (TenantId extraído del token)
+
+Historial de salud del paciente. Siempre asociado a un ClienteId. Todas las operaciones son tenant-aisladas.
+
+### GET /api/Anamnesis?clienteId={uuid}
+
+Listar registros de anamnesis de un cliente.
+
+**Response 200:**
+```json
+[
+  {
+    "anamnesisId": "1d0f35a4-83a2-4a2b-8d7e-3f9b1c2e5d6f",
+    "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+    "clienteId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "hipertension": true,
+    "diabetes": false,
+    "alergias": true,
+    "usaLentes": true,
+    "observacion": "Paciente refiere alergia estacional.",
+    "fechaRegistro": "2026-05-15T10:00:00Z",
+    "createdAt": "2026-05-15T10:00:00Z",
+    "createdBy": "12345678-9"
+  }
+]
+```
+
+### GET /api/Anamnesis/{id}
+
+Obtener anamnesis por ID.
+
+**Response 200:** AnamnesisDto  
+**Response 404:** `"Anamnesis no encontrada"`
+
+### POST /api/Anamnesis
+
+Crear nueva anamnesis.
+
+**Request:**
+```json
+{
+  "clienteId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "hipertension": true,
+  "diabetes": false,
+  "alergias": true,
+  "usaLentes": true,
+  "observacion": "Notas opcionales."
+}
+```
+
+**Response 200:** `{ "id": "uuid-del-nuevo-registro" }`
+
+### PUT /api/Anamnesis/{id}
+
+Actualizar anamnesis existente.
+
+**Request:**
+```json
+{
+  "hipertension": true,
+  "diabetes": true,
+  "alergias": true,
+  "usaLentes": false,
+  "observacion": "Diagnóstico actualizado."
+}
+```
+
+**Response 200:** sin body
+
+### DELETE /api/Anamnesis/{id}
+
+Soft-delete de anamnesis.
+
+**Response 204:** No Content  
+**Response 404:** `"Anamnesis no encontrada"`
+
+---
+
+---
+
+## 6. RecetaCristales API
+
+**Auth:** Requiere JWT (TenantId extraído del token)
+
+Receta óptica del cliente (lejos, cerca, DP y ADD). Siempre asociada a un ClienteId. Múltiples recetas por cliente (historial).
+
+### GET /api/RecetaCristales?clienteId={uuid}
+
+Listar recetas de un cliente, ordenadas por FechaIngreso DESC.
+
+**Response 200:**
+```json
+[
+  {
+    "recetaCristalesId": "7f4a1b2c-3d5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+    "clienteId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "lejosODEsferico": "-1.50",
+    "lejosODCilindro": "-0.50",
+    "lejosODEje": "90",
+    "lejosOIEsferico": "-1.75",
+    "checkLejos": true,
+    "checkCerca": false,
+    "checkCristalesLaboratorio": true,
+    "checkUrgente": false,
+    "fechaIngreso": "2026-05-15T10:00:00Z",
+    "createdAt": "2026-05-15T10:00:00Z",
+    "createdBy": "12345678-9"
+  }
+]
+```
+
+### GET /api/RecetaCristales/{id}
+
+Obtener detalle de una receta por ID.
+
+**Response 200:** RecetaCristalesDto  
+**Response 404:** `"RecetaCristales no encontrada"`
+
+### POST /api/RecetaCristales
+
+Registrar una nueva receta de cristales.
+
+**Request:**
+```json
+{
+  "clienteId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "lejosODEsferico": "-1.50",
+  "lejosODCilindro": "-0.50",
+  "lejosODEje": "90",
+  "lejosODObservacion": null,
+  "lejosOIEsferico": "-1.75",
+  "lejosOICilindro": null,
+  "lejosOIEje": null,
+  "lejosDPEsferico": "63",
+  "cercaODEsferico": null,
+  "cercaODCilindro": null,
+  "lejosADDEsfera": null,
+  "checkLejos": true,
+  "checkCerca": false,
+  "checkCristalesLaboratorio": true,
+  "checkUrgente": false,
+  "fechaIngreso": null
+}
+```
+
+> `fechaIngreso` es opcional. Si se omite, el backend usa `DateTime.UtcNow`.  
+> Todos los campos de medida son opcionales (`string?`). Solo `clienteId` y los flags (`bool`) son requeridos.
+
+**Response 201:** `{ "id": "uuid-nueva-receta" }`
+
+### PUT /api/RecetaCristales/{id}
+
+Actualizar receta existente. Mismos campos que POST excepto `clienteId`.
+
+**Response 204:** No Content  
+**Response 404:** `"RecetaCristales no encontrada"`
+
+### DELETE /api/RecetaCristales/{id}
+
+Soft-delete de receta (IsDeleted = true).
+
+**Response 204:** No Content  
+**Response 404:** `"RecetaCristales no encontrada"`
+
+---
+
 ## Respuestas de Error Estandar
 
 ### Formato de error
@@ -427,7 +599,7 @@ Todos los errores retornan un string descriptivo en el body:
 # 1. Login
 TOKEN=$(curl -s -X POST https://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"rutUsuario":"12345678-9","password":"MiClave123!","tenantId":1}' \
+  -d '{"rutUsuario":"12345678-9","password":"MiClave123!","tenantId":"550e8400-e29b-41d4-a716-446655440000"}' \
   | jq -r '.token')
 
 # 2. Crear cliente
@@ -463,7 +635,7 @@ curl -X POST https://localhost:5001/api/tenants \
 curl -X POST https://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "tenantId": 2,
+    "tenantId": "660e8400-e29b-41d4-a716-446655441111",
     "rutUsuario": "11111111-1",
     "nombre": "Admin Optica",
     "email": "admin@mioptica.cl",

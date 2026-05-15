@@ -1,5 +1,5 @@
 export interface LoginRequest {
-  tenantId: number;
+  tenantId: string;  // UUID — UNIQUEIDENTIFIER en SQL Server
   rut: string;
   password: string;
 }
@@ -7,7 +7,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   expiresIn: number;
-  userId: number;
+  userId: string;    // UUID
   userName: string;
-  tenantId: number;
+  tenantId: string;  // UUID
 }

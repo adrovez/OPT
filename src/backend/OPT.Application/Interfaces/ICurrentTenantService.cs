@@ -10,7 +10,7 @@ public interface ICurrentTenantService
     /// TenantId del usuario autenticado.
     /// Lanza InvalidOperationException si no hay usuario autenticado.
     /// </summary>
-    int TenantId { get; }
+    Guid TenantId { get; }
 
     /// <summary>RUT del usuario autenticado.</summary>
     string RutUsuario { get; }

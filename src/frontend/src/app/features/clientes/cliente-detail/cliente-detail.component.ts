@@ -44,16 +44,30 @@ import { RegionWithComunas } from '../../../core/models/region.model';
         <!-- Header -->
         <div class="mb-6">
 
-          <!-- Botón volver -->
-          <button (click)="volver()"
-            class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600
-                   transition-colors mb-5 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-lg px-1"
-            aria-label="Volver al listado">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            Volver
-          </button>
+          <!-- Barra superior: volver + acciones -->
+          <div class="flex items-center justify-between mb-5">
+            <button (click)="volver()"
+              class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600
+                     transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-lg px-1"
+              aria-label="Volver al listado">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Volver
+            </button>
+            <button (click)="irAnamnesis()"
+              class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-teal-700
+                     bg-teal-50 hover:bg-teal-100 rounded-xl transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-teal-500"
+              aria-label="Gestionar anamnesis del cliente">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414
+                     a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Anamnesis
+            </button>
+          </div>
 
           <!-- Card de identidad -->
           <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -254,10 +268,14 @@ export class ClienteDetailComponent implements OnInit {
   private regiones: RegionWithComunas[] = [];
 
   // ── Ciclo de vida ─────────────────────────────────────────────────────────
-  ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+  // Regex básico para validar formato UUID v4
+  private static readonly UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    if (!id || isNaN(id)) {
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
+
+    if (!ClienteDetailComponent.UUID_RE.test(id)) {
       this.error.set('ID de cliente inválido.');
       this.loading.set(false);
       return;
@@ -296,6 +314,10 @@ export class ClienteDetailComponent implements OnInit {
   // ── Navegación ────────────────────────────────────────────────────────────
   volver(): void {
     this.router.navigate(['/clientes']);
+  }
+
+  irAnamnesis(): void {
+    this.router.navigate(['/clientes', this.route.snapshot.paramMap.get('id'), 'anamnesis']);
   }
 
 }

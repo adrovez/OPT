@@ -1,229 +1,252 @@
 # Frontend Technical Manual - OPT System
 
-## Overview
+> **Última actualización:** 2026-05-15 (Sesión 9 — Refleja arquitectura real: Reactive Forms, standalone, Anamnesis)
 
-The OPT frontend is built with **Angular 21** using modern standalone components and **Signal Forms** for reactive form handling. The UI is styled with **Tailwind CSS** following a custom design system.
+## Stack Tecnológico
 
-## Technology Stack
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
 | Angular | 21.0.5 | Framework (standalone components) |
-| TypeScript | 5.x | Type-safe JavaScript |
-| Tailwind CSS | 4.2.4 | Utility-first CSS framework |
-| Angular Signals | Built-in | Reactive state management |
-| Signal Forms | Built-in | Modern form handling (@angular/forms/signals) |
+| TypeScript | ~5.9.2 | Tipado estático estricto |
+| Tailwind CSS | 4.2.4 | Estilos utility-first |
+| Angular Signals | Built-in 21 | Estado reactivo (`signal()`, `computed()`) |
+| Reactive Forms | `@angular/forms` | Formularios (`FormBuilder`, `FormGroup`, `FormArray`) |
+| RxJS | ~7.8.0 | Observables y operadores |
+| SweetAlert2 | 11.26.24 | Diálogos de confirmación y notificaciones |
 
-## Project Initialization
-
-The project was created using the **angular-new-app** skill with the following command:
-
-```bash
-npx ng new opt-frontend --directory="frontend" --style=css --routing --skip-git --interactive=false --ai-config=none --ssr=false
-```
-
-Tailwind CSS was added via:
-
-```bash
-npx ng add tailwindcss --skip-confirmation
-```
-
-## Architecture
-
-### Component Structure
-
-```
-src/app/
-├── login/              # Authentication module
-├── cliente/           # Client management module
-│   ├── lista/         # List view with pagination
-│   └── formulario/   # Create/Edit form
-├── services/           # API communication layer
-├── models/            # TypeScript interfaces
-├── app.config.ts      # App configuration
-└── app.routes.ts     # Route definitions
-```
-
-### Key Design Decisions
-
-1. **Standalone Components**: No NgModules, each component is self-contained
-2. **Signal Forms**: Replaced Reactive Forms for better type safety and reactivity
-3. **Lazy Loading**: All feature modules use `loadComponent()` for on-demand loading
-4. **Service Layer**: All API calls go through services (never in components)
-5. **Tailwind CSS**: Utility-first approach with custom design tokens in `@theme`
-
-## Signal Forms Implementation
-
-### Model Definition
-
-```typescript
-import { form, FormField, submit, required } from '@angular/forms/signals';
-
-// Model with initial values (NEVER use null)
-loginModel = signal({
-  rutUsuario: '',
-  password: '',
-  tenantId: 0
-});
-
-// Form with validation schema
-loginForm = form(this.loginModel, (s) => {
-  required(s.rutUsuario, { message: 'El RUT es requerido' });
-  required(s.password, { message: 'La contraseña es requerida' });
-});
-```
-
-### Template Binding
-
-```html
-<!-- Bind with [formField] directive -->
-<input type="text" [formField]="loginForm.rutUsuario" class="input-field">
-
-<!-- Access field state by calling it -->
-@if (loginForm.rutUsuario().touched() && loginForm.rutUsuario().errors().length > 0) {
-  <span>{{ loginForm.rutUsuario().errors()[0].message }}</span>
-}
-```
-
-### Submission
-
-```typescript
-login() {
-  submit(this.loginForm, async () => {
-    // Only runs if form is valid
-    const formData = this.loginModel();
-    this.auth.login(formData).subscribe({ ... });
-  });
-}
-```
-
-## Design System
-
-### Custom Theme (styles.css)
-
-```css
-@theme {
-  /* Primary Colors - Blue Optico */
-  --color-primary-50: #eff6ff;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-900: #1e3a8a;
-
-  /* Status Colors */
-  --color-success: #22c55e;
-  --color-warning: #eab308;
-  --color-error: #ef4444;
-}
-```
-
-### Reusable Component Classes
-
-```css
-@layer components {
-  .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
-           focus:outline-none focus:ring-2 focus:ring-primary-500
-           transition-all duration-200;
-  }
-
-  .btn-primary {
-    @apply w-full flex justify-center py-2.5 px-4 
-           bg-primary-600 hover:bg-primary-700 text-white
-           rounded-lg shadow-sm text-sm font-medium
-           focus:outline-none focus:ring-2 focus:ring-offset-2;
-  }
-}
-```
-
-## Authentication Flow
-
-1. User enters credentials in Login component
-2. `Auth` service calls `POST /api/Auth/login`
-3. On success, JWT token is stored in `localStorage`
-4. User is redirected to `/clientes`
-5. Token should be attached to subsequent API requests (TODO: HTTP Interceptor)
-
-## Routing Configuration
-
-```typescript
-export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'login', loadComponent: () => import('./login/login').then(m => m.Login) },
-  { path: 'clientes', loadComponent: () => import('./cliente/lista/lista').then(m => m.Lista) },
-  { path: 'clientes/nuevo', loadComponent: () => import('./cliente/formulario/formulario').then(m => m.Formulario) },
-  { path: 'clientes/editar/:id', loadComponent: () => import('./cliente/formulario/formulario').then(m => m.Formulario) },
-];
-```
-
-## API Services
-
-### Auth Service
-
-```typescript
-@Injectable({ providedIn: 'root' })
-export class Auth {
-  private apiUrl = 'http://localhost:5005/api/Auth';
-
-  login(credentials: LoginRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials);
-  }
-}
-```
-
-### Cliente Service
-
-```typescript
-@Injectable({ providedIn: 'root' })
-export class ClienteService {
-  private apiUrl = 'http://localhost:5005/api/Clientes';
-
-  getClientes(page = 1, pageSize = 20, search?: string): Observable<any> { ... }
-  getCliente(id: number): Observable<Cliente> { ... }
-  createCliente(cliente: CreateClienteDto): Observable<any> { ... }
-  updateCliente(id: number, cliente: UpdateClienteDto): Observable<any> { ... }
-  deleteCliente(id: number): Observable<any> { ... }
-}
-```
-
-## Build & Deployment
-
-### Development
+## Comandos de Desarrollo
 
 ```bash
 cd src/frontend
-npx ng serve
-# App runs on http://localhost:4200
+
+npm install         # instalar dependencias
+npm start           # servidor dev: http://localhost:4200
+npm run build       # build producción → dist/frontend/
+npm run test        # unit tests con Vitest
+npm run lint        # linting TypeScript
 ```
 
-### Production Build
+---
 
-```bash
-npx ng build
-# Output in dist/opt-frontend/
+## Arquitectura
+
+### Estructura de directorios
+
+```
+src/app/
+├── core/                          # Lógica compartida (singleton)
+│   ├── guards/
+│   │   └── auth.guard.ts          # CanActivateFn — redirige a /login si no hay token
+│   ├── interceptors/
+│   │   └── auth.interceptor.ts    # Inyecta Authorization: Bearer <token> en cada request
+│   ├── models/
+│   │   ├── auth.model.ts          # LoginRequest, LoginResponse
+│   │   ├── cliente.model.ts       # Cliente, CreateClienteDto, UpdateClienteDto, PaginatedResponse<T>
+│   │   ├── region.model.ts        # RegionWithComunas, ComunaItem
+│   │   └── anamnesis.model.ts     # AnamnesisDto, CreateAnamnesisRequest, UpdateAnamnesisRequest
+│   ├── services/
+│   │   ├── auth.service.ts        # login(), logout(), currentUser signal
+│   │   ├── cliente.service.ts     # CRUD clientes + paginación
+│   │   ├── region.service.ts      # getRegionesWithComunas() con shareReplay(1)
+│   │   └── anamnesis.service.ts   # CRUD anamnesis por clienteId
+│   └── validators/
+│       └── rut.validator.ts       # ValidatorFn para RUT chileno + formatRut()
+│
+├── features/                      # Módulos de dominio (lazy-loaded)
+│   ├── auth/
+│   │   └── login/
+│   │       └── login.component.ts
+│   ├── clientes/
+│   │   ├── clientes-list/         # Lista paginada con búsqueda + modal form
+│   │   ├── cliente-form/          # Formulario crear/editar (modal overlay)
+│   │   └── cliente-detail/        # Vista detalle solo lectura + botón Anamnesis
+│   └── anamnesis/
+│       ├── anamnesis-list/        # Página CRUD de anamnesis para un cliente
+│       └── anamnesis-form/        # Formulario modal crear/editar
+│
+├── layout/
+│   └── main-layout/               # Sidebar + router-outlet (envuelve rutas protegidas)
+│
+├── app.routes.ts                  # Definición de rutas con lazy loading
+├── app.config.ts                  # Providers: Router, HttpClient, Interceptors
+└── app.ts / app.html              # Componente raíz
 ```
 
-## Common Pitfalls (Lessons Learned)
+### Flujo de navegación
 
-| Error | Cause | Solution |
-|-------|------|-----------|
-| `Property 'value' does not exist on type 'FormField'` | Not calling field to access state | Use `form.field().value()` not `form.field.value()` |
-| `TS2774: This condition will always return true` | Signal not called in template | Use `errorMessage()` not `errorMessage` in `@if` |
-| `NG8022: Setting 'disabled' attribute is not allowed` | Conflicting with `[formField]` | Use `disabled()` rule in form schema, not `[disabled]` attribute |
-| `Module has no exported member 'FormState'` | Wrong import | Use `FieldState` concepts, not `FormState` (doesn't exist) |
+```
+/ → /clientes                           (redirect)
+/login                                  → LoginComponent (anónimo)
+/clientes                               → ClientesListComponent (JWT requerido)
+/clientes/:id                           → ClienteDetailComponent (JWT requerido)
+/clientes/:id/anamnesis                 → AnamnesisListComponent (JWT requerido)
+```
 
-## TODO / Next Steps
+Todas las rutas bajo el `MainLayoutComponent` (sidebar + header) requieren `authGuard`.
 
-- [ ] Add HTTP Interceptor for JWT token injection
-- [ ] Add route guards for authentication
-- [ ] Implement Contactos module
-- [ ] Add Tenant selection dropdown in login
-- [ ] Implement logout functionality
-- [ ] Add unit tests
-- [ ] Set up CI/CD for frontend
-- [ ] Configure environment-specific API URLs
+---
 
-## References
+## Patrones de Implementación
 
-- Angular Signal Forms: `C:\Adrovez\GitHub\OPT\skills\angular-developer\references\signal-forms.md`
-- Tailwind Customization: `C:\Adrovez\GitHub\OPT\skills\ui-ux-pro-max\ui-styling\references\tailwind-customization.md`
-- Component Specs: `C:\Adrovez\GitHub\OPT\skills\ui-ux-pro-max\design-system\references\component-specs.md`
+### Formularios (Reactive Forms)
+
+Todos los formularios usan `FormBuilder` + `FormGroup`. No se usa Signal Forms (librería descartada).
+
+```typescript
+readonly form = this.fb.group({
+  nombre:    ['', Validators.required],
+  mail:      ['', [Validators.email]],
+  idComuna:  [null as number | null],
+  contactos: this.fb.array([]),     // FormArray para listas dinámicas
+});
+
+// Clase CSS dinámica según estado del campo
+fieldClass(field: string): string {
+  const c = this.form.get(field);
+  return c?.invalid && c?.touched
+    ? 'border-red-300 bg-red-50'
+    : 'border-gray-200 bg-white hover:border-gray-300';
+}
+```
+
+### Estado reactivo (Signals)
+
+```typescript
+readonly clientes = signal<Cliente[]>([]);
+readonly loading  = signal(false);
+readonly total    = signal(0);
+
+// En template: @if (loading()) { ... } @else { ... }
+// En código:   this.loading.set(true);
+//              this.clientes.update(list => list.filter(...));
+```
+
+### Modales
+
+Los formularios son componentes standalone que se renderizan con `@if (showForm())` en la plantilla del componente padre. Usan un overlay con `fixed inset-0 bg-black/40 backdrop-blur-sm z-40`.
+
+```typescript
+// Padre declara signals y pasa al hijo via @Input
+readonly showForm      = signal(false);
+readonly seleccionado  = signal<T | null>(null);
+
+// Hijo emite outputs
+readonly saved     = output<void>();
+readonly cancelled = output<void>();
+```
+
+### Servicios HTTP
+
+Todos los servicios son `providedIn: 'root'` e inyectan `HttpClient`. El interceptor `auth.interceptor.ts` agrega el token JWT automáticamente.
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class AnamnesisService {
+  private readonly http    = inject(HttpClient);
+  private readonly apiUrl  = `${environment.apiUrl}/Anamnesis`;
+
+  getByCliente(clienteId: string): Observable<AnamnesisDto[]> {
+    return this.http.get<AnamnesisDto[]>(this.apiUrl, {
+      params: new HttpParams().set('clienteId', clienteId),
+    });
+  }
+}
+```
+
+---
+
+## Módulos Implementados
+
+| Módulo | Rutas | Descripción |
+|--------|-------|-------------|
+| Auth | `/login` | Login con RUT, password y tenantId |
+| Clientes | `/clientes`, `/clientes/:id` | Lista paginada + detalle. Form como modal. |
+| Anamnesis | `/clientes/:id/anamnesis` | Historial médico por cliente. Accedido desde detalle del cliente. |
+
+### Módulo Anamnesis — detalles
+
+**Acceso:** Botón "Anamnesis" (color teal) en `ClienteDetailComponent`.
+
+**`AnamnesisListComponent`** (`/clientes/:id/anamnesis`):
+- Lee `clienteId` desde `ActivatedRoute.snapshot.paramMap`
+- Valida UUID con regex antes de llamar a la API
+- Carga nombre del cliente (`ClienteService.getCliente`) para el header
+- Tabla con badges de condiciones: Hipertensión (rojo), Diabetes (ámbar), Alergias (verde), Usa lentes (azul)
+- Eliminación optimista: `registros.update()` sin recargar la lista completa
+- Abre `AnamnesisFormComponent` como modal inline con `@if (showForm())`
+
+**`AnamnesisFormComponent`** (modal):
+- `input.required<string>()` para `clienteId` — obligatorio siempre
+- `input<AnamnesisDto | null>()` para `anamnesis` — `null` = modo crear
+- Checkboxes para 4 condiciones + textarea observación (máx 1000 chars)
+- Contador de caracteres en tiempo real
+- `output<void>()` `saved` y `cancelled`
+
+---
+
+## Convención de Tipos
+
+| Campo | Tipo TypeScript | Tipo BD |
+|-------|----------------|---------|
+| IDs de entidades (clienteId, tenantId, etc.) | `string` (UUID) | `UNIQUEIDENTIFIER` |
+| IDs de catálogos (idComuna, idRegion) | `number` | `INT IDENTITY` |
+| Fechas | `string` (ISO 8601) | `DATETIME2` |
+| Flags de condición (hipertension, etc.) | `boolean` | `BIT` |
+
+---
+
+## Manejo de Errores
+
+Los componentes muestran errores de API via **SweetAlert2**:
+
+```typescript
+Swal.fire({
+  icon: 'error',
+  title: 'Error al guardar',
+  text: err.error?.message ?? 'Intente nuevamente.',
+  confirmButtonColor: '#2563eb',
+  confirmButtonText: 'Cerrar',
+});
+```
+
+Para confirmaciones de eliminación:
+```typescript
+Swal.fire({
+  icon: 'warning',
+  title: '¿Eliminar registro?',
+  showCancelButton: true,
+  confirmButtonColor: '#dc2626',
+  reverseButtons: true,
+}).then((result) => {
+  if (!result.isConfirmed) return;
+  // llamar al servicio...
+});
+```
+
+Los servicios nunca manejan errores internamente — se propagan al componente.
+
+---
+
+## Variables de Entorno
+
+```typescript
+// src/environments/environment.ts
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:5005/api',
+  defaultTenantId: '6003e976-f14a-f111-ba1e-588a5a073a51',
+};
+```
+
+---
+
+## Referencia Rápida Anti-patrones
+
+| ❌ No hacer | ✅ Hacer en su lugar |
+|------------|---------------------|
+| Llamar API desde componentes | Usar servicios en `core/services/` |
+| Usar `NgModule` | Standalone components únicamente |
+| Usar `any` sin comentario | Tipado explícito con interfaces |
+| Usar `localStorage` para datos de sesión | Solo el JWT token va en `localStorage` |
+| Lógica de negocio en templates | Mover a métodos del componente o servicio |
+| `number` para IDs de entidades | `string` (UUID) para todas las entidades de negocio |

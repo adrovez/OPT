@@ -7,11 +7,12 @@ import {
   UpdateClienteDto,
   PaginatedResponse,
 } from '../models/cliente.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5005/api/Clientes';
+  private readonly apiUrl = `${environment.apiUrl}/Clientes`;
 
   getClientes(page = 1, pageSize = 20, search?: string): Observable<PaginatedResponse<Cliente>> {
     let params = new HttpParams()
@@ -21,7 +22,7 @@ export class ClienteService {
     return this.http.get<PaginatedResponse<Cliente>>(this.apiUrl, { params });
   }
 
-  getCliente(id: number): Observable<Cliente> {
+  getCliente(id: string): Observable<Cliente> {
     return this.http.get<Cliente>(`${this.apiUrl}/${id}`);
   }
 
@@ -29,11 +30,11 @@ export class ClienteService {
     return this.http.post<Cliente>(this.apiUrl, cliente);
   }
 
-  updateCliente(id: number, cliente: UpdateClienteDto): Observable<Cliente> {
+  updateCliente(id: string, cliente: UpdateClienteDto): Observable<Cliente> {
     return this.http.put<Cliente>(`${this.apiUrl}/${id}`, cliente);
   }
 
-  deleteCliente(id: number): Observable<void> {
+  deleteCliente(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

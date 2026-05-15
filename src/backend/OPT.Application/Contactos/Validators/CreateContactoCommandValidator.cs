@@ -8,7 +8,7 @@ public class CreateContactoCommandValidator : AbstractValidator<CreateContactoCo
     public CreateContactoCommandValidator()
     {
         RuleFor(x => x.ClienteId)
-            .GreaterThan(0).WithMessage("ClienteId inválido.");
+            .NotEmpty().WithMessage("ClienteId inválido.");
 
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre del contacto es requerido.")

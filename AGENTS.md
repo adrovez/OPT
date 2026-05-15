@@ -1,6 +1,6 @@
 # OPT - Project Agent Instructions
 
-> **Última actualización:** 2026-05-07 (Sesión 6 — RegionService, contactos embebidos, vista detalle cliente)
+> **Última actualización:** 2026-05-15 (Sesión 10 — Backend RecetaCristales CRUD completo)
 
 ## About This Project
 
@@ -86,8 +86,11 @@ OPT/
 7. **NUNCA lógica de negocio en controllers** — controllers delegan a handlers via MediatR.
 8. **NUNCA acceder a DbContext directamente desde Application** — usar repositorios.
 9. **NUNCA try/catch en controllers** — el `ExceptionHandlingMiddleware` lo maneja.
-10. **Si cambia el esquema DB**, crear script SQL incremental en `src/basedatos/` (siguiente número secuencial: `009_...`).
+10. **Si cambia el esquema DB**, crear script SQL incremental en `src/basedatos/` (siguiente número secuencial: `011_...`).
 11. **SIEMPRE actualizar `.agents/progress.md`** al finalizar sesiones significativas.
+12. **NUNCA usar `int` como tipo de PK/FK en entidades de negocio** — todas usan `Guid` en C# / `UNIQUEIDENTIFIER` en SQL. Solo catálogos (Region, Comuna) mantienen `int`/`INT IDENTITY`.
+13. **NUNCA usar `GreaterThan(0)` en FluentValidation para IDs tipo Guid** — usar `.NotEmpty()` en su lugar.
+14. **NUNCA usar `int.TryParse`** para parsear claims JWT de TenantId/UsuarioId — usar `Guid.TryParse`.
 
 ---
 
@@ -102,6 +105,8 @@ OPT/
 | **Clientes** | `ClienteController` | JWT | ✅ CRUD + paginado + búsqueda + contactos embebidos |
 | **Contactos** | `ContactoController` | JWT | ✅ CRUD por cliente |
 | **Regiones** | `RegionController` | JWT | ✅ GET /WithComunas (catálogo anidado) |
+| **Anamnesis** | `AnamnesisController` | JWT | ✅ CRUD completo (por ClienteId) |
+| **RecetaCristales** | `RecetaCristalesController` | JWT | ✅ CRUD completo (por ClienteId) |
 
 ### Frontend (Angular)
 
@@ -119,22 +124,32 @@ OPT/
 | Core | `core/guards/auth.guard.ts` (protección de rutas) | ✅ Implementado |
 | Core | `core/validators/rut.validator.ts` (validación RUT chileno) | ✅ Implementado |
 | Core | `core/models/auth.model.ts`, `cliente.model.ts`, `region.model.ts` | ✅ Implementado |
+| Core | `core/models/anamnesis.model.ts` | ✅ Implementado |
+| Core | `core/services/anamnesis.service.ts` | ✅ Implementado (CRUD por clienteId) |
+| Anamnesis | `features/anamnesis/anamnesis-list/anamnesis-list.component.ts` | ✅ Implementado (ruta `/clientes/:id/anamnesis`) |
+| Anamnesis | `features/anamnesis/anamnesis-form/anamnesis-form.component.ts` | ✅ Implementado (modal create/edit) |
+| Core | `core/models/receta-cristales.model.ts` | ⏳ Pendiente (solo backend implementado) |
+| Core | `core/services/receta-cristales.service.ts` | ⏳ Pendiente |
 
 ### Base de Datos (scripts SQL en `src/basedatos/`)
 
 | Script | Tabla / Acción |
 |--------|---------------|
 | `000_creacion_base_datos.sql` | Base de datos `dbOPT` |
-| `001_OPT_Tenant.sql` | OPT_Tenant |
-| `002_OPT_Region.sql` | OPT_Region (16 regiones de Chile) |
-| `003_OPT_Comuna.sql` | OPT_Comuna |
-| `004_OPT_Sucursal.sql` | OPT_Sucursal |
-| `005_OPT_Cliente.sql` | OPT_Cliente (Persona + Empresa unificados, campo `TipoCliente`) |
-| `006_OPT_Contacto.sql` | OPT_Contacto (FKs con ON DELETE corregidas — ver ADR) |
+| `001_OPT_Tenant.sql` | OPT_Tenant — **PK: UNIQUEIDENTIFIER** |
+| `002_OPT_Region.sql` | OPT_Region (catálogo — PK: INT IDENTITY) |
+| `003_OPT_Comuna.sql` | OPT_Comuna (catálogo — PK: INT IDENTITY) |
+| `004_OPT_Sucursal.sql` | OPT_Sucursal — **PK + FK TenantId: UNIQUEIDENTIFIER** |
+| `005_OPT_Cliente.sql` | OPT_Cliente — **PK + FK TenantId: UNIQUEIDENTIFIER** · FK idComuna: INT (catálogo) |
+| `006_OPT_Contacto.sql` | OPT_Contacto — **PK + FK TenantId + FK ClienteId: UNIQUEIDENTIFIER** |
 | `007_datos_iniciales.sql` | Datos semilla idempotentes (regiones, tenant demo) |
-| `008_OPT_Usuario.sql` | OPT_Usuario (Rol NOT NULL DEFAULT 'Operador', índices TenantId+Email) |
+| `008_OPT_Usuario.sql` | OPT_Usuario — **PK + FK TenantId: UNIQUEIDENTIFIER** |
+| `010_OPT_Anamnesis.sql` | OPT_Anamnesis — **PK + FK TenantId + FK ClienteId: UNIQUEIDENTIFIER** |
+| `011_OPT_RecetaCristales.sql` | OPT_RecetaCristales — **PK + FK TenantId + FK ClienteId: UNIQUEIDENTIFIER** · Campos Lejos/Cerca/DP/ADD + flags |
 
-> El próximo script incremental debe ser `009_...`
+> El próximo script incremental debe ser `012_...`
+
+> **Regla de tipo de PK:** Las tablas de negocio (tenant-aware) usan `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()`. Los catálogos compartidos (Region, Comuna) mantienen `INT IDENTITY`. Ver ADR: `.agents/decisions/2026-05-08-migracion-pk-guid.md`
 
 ---
 
@@ -206,6 +221,8 @@ Ver ADR: `.agents/decisions/2026-05-05-backend-middleware.md`
 - ❌ Tablas de negocio sin `TenantId`
 - ❌ Tablas sin campos de auditoría (`CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy`, `IsDeleted`)
 - ❌ FKs con comportamiento CASCADE ambiguo (puede generar rutas múltiples de cascada en SQL Server)
+- ❌ `INT IDENTITY` como PK en tablas de negocio (tenant-aware) — usar `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()`
+- ❌ `NEWID()` como DEFAULT de GUIDs — usar `NEWSEQUENTIALID()` para evitar fragmentación de índice clustered
 
 ---
 

@@ -133,6 +133,13 @@
       <div class="alert alert-red">
         <strong>Regla multi-tenant:</strong> Todas las tablas de negocio tienen columna <code>TenantId</code>. Nunca hacer consultas sin filtrar por TenantId. Un error aquí expone datos de otros clientes.
       </div>
+      <div class="alert alert-blue" style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 16px;margin-top:12px;border-radius:4px;">
+        <strong>Convención de tipos de PK:</strong>
+        Las tablas de negocio (tenant-aware) usan <code>UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()</code> como PK y FK.
+        Se usa <code>NEWSEQUENTIALID()</code> (no <code>NEWID()</code>) para evitar fragmentación del índice clustered.
+        Los catálogos compartidos (<code>OPT_Region</code>, <code>OPT_Comuna</code>) mantienen <code>INT IDENTITY</code>.
+        Ver ADR: <code>.agents/decisions/2026-05-08-migracion-pk-guid.md</code>
+      </div>
 
       <table>
         <tr><th>Tipo</th><th>Tabla</th><th>TenantId</th><th>Descripción</th></tr>
@@ -143,6 +150,8 @@
         <tr><td>Negocio</td><td>OPT_Cliente</td><td>Sí</td><td>Clientes (Persona y Empresa unificados)</td></tr>
         <tr><td>Negocio</td><td>OPT_Contacto</td><td>Sí</td><td>Contactos de clientes Empresa</td></tr>
         <tr><td>Auth</td><td>OPT_Usuario</td><td>Sí</td><td>Usuarios del sistema (login JWT)</td></tr>
+        <tr><td>Negocio</td><td>OPT_Anamnesis</td><td>Sí</td><td>Historial de salud del cliente</td></tr>
+        <tr><td>Negocio</td><td>OPT_RecetaCristales</td><td>Sí</td><td>Receta óptica (lejos/cerca/DP/ADD + flags)</td></tr>
       </table>
 
       <!-- SCRIPTS -->
@@ -160,10 +169,12 @@
         <tr><td><span class="script-num">006</span> OPT_Contacto.sql</td><td>Contactos de clientes Empresa</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">007</span> datos_iniciales.sql</td><td>16 regiones + Tenant demo (idempotente)</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices)</td><td><span class="status-ok">✓ corregido</span></td></tr>
+        <tr><td><span class="script-num">010</span> OPT_Anamnesis.sql</td><td>Historial de salud del cliente (antecedentes médicos)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">011</span> OPT_RecetaCristales.sql</td><td>Receta óptica — Lejos/Cerca (OD, OI, DP) + ADD + flags + auditoría</td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> Para nuevas tablas o cambios de esquema, crear <code>009_...</code>, <code>010_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
+        <strong>Próximo script:</strong> Para nuevas tablas o cambios de esquema, crear <code>012_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
       </div>
 
       <!-- DIAGRAMA -->
@@ -263,7 +274,7 @@
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">TenantId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td><span class="pk">TenantId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
           <tr><td>RutEmpresa</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE (filtrado IsDeleted=0)</td></tr>
           <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
@@ -284,8 +295,8 @@
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">ClienteId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
-          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td><span class="pk">ClienteId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
           <tr><td>TipoCliente</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK: 'Persona' | 'Empresa'</td></tr>
           <tr><td>NumeroDocumento</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(200)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
@@ -314,8 +325,8 @@
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">UsuarioId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
-          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td><span class="pk">UsuarioId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
           <tr><td>RutUsuario</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
           <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td>Tiene índice IX_Email</td></tr>
@@ -335,9 +346,9 @@
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Notas</th></tr>
-          <tr><td><span class="pk">ContactoId</span></td><td>INT IDENTITY</td><td class="nn">NOT NULL</td><td>PK</td></tr>
-          <tr><td><span class="fk">TenantId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>FK → OPT_Tenant (<strong>NO ACTION</strong>)</td></tr>
-          <tr><td><span class="fk">ClienteId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>FK → OPT_Cliente (<strong>CASCADE</strong>)</td></tr>
+          <tr><td><span class="pk">ContactoId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>PK — GUID</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK → OPT_Tenant (<strong>NO ACTION</strong>)</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK → OPT_Cliente (<strong>CASCADE</strong>)</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td></td></tr>
           <tr><td>Email, Telefono, Cargo</td><td>NVARCHAR</td><td>NULL</td><td></td></tr>
           <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td>Default 1</td></tr>

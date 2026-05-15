@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -23,12 +24,12 @@ import { AuthService } from '../../../core/services/auth.service';
             </svg>
           </div>
           <h1 class="text-2xl font-bold text-gray-900">Sistema OPT</h1>
-          <p class="text-sm text-gray-500 mt-1">Gestión de Óptica</p>
+          <p class="text-sm text-gray-500 mt-1">Gestion de Optica</p>
         </div>
 
         <!-- Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h2 class="text-lg font-semibold text-gray-900 mb-6">Iniciar sesión</h2>
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Iniciar sesion</h2>
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="space-y-4">
 
@@ -52,17 +53,17 @@ import { AuthService } from '../../../core/services/auth.service';
               }
             </div>
 
-            <!-- Contraseña -->
+            <!-- Contrasena -->
             <div>
               <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
-                Contraseña
+                Contrasena
               </label>
               <div class="relative">
                 <input
                   id="password"
                   [type]="showPassword() ? 'text' : 'password'"
                   formControlName="password"
-                  placeholder="••••••••"
+                  placeholder="........"
                   autocomplete="current-password"
                   class="w-full px-3.5 py-2.5 pr-10 text-sm rounded-lg border transition-colors
                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -72,7 +73,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   type="button"
                   (click)="showPassword.update((v) => !v)"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  [attr.aria-label]="showPassword() ? 'Ocultar' : 'Mostrar'"
                 >
                   @if (showPassword()) {
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -93,7 +94,7 @@ import { AuthService } from '../../../core/services/auth.service';
                 </button>
               </div>
               @if (isInvalid('password')) {
-                <p class="mt-1.5 text-xs text-red-600" role="alert">La contraseña es obligatoria</p>
+                <p class="mt-1.5 text-xs text-red-600" role="alert">La contrasena es obligatoria</p>
               }
             </div>
 
@@ -108,7 +109,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </div>
             }
 
-            <!-- Botón -->
+            <!-- Boton submit -->
             <button
               type="submit"
               [disabled]="loading()"
@@ -149,8 +150,8 @@ export class LoginComponent {
   readonly errorMessage = signal('');
   readonly currentYear = new Date().getFullYear();
 
-  // tenantId fijo en 1 para desarrollo — en producción vendrá del subdominio o configuración
-  private readonly DEFAULT_TENANT_ID = 1;
+  // TenantId leido desde environment.ts (dev) o environment.prod.ts (produccion).
+  private readonly DEFAULT_TENANT_ID = environment.defaultTenantId;
 
   readonly loginForm = this.fb.group({
     rut: ['', Validators.required],
@@ -186,8 +187,8 @@ export class LoginComponent {
         this.loading.set(false);
         this.errorMessage.set(
           err.status === 401
-            ? 'RUT o contraseña incorrectos.'
-            : (err.error?.message as string | undefined) ?? 'Error al iniciar sesión. Intente nuevamente.',
+            ? 'RUT o contrasena incorrectos.'
+            : (err.error?.message as string | undefined) ?? 'Error al iniciar sesion. Intente nuevamente.',
         );
       },
     });

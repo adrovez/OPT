@@ -13,7 +13,7 @@ namespace OPT.Infrastructure.Persistence.Repositories;
 public class ClienteRepository(OPTDbContext context) : IClienteRepository
 {
     public async Task<PagedResult<Cliente>> GetPagedAsync(
-        int tenantId, string? tipoCliente, string? busqueda,
+        Guid tenantId, string? tipoCliente, string? busqueda,
         int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = context.Clientes
@@ -48,14 +48,14 @@ public class ClienteRepository(OPTDbContext context) : IClienteRepository
     }
 
     public async Task<Cliente?> GetByIdAsync(
-        int clienteId, int tenantId, CancellationToken cancellationToken = default)
+        Guid clienteId, Guid tenantId, CancellationToken cancellationToken = default)
         => await context.Clientes
             .Include(c => c.Contactos.OrderBy(ct => ct.Nombre))
             .FirstOrDefaultAsync(c => c.ClienteId == clienteId && c.TenantId == tenantId,
                 cancellationToken);
 
     public async Task<bool> ExisteDocumentoAsync(
-        string numeroDocumento, int tenantId, int? excludeClienteId = null,
+        string numeroDocumento, Guid tenantId, Guid? excludeClienteId = null,
         CancellationToken cancellationToken = default)
     {
         var query = context.Clientes
@@ -83,7 +83,7 @@ public class ClienteRepository(OPTDbContext context) : IClienteRepository
     }
 
     public async Task SoftDeleteAsync(
-        int clienteId, int tenantId, string deletedBy,
+        Guid clienteId, Guid tenantId, string deletedBy,
         CancellationToken cancellationToken = default)
     {
         var cliente = await context.Clientes

@@ -576,7 +576,7 @@ export class ClienteFormComponent implements OnInit {
 
     this.loading.set(true);
 
-    const tenantId = this.authService.currentUser()?.tenantId ?? 1;
+    const tenantId = this.authService.currentUser()?.tenantId ?? '';
     const values = this.form.getRawValue();
     const contactos = this.buildContactos();
     const existing = this.cliente();

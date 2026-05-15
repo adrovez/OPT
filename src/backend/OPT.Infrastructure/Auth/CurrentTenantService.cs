@@ -10,14 +10,14 @@ namespace OPT.Infrastructure.Auth;
 /// </summary>
 public class CurrentTenantService(IHttpContextAccessor httpContextAccessor) : ICurrentTenantService
 {
-    public int TenantId
+    public Guid TenantId
     {
         get
         {
             var claim = httpContextAccessor.HttpContext?.User
                 .FindFirstValue("tenant_id");
 
-            if (string.IsNullOrEmpty(claim) || !int.TryParse(claim, out var tenantId))
+            if (string.IsNullOrEmpty(claim) || !Guid.TryParse(claim, out var tenantId))
                 throw new InvalidOperationException("No hay usuario autenticado o el TenantId es inválido.");
 
             return tenantId;

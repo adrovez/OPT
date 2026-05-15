@@ -6,8 +6,8 @@ namespace OPT.Domain.Entities;
 /// </summary>
 public class Usuario
 {
-    public int UsuarioId { get; set; }
-    public int TenantId { get; set; }
+    public Guid UsuarioId { get; set; }
+    public Guid TenantId { get; set; }
 
     /// <summary>RUT del usuario (único por Tenant, soft-deleted excluido)</summary>
     public string RutUsuario { get; set; } = string.Empty;

@@ -49,11 +49,11 @@ public class ClienteController(IMediator mediator, ICurrentTenantService tenantS
     // ── GET /api/cliente/{id} ───────────────────────────────────────────────
 
     /// <summary>Obtiene el detalle de un cliente por ID.</summary>
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ClienteDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCliente(
-        int id, CancellationToken cancellationToken)
+        Guid id, CancellationToken cancellationToken)
     {
         var query = new GetClienteByIdQuery(id, tenantService.TenantId);
         var cliente = await mediator.Send(query, cancellationToken);
@@ -102,12 +102,12 @@ public class ClienteController(IMediator mediator, ICurrentTenantService tenantS
     // ── PUT /api/cliente/{id} ───────────────────────────────────────────────
 
     /// <summary>Actualiza datos de un cliente existente.</summary>
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateCliente(
-        int id,
+        Guid id,
         [FromBody] UpdateClienteRequest request,
         CancellationToken cancellationToken)
     {
@@ -132,12 +132,12 @@ public class ClienteController(IMediator mediator, ICurrentTenantService tenantS
     // ── DELETE /api/cliente/{id} ────────────────────────────────────────────
 
     /// <summary>Elimina lógicamente un cliente (IsDeleted = true).</summary>
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin,Operador")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCliente(
-        int id, CancellationToken cancellationToken)
+        Guid id, CancellationToken cancellationToken)
     {
         var command = new DeleteClienteCommand(id, tenantService.TenantId, tenantService.RutUsuario);
         await mediator.Send(command, cancellationToken);

@@ -2,7 +2,7 @@
 
 > **Alcance:** solo `src/frontend/`
 > **Objetivo:** que cualquier agente contribuya sin romper la arquitectura standalone, el flujo de autenticación ni las convenciones de Angular 21.
-> **Última actualización:** 2026-05-07 (Sesión 6)
+> **Última actualización:** 2026-05-08 (Sesión 8 — Modelos Angular actualizados a UUID string)
 
 ---
 
@@ -232,7 +232,42 @@ ng generate component features/<modulo>/<nombre> --standalone
 
 ---
 
-## 12) Anti-patrones (NUNCA hacer esto)
+## 12) Regla de tipos: IDs de entidades de negocio son `string` (UUID)
+
+Desde la Sesión 7 (migración PKs INT → GUID), los IDs de entidades de negocio son `UNIQUEIDENTIFIER` en SQL Server. En TypeScript/JSON se representan como `string`.
+
+```typescript
+// ✅ CORRECTO — entidades de negocio
+export interface Cliente {
+  clienteId: string;   // UUID "3f2e4a1c-..."
+  tenantId:  string;   // UUID
+  idComuna?: number;   // INT — catálogo compartido (Region/Comuna mantienen INT)
+}
+
+// ❌ INCORRECTO
+export interface Cliente {
+  clienteId: number;   // NUNCA número para PKs de negocio
+  tenantId:  number;
+}
+```
+
+**Regla de validación UUID en componentes:**
+```typescript
+// Para validar un id proveniente del router param
+private static readonly UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const id = this.route.snapshot.paramMap.get('id') ?? '';
+if (!ComponentClass.UUID_RE.test(id)) { /* error */ }
+// ❌ INCORRECTO: Number(id) + isNaN(id) — no aplica a GUID
+```
+
+**Entidades que usan string (UUID):** `clienteId`, `tenantId`, `contactoId`, `anamnesisId`, `usuarioId`  
+**Entidades que mantienen number (INT):** `idRegion`, `idComuna`
+
+---
+
+## 13) Anti-patrones (NUNCA hacer esto)
 
 - ❌ Llamar a `HttpClient` directamente desde un componente (usar servicios)
 - ❌ Crear `NgModule` (el proyecto es 100% standalone)
@@ -245,3 +280,5 @@ ng generate component features/<modulo>/<nombre> --standalone
 - ❌ Hardcodear listas de regiones/comunas — siempre usar `RegionService`
 - ❌ Importar `RouterLink` o cualquier otro directive en un componente si no se usa en el template (Angular 21 reporta NG8113)
 - ❌ Suscribirse a un Observable sin destruirlo (`takeUntilDestroyed` es obligatorio en componentes)
+- ❌ Declarar IDs de entidades de negocio como `number` — siempre `string` (UUID). Ver sección 12.
+- ❌ Usar `Number(id)` o `parseInt(id)` para parsear route params de entidades de negocio — usar validación UUID regex

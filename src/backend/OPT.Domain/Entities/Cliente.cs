@@ -6,8 +6,8 @@ namespace OPT.Domain.Entities;
 /// </summary>
 public class Cliente
 {
-    public int ClienteId { get; set; }
-    public int TenantId { get; set; }
+    public Guid ClienteId { get; set; }
+    public Guid TenantId { get; set; }
 
     /// <summary>'Persona' o 'Empresa'</summary>
     public string TipoCliente { get; set; } = string.Empty;

@@ -16,8 +16,8 @@ GO
 
 CREATE TABLE [dbo].[OPT_Cliente]
 (
-    [ClienteId]            INT              IDENTITY(1,1) NOT NULL,
-    [TenantId]             INT              NOT NULL,
+    [ClienteId]            UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    [TenantId]             UNIQUEIDENTIFIER NOT NULL,
     [TipoCliente]          NVARCHAR(20)     NOT NULL,  -- 'Persona' | 'Empresa'
     [NumeroDocumento]      NVARCHAR(20)     NOT NULL,
     [Nombre]               NVARCHAR(200)    NOT NULL,

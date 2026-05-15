@@ -32,4 +32,4 @@ public class AuthController(IMediator mediator) : ControllerBase
 }
 
 /// <summary>Cuerpo del request de login.</summary>
-public record LoginRequest(int TenantId, string Rut, string Password);
+public record LoginRequest(Guid TenantId, string Rut, string Password);

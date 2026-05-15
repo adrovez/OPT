@@ -5,8 +5,8 @@ namespace OPT.Application.Clientes.Commands;
 
 /// <summary>Comando para actualizar datos de un cliente existente.</summary>
 public record UpdateClienteCommand(
-    int ClienteId,
-    int TenantId,
+    Guid ClienteId,
+    Guid TenantId,
     string Nombre,
     string? Direccion,
     int? IdComuna,

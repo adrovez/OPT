@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<IRegionRepository, RegionRepository>();
         services.AddScoped<IComunaRepository, ComunaRepository>();
         services.AddScoped<IContactoRepository, ContactoRepository>();
+        services.AddScoped<IAnamnesisRepository, AnamnesisRepository>();
+        services.AddScoped<IRecetaCristalesRepository, RecetaCristalesRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

@@ -7,9 +7,9 @@ namespace OPT.Application.Contactos.Commands;
 public class CreateContactoCommandHandler(
     IContactoRepository contactoRepository,
     IClienteRepository clienteRepository)
-    : IRequestHandler<CreateContactoCommand, int>
+    : IRequestHandler<CreateContactoCommand, Guid>
 {
-    public async Task<int> Handle(
+    public async Task<Guid> Handle(
         CreateContactoCommand request, CancellationToken cancellationToken)
     {
         // Validar que el cliente exista y pertenezca al tenant

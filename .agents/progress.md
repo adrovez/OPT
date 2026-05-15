@@ -3,11 +3,11 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-07 (Sesión 6 — RegionService, contactos embebidos, vista detalle cliente)
+> Updated: 2026-05-15 (Sesión 10 — Backend RecetaCristales CRUD + documentación actualizada)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts 000–008, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario
-- [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas)
+- [x] Base de datos: scripts 000–010, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis
+- [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), **Anamnesis**
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21: Login, Clientes (lista + form + detalle), Layout, AuthGuard, HTTP Interceptor JWT, RUT Validator
 - [x] Frontend: RegionService con shareReplay (comunas desde API, no hardcodeado)
@@ -16,6 +16,11 @@ Track work sessions and current state for continuity between AI agent sessions.
 - [x] Correcciones SQL: FKs OPT_Contacto, índices OPT_Usuario, idempotencia datos iniciales
 - [x] Documentación técnica HTML: backend-arquitectura, base-datos, backend-api-reference
 - [x] Memoria IA actualizada: AGENTS.md raíz, src/backend/, src/frontend/, .agents/progress.md
+- [x] **Migración PKs INT → UNIQUEIDENTIFIER (GUID)**: 6 tablas SQL + entidades Domain + repositorios + Application + controllers
+- [x] **Modelos Angular actualizados**: `clienteId`, `tenantId`, `contactoId`, `anamnesisId`, `usuarioId` → `string` (UUID)
+- [x] **Manuales técnicos actualizados**: backend-arquitectura.html, frontend-setup.md, API Reference (tipos GUID)
+- [x] **Frontend Anamnesis**: model, service, anamnesis-list (página `/clientes/:id/anamnesis`), anamnesis-form (modal), botón en cliente-detail
+- [x] **Backend RecetaCristales**: entidad Domain, interfaz Application, Commands/Queries/Validators, repositorio Infrastructure, DbContext, DI, Controller CRUD completo (`/api/RecetaCristales`)
 
 ### Completed This Session (Sesión 6)
 - **Backend — nuevas features:**
@@ -41,16 +46,121 @@ Track work sessions and current state for continuity between AI agent sessions.
   - Memoria IA: `project_opt_estado.md`, `project_opt_reglas.md` (lecciones EF Core, replace strategy, shareReplay)
 
 ### Next Steps Sugeridos
+- [ ] **Frontend RecetaCristales**: model (`receta-cristales.model.ts`), service, lista + formulario modal (igual patrón que Anamnesis), botón en `cliente-detail`
 - [ ] Módulo Sucursal — backend (CRUD) + frontend
-- [ ] Script `009_` para datos de prueba de usuarios con hashes BCrypt reales
+- [ ] Script `012_` para datos de prueba
 - [ ] Unit tests backend con xUnit + Moq (IClienteRepository, handlers)
 - [ ] Validación de formato RUT chileno en FluentValidation (backend)
 - [ ] Dashboard / Home screen en Angular
 - [ ] Módulo Usuarios — gestión de usuarios del tenant (Admin)
+- [ ] Sidebar con acceso directo a Anamnesis (requiere selector de cliente)
 
 ---
 
 ## Session History
+
+### 2026-05-15 - Sesión 10: Backend RecetaCristales CRUD + documentación
+- **Work**: Implementación completa del módulo backend de RecetaCristales. Actualización de todos los archivos de contexto IA y manuales técnicos.
+- **Archivos creados** (15 archivos nuevos):
+  - `OPT.Domain/Entities/RecetaCristales.cs` — entidad con campos Lejos/Cerca (OD, OI, DP), ADD, 4 flags, FechaIngreso, auditoría
+  - `OPT.Application/Interfaces/IRecetaCristalesRepository.cs` — contrato GetByCliente, GetById, Add, Update, SoftDelete
+  - `OPT.Application/RecetaCristales/DTOs/RecetaCristalesDto.cs` — record de respuesta completo
+  - `OPT.Application/RecetaCristales/DTOs/RecetaCristalesMappingExtensions.cs` — alias `RecetaCristalesEntity` para resolver conflicto de nombre namespace
+  - `OPT.Application/RecetaCristales/Commands/Create|Update|DeleteRecetaCristalesCommand.cs` (+ handlers) — 6 archivos
+  - `OPT.Application/RecetaCristales/Queries/GetRecetasByClienteQuery.cs` + Handler, `GetRecetaByIdQuery.cs` + Handler — 4 archivos
+  - `OPT.Application/RecetaCristales/Validators/CreateRecetaCristalesCommandValidator.cs` + Update — 2 archivos
+  - `OPT.Infrastructure/Persistence/Repositories/RecetaCristalesRepository.cs` — implementación con alias tipo
+  - `OPT.API/Controllers/RecetaCristalesController.cs` — CRUD completo en `/api/RecetaCristales`
+- **Archivos modificados** (3 archivos):
+  - `OPT.Infrastructure/Persistence/OPTDbContext.cs` — DbSet + configuración EF (HasMaxLength, HasQueryFilter, FK Restrict, NEWSEQUENTIALID)
+  - `OPT.Infrastructure/DependencyInjection.cs` — registro `IRecetaCristalesRepository`
+- **Lección técnica**: Conflicto C# entre namespace `OPT.Application.RecetaCristales` y clase `RecetaCristales` del dominio. Solución: alias `using RecetaCristalesEntity = OPT.Domain.Entities.RecetaCristales` en los archivos afectados.
+- **Documentación actualizada** (8 archivos):
+  - `AGENTS.md` raíz — tabla backend, tabla DB scripts (011), tabla frontend (pendientes), fecha
+  - `src/backend/AGENTS.md` — interfaces, módulos (sesión 10), entidades, endpoints detallados
+  - `.agents/progress.md` — esta entrada
+  - `docs/api/README.md` — módulo RecetaCristales en tabla + sección de endpoints
+  - `docs/api/frontend-api-contracts.md` — modelos TypeScript RecetaCristales (pendientes)
+  - `docs/technical-manual/base-datos.html` — tabla resumen + script 011
+  - `docs/technical-manual/backend-arquitectura.html` — entidad, interfaz, repositorio, controller
+
+### 2026-05-15 - Sesión 9: Frontend Anamnesis CRUD completo
+- **Work**: Implementación completa del módulo frontend de Anamnesis (modelo, servicio, lista, formulario modal). Actualización de documentación técnica y archivos de contexto IA.
+- **Archivos creados** (4 archivos nuevos):
+  - `src/frontend/src/app/core/models/anamnesis.model.ts` — `AnamnesisDto`, `CreateAnamnesisRequest`, `UpdateAnamnesisRequest`
+  - `src/frontend/src/app/core/services/anamnesis.service.ts` — `getByCliente(clienteId)`, `getById`, `create`, `update`, `delete`
+  - `src/frontend/src/app/features/anamnesis/anamnesis-list/anamnesis-list.component.ts` — página CRUD en `/clientes/:id/anamnesis`; lista con badges de condiciones + modal inline
+  - `src/frontend/src/app/features/anamnesis/anamnesis-form/anamnesis-form.component.ts` — modal create/edit; checkboxes para 4 condiciones + textarea observación
+- **Archivos modificados** (2 archivos):
+  - `src/frontend/src/app/app.routes.ts` — ruta lazy `clientes/:id/anamnesis`
+  - `src/frontend/src/app/features/clientes/cliente-detail/cliente-detail.component.ts` — botón "Anamnesis" (teal) en header + método `irAnamnesis()`
+- **Documentación actualizada** (5 archivos):
+  - `AGENTS.md` raíz — Anamnesis agregado a tablas backend y frontend, fecha actualizada
+  - `.agents/progress.md` — esta entrada
+  - `docs/api/README.md` — módulo Anamnesis en tabla + sección de endpoints
+  - `docs/api/frontend-api-contracts.md` — `UpdateAnamnesisRequest` agregado, tabla servicios actualizada
+  - `docs/technical-manual/frontend-setup.md` — reescrito para reflejar arquitectura real actual
+- **Decisiones de diseño**:
+  - Acceso a Anamnesis desde `cliente-detail` via botón, no desde sidebar (siempre requiere ClienteId)
+  - Validación UUID regex en `ngOnInit` del componente lista (igual que `ClienteDetailComponent`)
+  - Eliminación optimista: `registros.update()` sin recargar toda la lista
+  - `AnamnesisFormComponent` como componente modal reutilizable con `input.required<string>()` para `clienteId`
+
+### 2026-05-08 - Sesión 8: Modelos Angular UUID + Documentación técnica
+- **Work**: Actualización de modelos TypeScript/Angular para reflejar migración GUID. Actualización de archivos de contexto IA y manuales técnicos.
+- **Archivos Angular modificados** (5 archivos):
+  - `core/models/cliente.model.ts` — `clienteId: number → string`, `tenantId: number → string` (con comentarios UUID)
+  - `core/models/auth.model.ts` — `tenantId: number → string`, `userId: number → string`
+  - `core/services/cliente.service.ts` — parámetros `id: number → id: string`
+  - `features/clientes/cliente-detail/cliente-detail.component.ts` — validación UUID regex en lugar de `Number(id) + isNaN`
+  - `features/clientes/clientes-list/clientes-list.component.ts` — state `editarClienteId?: number → string`
+  - `features/clientes/cliente-form/cliente-form.component.ts` — fallback tenantId `?? 1 → ?? ''`
+- **Archivos de contexto IA actualizados** (3 archivos):
+  - `src/frontend/AGENTS.md` — sección 12 nueva (regla tipos UUID), sección 13 anti-patrones UUID, fecha actualizada
+  - `.agents/progress.md` — estado actual + sesión 8 registrada
+- **Manuales técnicos actualizados**: ver tarea #12
+- **Decisiones clave**:
+  - `idComuna` mantiene `number` en TypeScript (FK a catálogo INT)
+  - Validación de ID en router param usa regex UUID, no `Number(id)`
+  - Fallback de `tenantId` en form cambiado de `1` (int inválido) a `''` (string vacío que la API rechaza con 401)
+
+### 2026-05-08 - Sesión 7: Migración PKs INT → GUID
+- **Work**: Cambio de tipo de PK/FK de `INT IDENTITY` a `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()` en todas las entidades de negocio del SaaS.
+- **Motivación**: Seguridad (prevención IDOR), compatibilidad futura con PostgreSQL, generación de IDs distribuida.
+- **Archivos SQL modificados** (6 scripts):
+  - `001_OPT_Tenant.sql` — TenantId UNIQUEIDENTIFIER
+  - `004_OPT_Sucursal.sql` — idSucursal + TenantId UNIQUEIDENTIFIER
+  - `005_OPT_Cliente.sql` — ClienteId + TenantId UNIQUEIDENTIFIER (idComuna INT se mantiene)
+  - `006_OPT_Contacto.sql` — ContactoId + TenantId + ClienteId UNIQUEIDENTIFIER
+  - `008_OPT_Usuario.sql` — UsuarioId + TenantId UNIQUEIDENTIFIER
+  - `010_OPT_Anamnesis.sql` — AnamnesisId + TenantId + ClienteId UNIQUEIDENTIFIER
+- **Archivos Domain modificados** (4 entidades):
+  - `Cliente.cs`, `Usuario.cs`, `Contacto.cs`, `Anamnesis.cs` — propiedades `int` → `Guid`
+- **Archivos Infrastructure modificados**:
+  - `OPTDbContext.cs` — `HasDefaultValueSql("NEWSEQUENTIALID()")` en 4 entidades
+  - `CurrentTenantService.cs` — `Guid.TryParse` + propiedad `Guid TenantId`
+  - `ClienteRepository.cs`, `ContactoRepository.cs`, `UsuarioRepository.cs`, `AnamnesisRepository.cs` — firmas `int` → `Guid`
+- **Archivos Application modificados** (18 archivos):
+  - `ICurrentTenantService.cs` — `Guid TenantId`
+  - `IClienteRepository.cs`, `IContactoRepository.cs`, `IUsuarioRepository.cs`, `IAnamnesisRepository.cs`
+  - DTOs: `ClienteDto`, `ContactoDto`, `AnamnesisDto`
+  - Commands/Queries: Create*, Update*, Delete*, GetBy*, GetAll* de Clientes, Contactos, Anamnesis
+  - Handlers: `CreateClienteCommandHandler`, `CreateContactoCommandHandler`, `CreateAnamnesisCommandHandler` — `IRequest<Guid>`
+  - Validators: `LoginCommandValidator`, `UpdateClienteCommandValidator`, `CreateAnamnesisCommandValidator`, `UpdateAnamnesisCommandValidator`, `CreateContactoCommandValidator` — `.NotEmpty()` en lugar de `.GreaterThan(0)`
+  - Auth: `LoginCommand` (Guid TenantId), `LoginCommandHandler`
+- **Archivos API modificados** (4 controllers):
+  - `ClienteController.cs` — rutas `{id:guid}`, parámetros `Guid`
+  - `ContactoController.cs` — rutas `{clienteId:guid}/{id:guid}`, parámetros `Guid`
+  - `AnamnesisController.cs` — rutas `{id:guid}`, parámetros `Guid`, `CreateAnamnesisRequest.ClienteId: Guid`
+  - `AuthController.cs` — `LoginRequest.TenantId: Guid`
+- **Documentación actualizada**:
+  - `AGENTS.md` raíz — reglas 12-14 agregadas, scripts actualizados, anti-patrones GUID
+  - `src/backend/AGENTS.md` — tabla de entidades con tipos, sección "Regla de tipos PK/FK", anti-patrones GUID
+  - `.agents/decisions/2026-05-08-migracion-pk-guid.md` — ADR completo
+  - `.agents/progress.md` — esta entrada
+  - `docs/api/frontend-api-contracts.md` — IDs actualizados a `string` (UUID)
+- **Decisión clave**: catálogos compartidos (Region, Comuna) mantienen `INT IDENTITY` — no tienen TenantId ni se exponen directamente.
+- **Próximo paso pendiente**: actualizar modelos Angular (`number` → `string` para IDs de negocio).
 
 ### 2026-05-07 - Sesión 6: RegionService, contactos embebidos, vista detalle cliente
 - **Work**: Carga de comunas desde API, contactos en formulario Empresa, página Ver Cliente, mejoras UX header

@@ -12,14 +12,14 @@ namespace OPT.Infrastructure.Persistence.Repositories;
 public class ContactoRepository(OPTDbContext context) : IContactoRepository
 {
     public async Task<IReadOnlyList<Contacto>> GetByClienteAsync(
-        int clienteId, int tenantId, CancellationToken cancellationToken = default)
+        Guid clienteId, Guid tenantId, CancellationToken cancellationToken = default)
         => await context.Contactos
             .Where(c => c.ClienteId == clienteId && c.TenantId == tenantId)
             .OrderBy(c => c.Nombre)
             .ToListAsync(cancellationToken);
 
     public async Task<Contacto?> GetByIdAsync(
-        int contactoId, int tenantId, CancellationToken cancellationToken = default)
+        Guid contactoId, Guid tenantId, CancellationToken cancellationToken = default)
         => await context.Contactos
             .FirstOrDefaultAsync(
                 c => c.ContactoId == contactoId && c.TenantId == tenantId,
@@ -48,7 +48,7 @@ public class ContactoRepository(OPTDbContext context) : IContactoRepository
     }
 
     public async Task SoftDeleteAsync(
-        int contactoId, int tenantId, string deletedBy,
+        Guid contactoId, Guid tenantId, string deletedBy,
         CancellationToken cancellationToken = default)
     {
         var contacto = await context.Contactos
@@ -66,7 +66,7 @@ public class ContactoRepository(OPTDbContext context) : IContactoRepository
     }
 
     public async Task SoftDeleteByClienteAsync(
-        int clienteId, int tenantId, string deletedBy,
+        Guid clienteId, Guid tenantId, string deletedBy,
         CancellationToken cancellationToken = default)
     {
         // IgnoreQueryFilters para acceder también a los ya soft-deleted (idempotente)

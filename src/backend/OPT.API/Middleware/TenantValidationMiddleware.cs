@@ -9,11 +9,11 @@ namespace OPT.API.Middleware;
 /// <summary>
 /// Middleware de validación multi-tenant.
 /// Segunda línea de defensa: después de que UseAuthentication() verifica la firma del JWT,
-/// este middleware garantiza que el claim <c>tenant_id</c> esté presente y sea un entero válido > 0
+/// este middleware garantiza que el claim <c>tenant_id</c> esté presente y sea un GUID válido
 /// en todas las rutas que requieren autenticación.
 ///
 /// Protege contra JWTs manipulados que hayan pasado la verificación de firma
-/// pero tengan un tenant_id inválido, nulo o cero.
+/// pero tengan un tenant_id inválido o ausente.
 /// </summary>
 public class TenantValidationMiddleware(
     RequestDelegate next,
@@ -31,7 +31,7 @@ public class TenantValidationMiddleware(
         {
             var tenantClaim = context.User.FindFirstValue("tenant_id");
 
-            if (!int.TryParse(tenantClaim, out var tenantId) || tenantId <= 0)
+            if (string.IsNullOrWhiteSpace(tenantClaim) || !Guid.TryParse(tenantClaim, out var tenantId) || tenantId == Guid.Empty)
             {
                 logger.LogWarning(
                     "TenantId inválido o ausente en JWT para {Method} {Path}. Claim: '{TenantClaim}'",

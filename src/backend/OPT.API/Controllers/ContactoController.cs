@@ -14,7 +14,7 @@ namespace OPT.API.Controllers;
 /// los datos del Tenant del usuario autenticado.
 /// </summary>
 [ApiController]
-[Route("api/Clientes/{clienteId:int}/Contactos")]
+[Route("api/Clientes/{clienteId:guid}/Contactos")]
 [Authorize]
 public class ContactoController(IMediator mediator, ICurrentTenantService tenantService)
     : ControllerBase
@@ -25,7 +25,7 @@ public class ContactoController(IMediator mediator, ICurrentTenantService tenant
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ContactoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetContactos(
-        int clienteId, CancellationToken cancellationToken)
+        Guid clienteId, CancellationToken cancellationToken)
     {
         var query = new GetContactosByClienteQuery(clienteId, tenantService.TenantId);
         var contactos = await mediator.Send(query, cancellationToken);
@@ -35,11 +35,12 @@ public class ContactoController(IMediator mediator, ICurrentTenantService tenant
     // ── GET /api/Clientes/{clienteId}/Contactos/{id} ────────────────────────
 
     /// <summary>Obtiene el detalle de un contacto por ID.</summary>
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ContactoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetContacto(
-        int clienteId, int id, CancellationToken cancellationToken)
+        Guid clienteId,
+        Guid id, CancellationToken cancellationToken)
     {
         var query = new GetContactoByIdQuery(id, tenantService.TenantId);
         var contacto = await mediator.Send(query, cancellationToken);
@@ -63,7 +64,7 @@ public class ContactoController(IMediator mediator, ICurrentTenantService tenant
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateContacto(
-        int clienteId,
+        Guid clienteId,
         [FromBody] CreateContactoRequest request,
         CancellationToken cancellationToken)
     {
@@ -86,13 +87,13 @@ public class ContactoController(IMediator mediator, ICurrentTenantService tenant
     // ── PUT /api/Clientes/{clienteId}/Contactos/{id} ────────────────────────
 
     /// <summary>Actualiza los datos de un contacto existente.</summary>
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateContacto(
-        int clienteId,
-        int id,
+        Guid clienteId,
+        Guid id,
         [FromBody] UpdateContactoRequest request,
         CancellationToken cancellationToken)
     {
@@ -113,13 +114,13 @@ public class ContactoController(IMediator mediator, ICurrentTenantService tenant
     // ── DELETE /api/Clientes/{clienteId}/Contactos/{id} ─────────────────────
 
     /// <summary>Elimina lógicamente un contacto (IsDeleted = true).</summary>
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin,Operador")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteContacto(
-        int clienteId,
-        int id,
+        Guid clienteId,
+        Guid id,
         CancellationToken cancellationToken)
     {
         var command = new DeleteContactoCommand(id, tenantService.TenantId, tenantService.RutUsuario);

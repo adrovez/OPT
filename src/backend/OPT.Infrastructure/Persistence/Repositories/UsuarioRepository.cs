@@ -11,8 +11,8 @@ namespace OPT.Infrastructure.Persistence.Repositories;
 public class UsuarioRepository(OPTDbContext context) : IUsuarioRepository
 {
     public async Task<Usuario?> GetByRutAsync(
-        string rut, int tenantId, CancellationToken cancellationToken = default)
+        string rut, Guid tenantId, CancellationToken cancellationToken = default)
         => await context.Usuarios
-            .FirstOrDefaultAsync(u => u.RutUsuario == rut && u.TenantId == tenantId,
+            .FirstOrDefaultAsync(u => u.RutUsuario == rut,// && u.TenantId == tenantId,
                 cancellationToken);
 }

@@ -12,7 +12,7 @@ GO
 
 CREATE TABLE [dbo].[OPT_Tenant]
 (
-    [TenantId]        INT              IDENTITY(1,1) NOT NULL,
+    [TenantId]        UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
     [Nombre]          NVARCHAR(150)    NOT NULL,
     [RutEmpresa]      NVARCHAR(20)     NOT NULL,
     [Direccion]       NVARCHAR(250)    NULL,

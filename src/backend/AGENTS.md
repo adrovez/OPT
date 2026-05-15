@@ -1,7 +1,7 @@
 # Backend - Agent Instructions
 > Alcance: **solo backend** `src/backend/`.
 > Objetivo: que cualquier agente contribuya sin romper arquitectura, seguridad multi-tenant ni calidad de entrega.
-> Última actualización: 2026-05-07 (Sesión 6)
+> Última actualización: 2026-05-15 (Sesión 10 — Módulo RecetaCristales CRUD)
 
 ---
 
@@ -60,13 +60,15 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 | `IRegionRepository` | `RegionRepository` | `GetAllWithComunasAsync` (sin filtro de tenant — son datos de catálogo) |
 | `IUsuarioRepository` | `UsuarioRepository` | Busca usuario por RUT+TenantId para auth |
 | `ITenantRepository` | `TenantRepository` | CRUD de tenants (sin filtro de tenant) |
+| `IAnamnesisRepository` | `AnamnesisRepository` | CRUD + `SoftDeleteAsync`, filtra por TenantId + ClienteId |
+| `IRecetaCristalesRepository` | `RecetaCristalesRepository` | CRUD + `SoftDeleteAsync`, filtra por TenantId + ClienteId |
 | `IJwtService` | `JwtService` | Genera tokens JWT con claims tenant_id, rut_usuario, rol |
 | `ICurrentTenantService` | `CurrentTenantService` | Extrae TenantId y RutUsuario del HttpContext actual |
 | `IPasswordHasher` | `BcryptPasswordHasher` | Verifica/hashea contraseñas con BCrypt |
 
 ---
 
-## 4) Módulos API implementados (estado: sesión 6)
+## 4) Módulos API implementados (estado: sesión 10)
 
 | Módulo | Controller | Auth | Estado |
 |--------|-----------|------|--------|
@@ -75,6 +77,8 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 | **Clientes** | `ClienteController` | JWT | ✅ CRUD + paginado + búsqueda + contactos embebidos |
 | **Contactos** | `ContactoController` | JWT | ✅ CRUD por cliente |
 | **Regiones** | `RegionController` | JWT | ✅ WithComunas (catálogo anidado) |
+| **Anamnesis** | `AnamnesisController` | JWT | ✅ CRUD por clienteId |
+| **RecetaCristales** | `RecetaCristalesController` | JWT | ✅ CRUD por clienteId |
 
 ### Endpoints detallados
 
@@ -108,6 +112,22 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 
 #### Regiones (catálogo — sin filtro de tenant)
 - `GET /api/Regiones/WithComunas` → `IReadOnlyList<RegionWithComunasDto>` (regiones de Chile con comunas anidadas, ordenadas por nombre)
+
+#### Anamnesis (historial de salud, por cliente)
+- `GET /api/Anamnesis?clienteId={guid}` → `IReadOnlyList<AnamnesisDto>` (orden: FechaRegistro DESC)
+- `GET /api/Anamnesis/{id:guid}` → `AnamnesisDto | 404`
+- `POST /api/Anamnesis` → body `CreateAnamnesisRequest` → `201 Created { id }`
+- `PUT /api/Anamnesis/{id:guid}` → body `UpdateAnamnesisRequest` → `204 No Content`
+- `DELETE /api/Anamnesis/{id:guid}` → soft delete → `204 No Content`
+
+#### RecetaCristales (receta óptica, por cliente)
+- `GET /api/RecetaCristales?clienteId={guid}` → `IReadOnlyList<RecetaCristalesDto>` (orden: FechaIngreso DESC)
+- `GET /api/RecetaCristales/{id:guid}` → `RecetaCristalesDto | 404`
+- `POST /api/RecetaCristales` → body `CreateRecetaCristalesRequest` → `201 Created { id }`
+- `PUT /api/RecetaCristales/{id:guid}` → body `UpdateRecetaCristalesRequest` → `204 No Content`
+- `DELETE /api/RecetaCristales/{id:guid}` → soft delete → `204 No Content`
+
+> **Campos RecetaCristales:** Lejos/Cerca (OD, OI, DP) cada uno con Esferico, Cilindro, Eje y Observacion. ADD (LejosADDEsfera). Flags: CheckLejos, CheckCerca, CheckCristalesLaboratorio, CheckUrgente. FechaIngreso opcional en POST (default: UtcNow).
 
 ---
 
@@ -145,14 +165,14 @@ CorrelationId → ExceptionHandling → Swagger(dev) → CORS
 
 1. Toda consulta de negocio lleva `TenantId` explícito (nunca confiar solo en query filters).
 2. `OPTDbContext` tiene `HasQueryFilter` para `IsDeleted = false` en todas las entidades.
-3. `TenantValidationMiddleware` rechaza tokens con `tenant_id <= 0`.
+3. **`TenantValidationMiddleware` rechaza tokens con `tenant_id` vacío o que no sea un Guid válido.**
 4. `CurrentTenantService` extrae el `TenantId` del claim JWT — nunca del body/query.
 5. El delete siempre es lógico: `IsDeleted = true`, nunca `DELETE` físico.
 
 ### Claims JWT incluidos
 ```json
-{ "sub": "1", "tenant_id": "1", "rut_usuario": "12345678-9",
-  "name": "Juan Pérez", "role": "Operador", "jti": "guid" }
+{ "sub": "550e8400-e29b-41d4-a716-446655440000", "tenant_id": "550e8400-e29b-41d4-a716-446655440001", "rut_usuario": "12345678-9",
+  "name": "Juan Pérez", "role": "Operador", "jti": "guid-unico" }
 ```
 
 ---
@@ -161,12 +181,27 @@ CorrelationId → ExceptionHandling → Swagger(dev) → CORS
 
 | Entidad | Archivo | PK | TenantId | Notas |
 |---------|---------|-----|---------|-------|
-| `Tenant` | `OPT.Domain/Entities/Tenant.cs` | `TenantId` | No (es la raíz) | — |
-| `Cliente` | `OPT.Domain/Entities/Cliente.cs` | `ClienteId` | Sí | TipoCliente: Persona\|Empresa; tiene `ICollection<Contacto> Contactos` |
-| `Contacto` | `OPT.Domain/Entities/Contacto.cs` | `ContactoId` | Sí | Solo para clientes Empresa; FK a Cliente |
-| `Region` | `OPT.Domain/Entities/Region.cs` | `IdRegion` | No (catálogo) | Tiene `ICollection<Comuna> Comunas` |
-| `Comuna` | `OPT.Domain/Entities/Comuna.cs` | `IdComuna` | No (catálogo) | FK a Region |
-| `Usuario` | `OPT.Domain/Entities/Usuario.cs` | `UsuarioId` | Sí | Roles: Admin, Operador, Lectura |
+| `Tenant` | `OPT.Domain/Entities/Tenant.cs` | `TenantId` **Guid** | No (es la raíz) | — |
+| `Cliente` | `OPT.Domain/Entities/Cliente.cs` | `ClienteId` **Guid** | Sí **Guid** | TipoCliente: Persona|Empresa; FK `IdComuna` sigue INT (catálogo) |
+| `Contacto` | `OPT.Domain/Entities/Contacto.cs` | `ContactoId` **Guid** | Sí **Guid** | Solo para clientes Empresa; FK ClienteId Guid |
+| `Region` | `OPT.Domain/Entities/Region.cs` | `IdRegion` **int** | No (catálogo) | Dato compartido — sin TenantId |
+| `Comuna` | `OPT.Domain/Entities/Comuna.cs` | `IdComuna` **int** | No (catálogo) | FK IdRegion int |
+| `Usuario` | `OPT.Domain/Entities/Usuario.cs` | `UsuarioId` **Guid** | Sí **Guid** | Roles: Admin, Operador, Lectura |
+| `Anamnesis` | `OPT.Domain/Entities/Anamnesis.cs` | `AnamnesisId` **Guid** | Sí **Guid** | Historial de salud; FK ClienteId Guid |
+| `RecetaCristales` | `OPT.Domain/Entities/RecetaCristales.cs` | `RecetaCristalesId` **Guid** | Sí **Guid** | Receta óptica (lejos/cerca/DP/ADD); FK ClienteId Guid |
+
+### Regla de tipos de PK/FK
+
+| Tipo de tabla | PK en C# | PK en SQL | DEFAULT SQL |
+|---|---|---|---|
+| Negocio (tenant-aware) | `Guid` | `UNIQUEIDENTIFIER` | `NEWSEQUENTIALID()` |
+| Catálogo compartido | `int` | `INT IDENTITY` | Autoincremental |
+
+- **EF Core**: `e.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");`
+- **FluentValidation**: IDs `Guid` usan `.NotEmpty()` — nunca `.GreaterThan(0)`
+- **CurrentTenantService**: parsear claims con `Guid.TryParse` — nunca `int.TryParse`
+- **Rutas API**: `{id:guid}` en controllers de entidades negocio · `{id:int}` solo en catálogos (Region, Comuna)
+- **Fragmentación**: nunca usar `NEWID()` como DEFAULT — usar `NEWSEQUENTIALID()` (secuencial, evita fragmentación del índice clustered)
 
 ### Advertencia EF Core — relación Cliente ↔ Contacto
 

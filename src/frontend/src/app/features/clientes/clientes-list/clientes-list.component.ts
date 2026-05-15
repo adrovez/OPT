@@ -256,7 +256,7 @@ export class ClientesListComponent implements OnInit {
     this.cargarClientes();
 
     // Si venimos del detalle con "Editar", abrir el formulario directamente
-    const state = window.history.state as { editarClienteId?: number };
+    const state = window.history.state as { editarClienteId?: string };
     if (state?.editarClienteId) {
       this.abrirFormulario({ clienteId: state.editarClienteId } as Cliente);
     }

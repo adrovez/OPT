@@ -12,8 +12,8 @@ GO
 
 CREATE TABLE [dbo].[OPT_Sucursal]
 (
-    [idSucursal]      INT              IDENTITY(1,1) NOT NULL,
-    [TenantId]        INT              NOT NULL,
+    [idSucursal]      UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    [TenantId]        UNIQUEIDENTIFIER NOT NULL,
     [Nombre]          NVARCHAR(150)    NOT NULL,
     [Direccion]       NVARCHAR(250)    NULL,
     [Telefono]        NVARCHAR(50)     NULL,

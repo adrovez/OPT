@@ -5,7 +5,7 @@ namespace OPT.Application.Clientes.Commands;
 
 /// <summary>Comando para crear un nuevo cliente (Persona o Empresa).</summary>
 public record CreateClienteCommand(
-    int TenantId,
+    Guid TenantId,
     string TipoCliente,
     string NumeroDocumento,
     string Nombre,
@@ -19,4 +19,4 @@ public record CreateClienteCommand(
     // Empresa
     string? Giro,
     IReadOnlyList<ContactoInputDto>? Contactos,
-    string CreatedBy) : IRequest<int>;
+    string CreatedBy) : IRequest<Guid>;

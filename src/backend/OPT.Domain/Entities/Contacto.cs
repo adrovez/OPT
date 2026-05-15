@@ -6,9 +6,9 @@ namespace OPT.Domain.Entities;
 /// </summary>
 public class Contacto
 {
-    public int ContactoId { get; set; }
-    public int TenantId { get; set; }
-    public int ClienteId { get; set; }
+    public Guid ContactoId { get; set; }
+    public Guid TenantId { get; set; }
+    public Guid ClienteId { get; set; }
 
     public string Nombre { get; set; } = string.Empty;
     public string? Email { get; set; }

@@ -4,8 +4,8 @@ namespace OPT.Application.Contactos.Commands;
 
 /// <summary>Comando para actualizar los datos de un contacto existente.</summary>
 public record UpdateContactoCommand(
-    int ContactoId,
-    int TenantId,
+    Guid ContactoId,
+    Guid TenantId,
     string Nombre,
     string? Email,
     string? Telefono,

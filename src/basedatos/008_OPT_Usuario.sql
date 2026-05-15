@@ -12,8 +12,8 @@ GO
 
 CREATE TABLE [dbo].[OPT_Usuario]
 (
-    [UsuarioId]        INT              IDENTITY(1,1) NOT NULL,
-    [TenantId]         INT              NOT NULL,
+    [UsuarioId]        UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    [TenantId]         UNIQUEIDENTIFIER NOT NULL,
     [RutUsuario]       NVARCHAR(20)     NOT NULL,
     [Nombre]           NVARCHAR(150)    NOT NULL,
     [Email]            NVARCHAR(150)    NOT NULL,

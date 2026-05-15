@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
+import { environment } from '../../../environments/environment';
 
 const TOKEN_KEY = 'opt_token';
 const USER_KEY = 'opt_user';
@@ -11,7 +12,7 @@ const USER_KEY = 'opt_user';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private readonly apiUrl = 'http://localhost:5005/api/Auth';
+  private readonly apiUrl = `${environment.apiUrl}/Auth`;
 
   readonly currentUser = signal<LoginResponse | null>(this.loadSession());
 

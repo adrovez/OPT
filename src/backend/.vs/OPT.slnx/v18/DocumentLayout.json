@@ -1,7 +1,28 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\controllers\\clientecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF6662BC-8E5C-4A38-85A9-B02B24B1A5C6}|OPT.API\\OPT.API.csproj|solutionrelative:opt.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.infrastructure\\persistence\\repositories\\usuariorepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|solutionrelative:opt.infrastructure\\persistence\\repositories\\usuariorepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{22274461-901A-4D02-8BB6-DE0081132611}|OPT.Application\\OPT.Application.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.application\\auth\\logincommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{22274461-901A-4D02-8BB6-DE0081132611}|OPT.Application\\OPT.Application.csproj|solutionrelative:opt.application\\auth\\logincommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|c:\\adrovez\\github\\opt\\src\\backend\\opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2CF9F214-8CF3-4C93-BB37-0700B66FCBF5}|OPT.Infrastructure\\OPT.Infrastructure.csproj|solutionrelative:opt.infrastructure\\auth\\bcryptpasswordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -22,6 +43,67 @@
             {
               "$type": "Bookmark",
               "Name": "ST:130:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ClienteController.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\ClienteController.cs",
+              "RelativeDocumentMoniker": "OPT.API\\Controllers\\ClienteController.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\ClienteController.cs",
+              "RelativeToolTip": "OPT.API\\Controllers\\ClienteController.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAQwCwAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-15T15:07:49.462Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BcryptPasswordHasher.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "RelativeDocumentMoniker": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "RelativeToolTip": "OPT.Infrastructure\\Auth\\BcryptPasswordHasher.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-15T14:39:00.842Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "OPT.API\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.API\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "OPT.API\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAvwBsAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-15T14:40:28.898Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LoginCommandHandler.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Application\\Auth\\LoginCommandHandler.cs",
+              "RelativeDocumentMoniker": "OPT.Application\\Auth\\LoginCommandHandler.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Application\\Auth\\LoginCommandHandler.cs",
+              "RelativeToolTip": "OPT.Application\\Auth\\LoginCommandHandler.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAmwBYAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-15T14:40:04.819Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "UsuarioRepository.cs",
+              "DocumentMoniker": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Persistence\\Repositories\\UsuarioRepository.cs",
+              "RelativeDocumentMoniker": "OPT.Infrastructure\\Persistence\\Repositories\\UsuarioRepository.cs",
+              "ToolTip": "C:\\Adrovez\\GitHub\\OPT\\src\\backend\\OPT.Infrastructure\\Persistence\\Repositories\\UsuarioRepository.cs",
+              "RelativeToolTip": "OPT.Infrastructure\\Persistence\\Repositories\\UsuarioRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-15T14:37:46.989Z"
             }
           ]
         }

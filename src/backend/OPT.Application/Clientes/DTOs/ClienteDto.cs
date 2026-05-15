@@ -4,8 +4,8 @@ namespace OPT.Application.Clientes.DTOs;
 
 /// <summary>DTO de respuesta para listado y detalle de clientes.</summary>
 public record ClienteDto(
-    int ClienteId,
-    int TenantId,
+    Guid ClienteId,
+    Guid TenantId,
     string TipoCliente,
     string NumeroDocumento,
     string Nombre,

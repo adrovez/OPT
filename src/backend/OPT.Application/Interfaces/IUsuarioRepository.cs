@@ -9,5 +9,5 @@ namespace OPT.Application.Interfaces;
 public interface IUsuarioRepository
 {
     /// <summary>Busca un usuario activo por RUT dentro del tenant.</summary>
-    Task<Usuario?> GetByRutAsync(string rut, int tenantId, CancellationToken cancellationToken = default);
+    Task<Usuario?> GetByRutAsync(string rut, Guid tenantId, CancellationToken cancellationToken = default);
 }

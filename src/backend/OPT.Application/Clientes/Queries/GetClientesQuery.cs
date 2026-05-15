@@ -6,7 +6,7 @@ namespace OPT.Application.Clientes.Queries;
 
 /// <summary>Query para listar clientes con filtros y paginación.</summary>
 public record GetClientesQuery(
-    int TenantId,
+    Guid TenantId,
     string? TipoCliente = null,
     string? Busqueda = null,
     int Page = 1,

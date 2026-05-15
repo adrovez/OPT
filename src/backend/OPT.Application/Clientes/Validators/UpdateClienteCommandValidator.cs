@@ -7,8 +7,8 @@ public class UpdateClienteCommandValidator : AbstractValidator<UpdateClienteComm
 {
     public UpdateClienteCommandValidator()
     {
-        RuleFor(x => x.ClienteId).GreaterThan(0);
-        RuleFor(x => x.TenantId).GreaterThan(0);
+        RuleFor(x => x.ClienteId).NotEmpty();
+        RuleFor(x => x.TenantId).NotEmpty();
 
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre es requerido.")

@@ -7,9 +7,9 @@ namespace OPT.Application.Clientes.Commands;
 public class CreateClienteCommandHandler(
     IClienteRepository clienteRepository,
     IContactoRepository contactoRepository)
-    : IRequestHandler<CreateClienteCommand, int>
+    : IRequestHandler<CreateClienteCommand, Guid>
 {
-    public async Task<int> Handle(
+    public async Task<Guid> Handle(
         CreateClienteCommand request, CancellationToken cancellationToken)
     {
         var existe = await clienteRepository.ExisteDocumentoAsync(

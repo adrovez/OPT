@@ -13,9 +13,9 @@ GO
 
 CREATE TABLE [dbo].[OPT_Contacto]
 (
-    [ContactoId]         INT              IDENTITY(1,1) NOT NULL,
-    [TenantId]           INT              NOT NULL,
-    [ClienteId]          INT              NOT NULL,  -- FK a OPT_Cliente (solo TipoCliente='Empresa')
+    [ContactoId]         UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    [TenantId]           UNIQUEIDENTIFIER NOT NULL,
+    [ClienteId]          UNIQUEIDENTIFIER NOT NULL,  -- FK a OPT_Cliente (solo TipoCliente='Empresa')
     [Nombre]             NVARCHAR(150)    NOT NULL,
     [Email]              NVARCHAR(150)    NULL,
     [Telefono]           NVARCHAR(50)     NULL,
