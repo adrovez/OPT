@@ -27,4 +27,7 @@ public class Usuario
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
     public bool IsDeleted { get; set; } = false;
+
+    // Navegación
+    public ICollection<UsuarioSucursal> UsuarioSucursales { get; set; } = [];
 }

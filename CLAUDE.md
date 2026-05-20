@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Las instrucciones completas están en `AGENTS.md` (raíz), `src/backend/AGENTS.md` y `.agents/progress.md`.
+Las instrucciones completas están en `AGENTS.md` (raíz), `src/backend/AGENTS.md`, `src/frontend/AGENTS.md` y `.agents/progress.md`.
 
 ---
 
@@ -29,15 +29,16 @@ dotnet run --project OPT.API   # http://localhost:5005 — Swagger en /swagger
 ```bash
 cd src/frontend
 npm install
-npm start          # servidor de desarrollo: http://localhost:4200
-npm run build      # build de producción → dist/frontend/
-npm run test       # tests unitarios con Vitest
+ng serve                        # servidor de desarrollo: http://localhost:4200
+npm run build                   # build de producción → dist/frontend/
+npm run test                    # tests unitarios con Vitest
 npm run lint
+ng generate component features/<modulo>/<nombre> --standalone
 ```
 
 ### Base de datos
 
-Scripts SQL en `src/basedatos/` numerados `000–010`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). Próximo script incremental: **`011_`**.
+Scripts SQL en `src/basedatos/` numerados `000–012`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `013_`**.
 
 ---
 
@@ -68,7 +69,8 @@ Organización por features, con lazy loading completo. Sin NgModules.
 
 ```
 core/           # services, guards, interceptors, models, validators
-features/       # auth, clientes, layout (cada uno en su carpeta)
+features/       # auth, clientes, anamnesis (cada uno en su carpeta)
+layout/         # main-layout shell (sidebar + router-outlet)
 app.routes.ts   # rutas raíz con lazy loading
 ```
 
@@ -84,6 +86,17 @@ Toda entidad de negocio tiene `TenantId` (Guid). Los query filters de EF Core ap
 ### Claves primarias
 - Entidades de negocio (tenant-aware): `Guid` en C# / `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()` en SQL
 - Catálogos compartidos (Region, Comuna): `int` / `INT IDENTITY`
+- **Nunca usar `NEWID()` como DEFAULT** — siempre `NEWSEQUENTIALID()` para evitar fragmentación del índice clustered
+
+### IDs en el frontend
+Los IDs de entidades de negocio son `string` (UUID) en TypeScript, nunca `number`. Los catálogos (`idRegion`, `idComuna`) mantienen `number`.
+
+```typescript
+// Para validar route params de entidades de negocio:
+private static readonly UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// ❌ NUNCA: Number(id) + isNaN() — no aplica a GUIDs
+```
 
 ### Soft delete
 Todos los borrados setean `IsDeleted = true`. Nunca usar `DELETE` físico.
@@ -97,10 +110,31 @@ Los controllers no tienen try/catch. El `ExceptionHandlingMiddleware` convierte 
 ### FluentValidation
 Usar `.NotEmpty()` para IDs Guid, nunca `.GreaterThan(0)`. Para parsear claims JWT usar `Guid.TryParse`, nunca `int.TryParse`.
 
+### Suscripciones Angular
+Siempre usar `takeUntilDestroyed(this.destroyRef)` en componentes. Nunca suscribirse sin destruir el observable.
+
+### Formularios Angular
+Usar **Signal Forms** de Angular 21. No usar `ReactiveFormsModule` ni `FormsModule`.
+
 ### Checklist para nuevo módulo
-**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`011_...`)
+**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`013_...`)
 
 **Frontend:** `core/models/<mod>.model.ts` → `core/services/<mod>.service.ts` → componentes en `features/<mod>/` → ruta en `app.routes.ts`
+
+---
+
+## Estado de módulos (Mayo 2026)
+
+| Módulo | Backend | Frontend |
+|--------|---------|----------|
+| Auth | ✅ | ✅ |
+| Clientes + Contactos | ✅ | ✅ |
+| Regiones/Comunas | ✅ (catálogo) | ✅ (shareReplay cache) |
+| Anamnesis | ✅ | ✅ |
+| RecetaCristales | ✅ | ⏳ Pendiente |
+| Sucursales | ✅ | ✅ |
+| Usuarios | ✅ | ✅ |
+| Roles (catálogo) | ⏳ Planeado (`013_OPT_Rol.sql` + `GET /api/roles`) | ⏳ Planeado (combobox dinámico en usuario-form) |
 
 ---
 
@@ -125,3 +159,14 @@ Server=localhost;Database=dbOPT;Trusted_Connection=True;TrustServerCertificate=T
 ```
 
 El secreto JWT y demás configuración están en `src/backend/OPT.API/appsettings.json`.
+
+---
+
+## Documentación de referencia
+
+| Documento | Contenido |
+|-----------|-----------|
+| `docs/api/frontend-api-contracts.md` | DTOs y firmas de servicios Angular |
+| `docs/api/README.md` | Resumen de todos los endpoints |
+| `.agents/progress.md` | Historial de sesiones y próximos pasos |
+| `.agents/decisions/` | ADRs (middleware, schema, migración GUID) |

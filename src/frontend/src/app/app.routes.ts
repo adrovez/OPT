@@ -39,6 +39,20 @@ export const routes: Routes = [
             (m) => m.AnamnesisListComponent,
           ),
       },
+      {
+        path: 'sucursales',
+        loadComponent: () =>
+          import('./features/sucursales/sucursales-list/sucursales-list.component').then(
+            (m) => m.SucursalesListComponent,
+          ),
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/usuarios/usuarios-list/usuarios-list.component').then(
+            (m) => m.UsuariosListComponent,
+          ),
+      },
     ],
   },
   {

@@ -104,6 +104,7 @@
       <li><a href="#cliente">OPT_Cliente</a></li>
       <li><a href="#contacto">OPT_Contacto</a></li>
       <li><a href="#usuario">OPT_Usuario</a></li>
+      <li><a href="#usuariosucursal">OPT_UsuarioSucursal</a></li>
       <li><a class="section-label">Guías</a></li>
       <li><a href="#indices">Índices</a></li>
       <li><a href="#cascadas">Cascadas FK</a></li>
@@ -146,12 +147,13 @@
         <tr><td>Catálogo</td><td>OPT_Region</td><td>No</td><td>16 regiones de Chile (solo lectura)</td></tr>
         <tr><td>Catálogo</td><td>OPT_Comuna</td><td>No</td><td>Comunas por región (solo lectura)</td></tr>
         <tr><td>Raíz SaaS</td><td>OPT_Tenant</td><td>No</td><td>Empresas clientes del SaaS</td></tr>
-        <tr><td>Negocio</td><td>OPT_Sucursal</td><td>Sí</td><td>Sucursales de la óptica</td></tr>
+        <tr><td>Negocio</td><td>OPT_Sucursal</td><td>Sí</td><td>Sucursales de la óptica — API CRUD implementada (<code>/api/sucursales</code>)</td></tr>
         <tr><td>Negocio</td><td>OPT_Cliente</td><td>Sí</td><td>Clientes (Persona y Empresa unificados)</td></tr>
         <tr><td>Negocio</td><td>OPT_Contacto</td><td>Sí</td><td>Contactos de clientes Empresa</td></tr>
         <tr><td>Auth</td><td>OPT_Usuario</td><td>Sí</td><td>Usuarios del sistema (login JWT)</td></tr>
         <tr><td>Negocio</td><td>OPT_Anamnesis</td><td>Sí</td><td>Historial de salud del cliente</td></tr>
         <tr><td>Negocio</td><td>OPT_RecetaCristales</td><td>Sí</td><td>Receta óptica (lejos/cerca/DP/ADD + flags)</td></tr>
+        <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de sucursales a usuarios (PK compuesta: UsuarioId + SucursalId)</td></tr>
       </table>
 
       <!-- SCRIPTS -->
@@ -164,17 +166,21 @@
         <tr><td><span class="script-num">001</span> OPT_Tenant.sql</td><td>Tabla raíz del SaaS, RutEmpresa único</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">002</span> OPT_Region.sql</td><td>Catálogo de regiones (código + nombre)</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">003</span> OPT_Comuna.sql</td><td>Catálogo de comunas (FK a Region)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">004</span> OPT_Sucursal.sql</td><td>Sucursales de la óptica (con TenantId)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">004</span> OPT_Sucursal.sql</td><td>Sucursales de la óptica (con TenantId) — módulo backend CRUD implementado en Sesión 11</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">005</span> OPT_Cliente.sql</td><td>Tabla unificada Persona + Empresa</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">006</span> OPT_Contacto.sql</td><td>Contactos de clientes Empresa</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">007</span> datos_iniciales.sql</td><td>16 regiones + Tenant demo (idempotente)</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices)</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">010</span> OPT_Anamnesis.sql</td><td>Historial de salud del cliente (antecedentes médicos)</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">011</span> OPT_RecetaCristales.sql</td><td>Receta óptica — Lejos/Cerca (OD, OI, DP) + ADD + flags + auditoría</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓ Sesión 12</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> Para nuevas tablas o cambios de esquema, crear <code>012_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
+        <strong>Próximo script:</strong> <code>013_OPT_Rol.sql</code> — tabla catálogo de roles del sistema (planeado Sesión 14). Para nuevas tablas o cambios de esquema, crear <code>014_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
+      </div>
+      <div class="alert alert-blue">
+        <strong>013_OPT_Rol.sql (planeado):</strong> Tabla catálogo <code>OPT_Rol</code> — <code>RolId INT IDENTITY PK</code>, <code>Nombre NVARCHAR(50)</code>. Sin TenantId (catálogo global compartido). Sin <code>IsDeleted</code> (catálogo no se borra). Poblar con: Admin, Operador, Lectura. Expondrá <code>GET /api/roles</code> para que el frontend cargue el combobox dinámicamente.
       </div>
 
       <!-- DIAGRAMA -->
@@ -393,8 +399,8 @@
 
       <!-- NUEVO SCRIPT -->
       <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
-      <p>Pasos para agregar cambios de esquema:</p>
-      <pre>-- Nombrar: 009_descripcion.sql
+      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>012_</code></strong>.</p>
+      <pre>-- Nombrar: 012_descripcion.sql
 -- Siempre: USE [dbOPT]; GO
 
 -- Para tablas nuevas: verificar existencia

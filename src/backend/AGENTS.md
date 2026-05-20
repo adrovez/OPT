@@ -1,7 +1,7 @@
 # Backend - Agent Instructions
 > Alcance: **solo backend** `src/backend/`.
 > Objetivo: que cualquier agente contribuya sin romper arquitectura, seguridad multi-tenant ni calidad de entrega.
-> Última actualización: 2026-05-15 (Sesión 10 — Módulo RecetaCristales CRUD)
+> Última actualización: 2026-05-19 (Sesión 12 — Módulo Usuarios CRUD + UsuarioSucursal M:N)
 
 ---
 
@@ -58,17 +58,18 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 | `IClienteRepository` | `ClienteRepository` | CRUD + paginación + `.Include(Contactos)` en GetByIdAsync, filtra por TenantId |
 | `IContactoRepository` | `ContactoRepository` | CRUD + `AddRangeAsync` + `SoftDeleteByClienteAsync`, filtra por TenantId + ClienteId |
 | `IRegionRepository` | `RegionRepository` | `GetAllWithComunasAsync` (sin filtro de tenant — son datos de catálogo) |
-| `IUsuarioRepository` | `UsuarioRepository` | Busca usuario por RUT+TenantId para auth |
+| `IUsuarioRepository` | `UsuarioRepository` | CRUD completo + GetByRut + AssignSucursal/RemoveSucursal/ExistsAssignment — Include(UsuarioSucursales) |
 | `ITenantRepository` | `TenantRepository` | CRUD de tenants (sin filtro de tenant) |
 | `IAnamnesisRepository` | `AnamnesisRepository` | CRUD + `SoftDeleteAsync`, filtra por TenantId + ClienteId |
 | `IRecetaCristalesRepository` | `RecetaCristalesRepository` | CRUD + `SoftDeleteAsync`, filtra por TenantId + ClienteId |
+| `ISucursalRepository` | `SucursalRepository` | CRUD + `SoftDeleteAsync`, filtra por TenantId; lista ordenada por Nombre |
 | `IJwtService` | `JwtService` | Genera tokens JWT con claims tenant_id, rut_usuario, rol |
 | `ICurrentTenantService` | `CurrentTenantService` | Extrae TenantId y RutUsuario del HttpContext actual |
 | `IPasswordHasher` | `BcryptPasswordHasher` | Verifica/hashea contraseñas con BCrypt |
 
 ---
 
-## 4) Módulos API implementados (estado: sesión 10)
+## 4) Módulos API implementados (estado: sesión 11)
 
 | Módulo | Controller | Auth | Estado |
 |--------|-----------|------|--------|
@@ -79,6 +80,8 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 | **Regiones** | `RegionController` | JWT | ✅ WithComunas (catálogo anidado) |
 | **Anamnesis** | `AnamnesisController` | JWT | ✅ CRUD por clienteId |
 | **RecetaCristales** | `RecetaCristalesController` | JWT | ✅ CRUD por clienteId |
+| **Sucursales** | `SucursalController` | JWT | ✅ CRUD por tenant |
+| **Usuarios** | `UsuarioController` | JWT | ✅ CRUD + cambio contraseña + asignar/desasignar sucursales (M:N) |
 
 ### Endpoints detallados
 
@@ -128,6 +131,27 @@ Nunca en sentido contrario. Application **no** conoce clases concretas de Infras
 - `DELETE /api/RecetaCristales/{id:guid}` → soft delete → `204 No Content`
 
 > **Campos RecetaCristales:** Lejos/Cerca (OD, OI, DP) cada uno con Esferico, Cilindro, Eje y Observacion. ADD (LejosADDEsfera). Flags: CheckLejos, CheckCerca, CheckCristalesLaboratorio, CheckUrgente. FechaIngreso opcional en POST (default: UtcNow).
+
+#### Sucursales
+- `GET /api/sucursales` → `IReadOnlyList<SucursalDto>` (orden: Nombre ASC)
+- `GET /api/sucursales/{id:guid}` → `SucursalDto | 404`
+- `POST /api/sucursales` → body `{ Nombre, Direccion?, Telefono?, Matriz }` → `201 Created { id }`
+- `PUT /api/sucursales/{id:guid}` → body `{ Nombre, Direccion?, Telefono?, Matriz }` → `204 No Content`
+- `DELETE /api/sucursales/{id:guid}` → soft delete → `204 No Content`
+
+> TenantId siempre extraído del claim JWT. No es campo del body. `Matriz: bool` indica si es la sede principal.
+
+#### Usuarios
+- `GET /api/usuarios` → `IReadOnlyList<UsuarioDto>` (incluye `sucursales[]` asignadas, orden: Nombre ASC)
+- `GET /api/usuarios/{id:guid}` → `UsuarioDto | 404`
+- `POST /api/usuarios` → body `{ RutUsuario, Nombre, Email, Password, Rol }` → `201 Created { id }`
+- `PUT /api/usuarios/{id:guid}` → body `{ Nombre, Email, Rol }` → `204 No Content`
+- `DELETE /api/usuarios/{id:guid}` → soft delete → `204 No Content`
+- `PUT /api/usuarios/{id:guid}/password` → body `{ NewPassword }` → `204 No Content`
+- `POST /api/usuarios/{id:guid}/sucursales` → body `{ SucursalId }` → `204 No Content | 409 ya asignada`
+- `DELETE /api/usuarios/{id:guid}/sucursales/{sucursalId:guid}` → `204 No Content`
+
+> Roles válidos: `Admin`, `Operador`, `Lectura`. Contraseña hasheada con BCrypt al crear/cambiar. La relación con Sucursales es M:N via `OPT_UsuarioSucursal`. Un usuario puede acceder a múltiples sucursales del mismo tenant.
 
 ---
 
@@ -189,6 +213,8 @@ CorrelationId → ExceptionHandling → Swagger(dev) → CORS
 | `Usuario` | `OPT.Domain/Entities/Usuario.cs` | `UsuarioId` **Guid** | Sí **Guid** | Roles: Admin, Operador, Lectura |
 | `Anamnesis` | `OPT.Domain/Entities/Anamnesis.cs` | `AnamnesisId` **Guid** | Sí **Guid** | Historial de salud; FK ClienteId Guid |
 | `RecetaCristales` | `OPT.Domain/Entities/RecetaCristales.cs` | `RecetaCristalesId` **Guid** | Sí **Guid** | Receta óptica (lejos/cerca/DP/ADD); FK ClienteId Guid |
+| `Sucursal` | `OPT.Domain/Entities/Sucursal.cs` | `SucursalId` **Guid** | Sí **Guid** | Sucursal de la óptica; campo Matriz (bool) para sede principal |
+| `UsuarioSucursal` | `OPT.Domain/Entities/UsuarioSucursal.cs` | PK compuesta **(UsuarioId, SucursalId)** | — | Pivote M:N. Campos: AssignedAt, AssignedBy |
 
 ### Regla de tipos de PK/FK
 

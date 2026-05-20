@@ -190,7 +190,9 @@
           <tr><td><code>Contacto</code></td><td>ContactoId <small>(Guid)</small></td><td>✓</td><td>Contactos de clientes Empresa.</td></tr>
           <tr><td><code>Anamnesis</code></td><td>AnamnesisId <small>(Guid)</small></td><td>✓</td><td>Historial de salud del cliente.</td></tr>
           <tr><td><code>RecetaCristales</code></td><td>RecetaCristalesId <small>(Guid)</small></td><td>✓</td><td>Receta óptica (lejos, cerca, DP, ADD). FK ClienteId.</td></tr>
-          <tr><td><code>Usuario</code></td><td>UsuarioId <small>(Guid)</small></td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña.</td></tr>
+          <tr><td><code>Sucursal</code></td><td>SucursalId <small>(Guid)</small></td><td>✓</td><td>Sucursal de la óptica. Campo <code>Matriz</code> (bool) para sede principal.</td></tr>
+          <tr><td><code>Usuario</code></td><td>UsuarioId <small>(Guid)</small></td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña. Navigation: <code>ICollection&lt;UsuarioSucursal&gt;</code></td></tr>
+          <tr><td><code>UsuarioSucursal</code></td><td>PK compuesta <small>(UsuarioId, SucursalId)</small></td><td>—</td><td>Pivote M:N entre Usuario y Sucursal. Campos: AssignedAt, AssignedBy.</td></tr>
           <tr><td><code>Region</code></td><td>IdRegion <small>(int)</small></td><td>—</td><td>Catálogo compartido. Solo lectura.</td></tr>
           <tr><td><code>Comuna</code></td><td>IdComuna <small>(int)</small></td><td>—</td><td>Catálogo compartido. FK a Region.</td></tr>
         </table>
@@ -204,7 +206,7 @@
         <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, IRegionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
           <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator</td></tr>
           <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers → retornan <code>Guid</code></td></tr>
           <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById (Guid) + handlers</td></tr>
@@ -213,6 +215,8 @@
           <tr><td><code>Contactos/</code></td><td>CRUD Commands + Queries + Validators</td></tr>
           <tr><td><code>Anamnesis/</code></td><td>CRUD Commands + Queries + Validators</td></tr>
           <tr><td><code>RecetaCristales/</code></td><td>CRUD Commands + Queries + Validators (campos de receta óptica)</td></tr>
+          <tr><td><code>Sucursales/</code></td><td>CRUD Commands + Queries + Validators (Nombre, Direccion, Telefono, Matriz)</td></tr>
+          <tr><td><code>Usuarios/</code></td><td>CRUD Commands + ChangePasswordCommand + AssignSucursalCommand + RemoveSucursalCommand + Queries + Validators (roles: Admin|Operador|Lectura)</td></tr>
           <tr><td><code>Regiones/</code></td><td>GetRegionesWithComunasQuery + RegionWithComunasDto</td></tr>
           <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt;</td></tr>
         </table>
@@ -221,7 +225,7 @@
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
           <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted) y <code>HasDefaultValueSql("NEWSEQUENTIALID()")</code></td></tr>
-          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, UsuarioRepository, RegionRepository</td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository (CRUD + AssignSucursal/RemoveSucursal), RegionRepository</td></tr>
           <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService (Guid.TryParse), BcryptPasswordHasher</td></tr>
           <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
         </table>
@@ -229,7 +233,7 @@
         <h3>OPT.API</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController (Guid), ContactoController (Guid), AnamnesisController (Guid), RecetaCristalesController (Guid), RegionController</td></tr>
+          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController (Guid), ContactoController (Guid), AnamnesisController (Guid), RecetaCristalesController (Guid), SucursalController (Guid), UsuarioController (Guid), RegionController</td></tr>
           <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
           <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
         </table>
@@ -277,7 +281,7 @@
         <table>
           <tr><th>Interface</th><th>Implementación</th><th>Responsabilidad</th></tr>
           <tr><td><code>IClienteRepository</code></td><td>ClienteRepository</td><td>CRUD + paginación. Siempre filtra por TenantId.</td></tr>
-          <tr><td><code>IUsuarioRepository</code></td><td>UsuarioRepository</td><td>Busca usuario activo por RUT + TenantId.</td></tr>
+          <tr><td><code>IUsuarioRepository</code></td><td>UsuarioRepository</td><td>CRUD completo + GetByRut + AssignSucursal/RemoveSucursal/ExistsAssignment. Include(UsuarioSucursales).ThenInclude(Sucursal).</td></tr>
           <tr><td><code>IJwtService</code></td><td>JwtService</td><td>Genera token JWT firmado con claims de tenant.</td></tr>
           <tr><td><code>ICurrentTenantService</code></td><td>CurrentTenantService</td><td>Extrae TenantId y RutUsuario del HttpContext.</td></tr>
           <tr><td><code>IPasswordHasher</code></td><td>BcryptPasswordHasher</td><td>Verifica y hashea contraseñas con BCrypt.</td></tr>
@@ -411,54 +415,79 @@ context.Clientes.Remove(cliente);</pre>
       <!-- NUEVO MÓDULO -->
       <section id="nuevo-modulo">
         <h2>Guía: Agregar un Nuevo Módulo</h2>
-        <p>Ejemplo: agregar el módulo <strong>Sucursal</strong>.</p>
+        <p>Ejemplo de referencia: módulo <strong>Sucursal</strong> (ya implementado en Sesión 11). Usar como patrón para el siguiente módulo.</p>
 
         <h3>Paso 1 — Domain</h3>
-        <pre>// OPT.Domain/Entities/Sucursal.cs
-public class Sucursal {
-    public Guid IdSucursal { get; set; }   // UNIQUEIDENTIFIER (NEWSEQUENTIALID())
-    public Guid TenantId { get; set; }    // FK → OPT_Tenant
+        <pre>// OPT.Domain/Entities/NuevoModulo.cs
+public class NuevoModulo {
+    public Guid NuevoModuloId { get; set; }  // UNIQUEIDENTIFIER (NEWSEQUENTIALID())
+    public Guid TenantId { get; set; }       // FK → OPT_Tenant
     public string Nombre { get; set; } = string.Empty;
-    // ... campos + auditoría (CreatedAt, UpdatedAt, IsDeleted)
+    // ... campos específicos
+    // Auditoría: CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted
 }</pre>
 
-        <h3>Paso 2 — Application: Interfaces + Commands + Queries</h3>
-        <pre>// OPT.Application/Interfaces/ISucursalRepository.cs
-public interface ISucursalRepository {
-    Task&lt;PagedResult&lt;Sucursal&gt;&gt; GetPagedAsync(Guid tenantId, ...);
-    Task&lt;Sucursal?&gt; GetByIdAsync(Guid id, Guid tenantId, ...);
-    Task&lt;Sucursal&gt; AddAsync(Sucursal s, ...);
-    // ...
+        <h3>Paso 2 — Application: Interface + Commands + Queries + Validators</h3>
+        <pre>// OPT.Application/Interfaces/INuevoModuloRepository.cs
+public interface INuevoModuloRepository {
+    Task&lt;IReadOnlyList&lt;NuevoModulo&gt;&gt; GetAllAsync(Guid tenantId);
+    Task&lt;NuevoModulo?&gt; GetByIdAsync(Guid id, Guid tenantId);
+    Task AddAsync(NuevoModulo entity);
+    Task UpdateAsync(NuevoModulo entity);
+    Task SoftDeleteAsync(Guid id, Guid tenantId, string deletedBy);
 }</pre>
 
         <h3>Paso 3 — Infrastructure: Repository + DbContext</h3>
         <pre>// En OPTDbContext.OnModelCreating:
-modelBuilder.Entity&lt;Sucursal&gt;(e => {
-    e.ToTable("OPT_Sucursal");
-    e.HasQueryFilter(s => !s.IsDeleted);
-    // ... configuración
+modelBuilder.Entity&lt;NuevoModulo&gt;(e => {
+    e.ToTable("OPT_NuevoModulo");
+    e.HasKey(x => x.NuevoModuloId);
+    e.Property(x => x.NuevoModuloId).HasDefaultValueSql("NEWSEQUENTIALID()");
+    e.HasIndex(x => x.TenantId).HasFilter("[IsDeleted] = 0");
+    e.HasQueryFilter(x => !x.IsDeleted);
 });</pre>
 
-        <h3>Paso 4 — API: Controller delgado</h3>
+        <h3>Paso 4 — API: Controller delgado (sin try/catch)</h3>
         <pre>[ApiController]
-[Route("api/[controller]")]
+[Route("api/nuevomodulo")]
 [Authorize]
-public class SucursalController(IMediator mediator, ICurrentTenantService tenant) : ControllerBase {
+public class NuevoModuloController(IMediator mediator, ICurrentTenantService tenantService)
+    : ControllerBase {
     [HttpGet]
-    public async Task&lt;IActionResult&gt; Get([FromQuery] int page = 1) {
-        var result = await mediator.Send(new GetSucursalesQuery(tenant.TenantId, page));
+    public async Task&lt;IActionResult&gt; GetAll(CancellationToken ct) {
+        var result = await mediator.Send(new GetNuevoModuloQuery(tenantService.TenantId), ct);
         return Ok(result);
     }
+    // ... GetById, Create (201), Update (204), Delete (204)
 }</pre>
 
-        <h3>Paso 5 — Script SQL</h3>
-        <pre>-- src/basedatos/009_OPT_Sucursal_ajuste.sql
--- Script incremental si hay cambios de esquema
-ALTER TABLE [dbo].[OPT_Sucursal] ADD [NuevoCampo] NVARCHAR(100) NULL;
-GO</pre>
+        <h3>Paso 5 — Script SQL (si hay nuevas tablas)</h3>
+        <pre>-- src/basedatos/012_OPT_NuevoModulo.sql
+-- Próximo número secuencial disponible: 012
+CREATE TABLE [dbo].[OPT_NuevoModulo] (
+    [NuevoModuloId] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+    [TenantId]      UNIQUEIDENTIFIER NOT NULL,
+    -- ... campos
+    [IsDeleted]     BIT NOT NULL DEFAULT 0,
+    CONSTRAINT [PK_OPT_NuevoModulo] PRIMARY KEY CLUSTERED ([NuevoModuloId])
+);</pre>
 
+        <div class="alert alert-blue">
+          <strong>Nota Sucursales:</strong> La tabla <code>OPT_Sucursal</code> ya existía en <code>004_OPT_Sucursal.sql</code>. El módulo backend CRUD fue implementado en Sesión 11 sin necesitar nuevo script SQL.
+        </div>
+        <div class="alert alert-blue">
+          <strong>Nota Usuarios (Sesión 12):</strong> La entidad <code>Usuario</code> tenía solo <code>GetByRutAsync</code>. En Sesión 12 se expandió con CRUD completo + relación M:N a Sucursales. El script <code>012_OPT_UsuarioSucursal.sql</code> crea la tabla pivote. Ver <code>OPT.API/Controllers/UsuarioController.cs</code> para referencia de implementación con asignación de sucursales.
+        </div>
         <div class="alert alert-green">
-          <strong>Tip:</strong> La tabla OPT_Sucursal ya existe en el script <code>004_OPT_Sucursal.sql</code>. Solo necesitas implementar las capas de código.
+          <strong>Frontend Usuarios (Sesión 13):</strong> Módulo Angular completo en <code>features/usuarios/</code>: lista con badges de rol (Admin=violeta, Operador=azul, Lectura=gris) y chips de sucursales, modal crear/editar con gestión de sucursales en tiempo real, modal exclusivo de cambio de contraseña. Rutas lazy en <code>app.routes.ts</code>, link en sidebar.
+        </div>
+        <div class="alert alert-amber">
+          <strong>Mejora Planeada — Módulo Rol (Sesión 14):</strong>
+          <ol style="margin: 8px 0 0 16px; line-height: 1.8;">
+            <li>BD: <code>013_OPT_Rol.sql</code> — tabla catálogo <code>OPT_Rol</code> (<code>RolId INT IDENTITY</code>, <code>Nombre NVARCHAR(50)</code>, sin TenantId). Poblar con Admin, Operador, Lectura.</li>
+            <li>Backend: <code>GET /api/roles</code> — endpoint solo lectura, retorna <code>RolDto[]</code>. Sin CRUD (catálogo gestionado en BD).</li>
+            <li>Frontend: <code>rol.service.ts</code> con <code>shareReplay(1)</code> + <code>rol.model.ts</code> → reemplazar opciones hardcodeadas del <code>&lt;select&gt;</code> de Rol en <code>usuario-form.component.ts</code> por datos dinámicos de la API.</li>
+          </ol>
         </div>
       </section>
 

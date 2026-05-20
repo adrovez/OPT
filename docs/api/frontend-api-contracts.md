@@ -1,6 +1,6 @@
 # Frontend API Contracts - OPT System
 
-> **Última actualización:** 2026-05-15 (Sesión 10 — Backend RecetaCristales; modelos TypeScript pendientes)
+> **Última actualización:** 2026-05-20 (Sesión 13 — Frontend Usuarios implementado + contrato Rol planeado)
 
 Este documento describe los contratos de API entre el frontend Angular y el backend .NET.
 
@@ -20,6 +20,8 @@ En TypeScript/Angular, los UUIDs se representan como **`string`** (no `number`).
 | Usuario | `string` | `"b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27"` |
 | Anamnesis | `string` | `"1d0f35a4-83a2-4a2b-8d7e-3f9b1c2e5d6f"` |
 | RecetaCristales | `string` | `"7f4a1b2c-3d5e-6f7a-8b9c-0d1e2f3a4b5c"` |
+| Sucursal | `string` | `"4e9f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b"` |
+| UsuarioSucursal | — | Join table — no tiene ID propio, PK compuesta en SQL |
 | Region (catálogo) | `number` | `7` |
 | Comuna (catálogo) | `number` | `318` |
 
@@ -519,6 +521,163 @@ delete(id: string): Observable<void>
 
 ---
 
+## Sucursales
+
+### Modelos TypeScript (pendiente implementar en frontend)
+
+**Endpoint base**: `GET|POST /api/sucursales`, `GET|PUT|DELETE /api/sucursales/{id}`
+
+```typescript
+// core/models/sucursal.model.ts  (pendiente crear)
+export interface SucursalDto {
+  sucursalId: string;     // UUID
+  tenantId: string;       // UUID
+  nombre: string;
+  direccion?: string;
+  telefono?: string;
+  matriz: boolean;        // true = sede principal
+  fechaRegistro: string;  // ISO 8601
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface CreateSucursalRequest {
+  nombre: string;         // requerido, max 150 chars
+  direccion?: string;
+  telefono?: string;
+  matriz: boolean;
+}
+
+export interface UpdateSucursalRequest {
+  nombre: string;
+  direccion?: string;
+  telefono?: string;
+  matriz: boolean;
+}
+```
+
+### Servicio Angular (pendiente implementar)
+
+```typescript
+// core/services/sucursal.service.ts  (pendiente crear)
+// Patrón idéntico a AnamnesisService, sin clienteId:
+getAll(): Observable<SucursalDto[]>
+getById(id: string): Observable<SucursalDto>
+create(req: CreateSucursalRequest): Observable<{ id: string }>
+update(id: string, req: UpdateSucursalRequest): Observable<void>
+delete(id: string): Observable<void>
+// URL base: /api/sucursales
+```
+
+---
+
+## Usuarios
+
+### Modelos TypeScript ✅ Implementado en Sesión 13
+
+**Endpoints**: `GET|POST /api/usuarios`, `GET|PUT|DELETE /api/usuarios/{id}`, `PUT /api/usuarios/{id}/password`, `POST|DELETE /api/usuarios/{id}/sucursales`
+
+```typescript
+// core/models/usuario.model.ts  (pendiente crear)
+export interface SucursalResumen {
+  sucursalId: string;  // UUID
+  nombre: string;
+}
+
+export interface UsuarioDto {
+  usuarioId: string;   // UUID
+  tenantId: string;    // UUID
+  rutUsuario: string;  // RUT chileno: "12345678-9"
+  nombre: string;
+  email: string;
+  rol: 'Admin' | 'Operador' | 'Lectura';
+  fechaIngreso: string;   // ISO 8601
+  sucursales: SucursalResumen[];
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface CreateUsuarioRequest {
+  rutUsuario: string;  // requerido, max 20 chars
+  nombre: string;      // requerido, max 150 chars
+  email: string;       // requerido, formato email
+  password: string;    // requerido, min 6 chars
+  rol: 'Admin' | 'Operador' | 'Lectura';
+}
+
+export interface UpdateUsuarioRequest {
+  nombre: string;
+  email: string;
+  rol: 'Admin' | 'Operador' | 'Lectura';
+}
+
+export interface ChangePasswordRequest {
+  newPassword: string;  // min 6 chars
+}
+
+export interface AssignSucursalRequest {
+  sucursalId: string;  // UUID
+}
+```
+
+### Servicio Angular ✅ Implementado
+
+```typescript
+// core/services/usuario.service.ts  ← implementado en Sesión 13
+getAll(): Observable<UsuarioDto[]>
+getById(id: string): Observable<UsuarioDto>
+create(req: CreateUsuarioRequest): Observable<{ id: string }>
+update(id: string, req: UpdateUsuarioRequest): Observable<void>
+delete(id: string): Observable<void>
+changePassword(id: string, req: ChangePasswordRequest): Observable<void>
+assignSucursal(id: string, req: AssignSucursalRequest): Observable<void>
+removeSucursal(id: string, sucursalId: string): Observable<void>
+// URL base: /api/usuarios
+```
+
+---
+
+## Roles (catálogo) — Planeado Sesión 14
+
+### Objetivo
+Reemplazar el `<select>` hardcodeado en `usuario-form.component.ts` por opciones cargadas desde la API.
+
+**Endpoint planeado**: `GET /api/roles`
+
+```typescript
+// core/models/rol.model.ts  (pendiente crear)
+export interface RolDto {
+  rolId: number;   // INT IDENTITY — catálogo compartido, no GUID
+  nombre: string;  // 'Admin' | 'Operador' | 'Lectura'
+}
+```
+
+```typescript
+// core/services/rol.service.ts  (pendiente crear)
+// Patrón idéntico a RegionService — catálogo estático con cache:
+getRoles(): Observable<RolDto[]> {
+  return this.http.get<RolDto[]>(`${this.apiUrl}/roles`)
+    .pipe(shareReplay(1));
+}
+```
+
+**Tabla BD planeada** (`013_OPT_Rol.sql`):
+```sql
+CREATE TABLE [dbo].[OPT_Rol] (
+    [RolId]  INT IDENTITY(1,1) NOT NULL,
+    [Nombre] NVARCHAR(50)      NOT NULL,
+    CONSTRAINT [PK_OPT_Rol] PRIMARY KEY CLUSTERED ([RolId])
+);
+-- Sin TenantId (catálogo global), sin IsDeleted (nunca se borra)
+INSERT INTO [dbo].[OPT_Rol] ([Nombre]) VALUES ('Admin'), ('Operador'), ('Lectura');
+```
+
+---
+
 ## Respuestas de error (RFC 7807 ProblemDetails)
 
 Todos los endpoints devuelven errores en este formato:
@@ -552,6 +711,9 @@ Todos los endpoints devuelven errores en este formato:
 | `RegionService` | `region.service.ts` | `getRegionesWithComunas()` con `shareReplay(1)` |
 | `AnamnesisService` | `anamnesis.service.ts` | `getByCliente(clienteId: string)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` |
 | `RecetaCristalesService` | `receta-cristales.service.ts` | `getByCliente(clienteId: string)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` — **pendiente** |
+| `SucursalService` | `sucursal.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` |
+| `UsuarioService` | `usuario.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)`, `changePassword(id, req)`, `assignSucursal(id, req)`, `removeSucursal(id, sucursalId)` |
+| `RolService` | `rol.service.ts` | `getRoles()` con `shareReplay(1)` — **pendiente Sesión 14** |
 
 > **Todos los `id` de entidades de negocio son `string` (UUID). Los catálogos (Region, Comuna) siguen usando `number`.**
 

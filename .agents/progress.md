@@ -3,11 +3,11 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-15 (Sesión 10 — Backend RecetaCristales CRUD + documentación actualizada)
+> Updated: 2026-05-20 (Sesión 13 — Frontend Usuarios completo + mejoras planeadas módulo Rol)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts 000–010, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis
-- [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), **Anamnesis**
+- [x] Base de datos: scripts 000–011, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales
+- [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), Anamnesis, RecetaCristales, **Sucursales**
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21: Login, Clientes (lista + form + detalle), Layout, AuthGuard, HTTP Interceptor JWT, RUT Validator
 - [x] Frontend: RegionService con shareReplay (comunas desde API, no hardcodeado)
@@ -21,6 +21,14 @@ Track work sessions and current state for continuity between AI agent sessions.
 - [x] **Manuales técnicos actualizados**: backend-arquitectura.html, frontend-setup.md, API Reference (tipos GUID)
 - [x] **Frontend Anamnesis**: model, service, anamnesis-list (página `/clientes/:id/anamnesis`), anamnesis-form (modal), botón en cliente-detail
 - [x] **Backend RecetaCristales**: entidad Domain, interfaz Application, Commands/Queries/Validators, repositorio Infrastructure, DbContext, DI, Controller CRUD completo (`/api/RecetaCristales`)
+- [x] **Backend Sucursales**: entidad Domain, ISucursalRepository, Commands/Queries/Validators, SucursalRepository, DbContext, DI, Controller CRUD completo (`/api/sucursales`)
+- [x] **Backend Usuarios**: entidad UsuarioSucursal (M:N), IUsuarioRepository expandido, Commands (CRUD + ChangePassword + AssignSucursal + RemoveSucursal), Queries, Validators, UsuarioRepository, DbContext, Controller CRUD completo (`/api/usuarios`) con endpoints de sucursales
+- [x] **Frontend Usuarios**: `usuario.model.ts`, `usuario.service.ts`, `usuarios-list` (tabla con badges de rol + chips de sucursales), `usuario-form` (modal crear/editar + gestión de sucursales en tiempo real), `usuario-password` (modal cambio contraseña), rutas lazy `/usuarios`, link en sidebar
+
+### Mejoras Anotadas — Módulo Rol (próxima sesión)
+- [ ] **BD**: Crear `013_OPT_Rol.sql` — tabla catálogo `OPT_Rol` (`RolId INT IDENTITY PK`, `Nombre NVARCHAR(50)`, sin TenantId — catálogo compartido). Poblar con Admin, Operador, Lectura.
+- [ ] **Backend**: API de solo lectura `GET /api/roles` — retorna `RolDto[]` (`rolId: number`, `nombre: string`). Sin CRUD (catálogo). Controller sin `[Authorize]` o con JWT según decisión.
+- [ ] **Frontend**: `rol.model.ts` + `rol.service.ts` (con `shareReplay(1)`) → cargar roles en `usuario-form` reemplazando las opciones hardcodeadas del `<select>` de Rol.
 
 ### Completed This Session (Sesión 6)
 - **Backend — nuevas features:**
@@ -47,17 +55,96 @@ Track work sessions and current state for continuity between AI agent sessions.
 
 ### Next Steps Sugeridos
 - [ ] **Frontend RecetaCristales**: model (`receta-cristales.model.ts`), service, lista + formulario modal (igual patrón que Anamnesis), botón en `cliente-detail`
-- [ ] Módulo Sucursal — backend (CRUD) + frontend
-- [ ] Script `012_` para datos de prueba
+- [ ] **Mejoras Módulo Rol**: BD (`013_OPT_Rol.sql`) + API (`GET /api/roles`) + Frontend (`rol.service.ts` + combobox dinámico en usuario-form) — ver sección "Mejoras Anotadas" arriba
 - [ ] Unit tests backend con xUnit + Moq (IClienteRepository, handlers)
 - [ ] Validación de formato RUT chileno en FluentValidation (backend)
 - [ ] Dashboard / Home screen en Angular
-- [ ] Módulo Usuarios — gestión de usuarios del tenant (Admin)
+- [ ] Definir autorización por rol en UsuarioController (actualmente solo [Authorize])
 - [ ] Sidebar con acceso directo a Anamnesis (requiere selector de cliente)
 
 ---
 
 ## Session History
+
+### 2026-05-20 - Sesión 13: Frontend Usuarios completo + mejoras planeadas Rol
+- **Work**: Implementación completa del módulo frontend de Usuarios. Corrección de bug ngModel. Actualización de documentación y anotación de mejoras para módulo Rol.
+- **Archivos creados** (5 archivos nuevos):
+  - `src/frontend/src/app/core/models/usuario.model.ts` — interfaces `UsuarioDto`, `SucursalResumen`, `CreateUsuarioRequest`, `UpdateUsuarioRequest`, `ChangePasswordRequest`, `AssignSucursalRequest`
+  - `src/frontend/src/app/core/services/usuario.service.ts` — 8 métodos HTTP: `getAll`, `getById`, `create`, `update`, `delete`, `changePassword`, `assignSucursal`, `removeSucursal`
+  - `src/frontend/src/app/features/usuarios/usuarios-list/usuarios-list.component.ts` — tabla con badges de rol (color por tipo), chips de sucursales, acciones (editar / cambiar contraseña / eliminar)
+  - `src/frontend/src/app/features/usuarios/usuario-form/usuario-form.component.ts` — modal crear/editar con ReactiveFormsModule; en edición incluye sección de sucursales (asignar/quitar en tiempo real via API)
+  - `src/frontend/src/app/features/usuarios/usuario-password/usuario-password.component.ts` — modal exclusivo cambio de contraseña (botón ámbar en lista)
+- **Archivos modificados** (2 archivos):
+  - `src/frontend/src/app/app.routes.ts` — ruta lazy `/usuarios`
+  - `src/frontend/src/app/layout/main-layout/main-layout.component.ts` — link "Usuarios" en sidebar
+- **Bug fix**: `[(ngModel)]` en select de sucursales → reemplazado por `(change)="onSucursalSelectChange($event)"` (no se importaba FormsModule)
+- **Decisiones de diseño**:
+  - Gestión de sucursales en tiempo real (API calls inmediatos al asignar/quitar), no diferida al guardar
+  - Crear usuario: solo campos básicos (sin sucursales) — se asignan desde edición posterior
+  - Cambio de contraseña: modal separado accesible con ícono de candado en la lista
+  - Roles hardcodeados en combobox (Admin/Operador/Lectura) — **mejora anotada**: cargar desde `GET /api/roles`
+- **Mejoras anotadas para próxima sesión** (módulo Rol):
+  1. `013_OPT_Rol.sql` — tabla catálogo `OPT_Rol`
+  2. `GET /api/roles` — endpoint solo lectura
+  3. `rol.service.ts` + combobox dinámico en `usuario-form`
+
+### 2026-05-19 - Sesión 12: Backend Usuarios CRUD + UsuarioSucursal M:N + documentación
+- **Work**: Implementación completa del módulo backend de Usuarios con relación M:N a Sucursales. Actualización de todos los archivos de contexto IA y manuales técnicos.
+- **SQL creado** (1 archivo):
+  - `012_OPT_UsuarioSucursal.sql` — tabla pivote M:N con PK compuesta (UsuarioId, SucursalId), FK a OPT_Usuario (CASCADE) y OPT_Sucursal (NO ACTION)
+- **Archivos creados** (15 archivos nuevos):
+  - `OPT.Domain/Entities/UsuarioSucursal.cs` — entidad pivote con AssignedAt, AssignedBy, navegación a Usuario y Sucursal
+  - `OPT.Application/Interfaces/IUsuarioRepository.cs` — expandido con GetAll, GetById, Add, Update, SoftDelete, AssignSucursal, RemoveSucursal, ExistsSucursalAssignment
+  - `OPT.Application/Usuarios/DTOs/UsuarioDto.cs` — record con `IReadOnlyList<SucursalResumenDto> Sucursales`
+  - `OPT.Application/Usuarios/DTOs/UsuarioMappingExtensions.cs` — ToDto con sucursales activas
+  - `OPT.Application/Usuarios/Commands/CreateUsuarioCommand.cs` (+ handler, hashea password con BCrypt)
+  - `OPT.Application/Usuarios/Commands/UpdateUsuarioCommand.cs` (+ handler, sin modificar contraseña)
+  - `OPT.Application/Usuarios/Commands/DeleteUsuarioCommand.cs` (+ handler, soft delete)
+  - `OPT.Application/Usuarios/Commands/ChangePasswordCommand.cs` (+ handler, rehashea con BCrypt)
+  - `OPT.Application/Usuarios/Commands/AssignSucursalCommand.cs` (+ handler, valida duplicados con 409)
+  - `OPT.Application/Usuarios/Commands/RemoveSucursalCommand.cs` (+ handler, valida existencia)
+  - `OPT.Application/Usuarios/Queries/GetUsuariosQuery.cs` (+ handler)
+  - `OPT.Application/Usuarios/Queries/GetUsuarioByIdQuery.cs` (+ handler)
+  - `OPT.Application/Usuarios/Validators/CreateUsuarioCommandValidator.cs` — valida Rol (Admin|Operador|Lectura), email, password min 6
+  - `OPT.Application/Usuarios/Validators/UpdateUsuarioCommandValidator.cs`
+  - `OPT.API/Controllers/UsuarioController.cs` — 8 endpoints en `/api/usuarios`
+- **Archivos modificados** (4 archivos):
+  - `OPT.Domain/Entities/Usuario.cs` — agregada `ICollection<UsuarioSucursal> UsuarioSucursales`
+  - `OPT.Infrastructure/Persistence/Repositories/UsuarioRepository.cs` — implementación completa con Include ThenInclude
+  - `OPT.Infrastructure/Persistence/OPTDbContext.cs` — DbSet<UsuarioSucursal> + config EF (PK compuesta, FKs, HasMaxLength)
+- **Build**: `dotnet build` exitoso — 0 errores, 0 advertencias
+- **Documentación actualizada**: AGENTS.md raíz, src/backend/AGENTS.md, .agents/progress.md, docs/api/README.md, docs/api/frontend-api-contracts.md, backend-arquitectura.html, base-datos.html
+
+### 2026-05-19 - Sesión 11: Backend Sucursales CRUD + documentación
+- **Work**: Implementación completa del módulo backend de Sucursales. Actualización de todos los archivos de contexto IA y manuales técnicos.
+- **Archivos creados** (13 archivos nuevos):
+  - `OPT.Domain/Entities/Sucursal.cs` — entidad con campos Nombre, Direccion, Telefono, Matriz (bool), FechaRegistro, auditoría
+  - `OPT.Application/Interfaces/ISucursalRepository.cs` — contrato GetAll, GetById, Add, Update, SoftDelete
+  - `OPT.Application/Sucursales/DTOs/SucursalDto.cs` — record de respuesta completo
+  - `OPT.Application/Sucursales/DTOs/SucursalMappingExtensions.cs` — ToDto extension
+  - `OPT.Application/Sucursales/Commands/CreateSucursalCommand.cs` (+ handler)
+  - `OPT.Application/Sucursales/Commands/UpdateSucursalCommand.cs` (+ handler, lanza KeyNotFoundException si no existe)
+  - `OPT.Application/Sucursales/Commands/DeleteSucursalCommand.cs` (+ handler)
+  - `OPT.Application/Sucursales/Queries/GetSucursalesQuery.cs` (+ handler — lista ordenada por Nombre)
+  - `OPT.Application/Sucursales/Queries/GetSucursalByIdQuery.cs` (+ handler)
+  - `OPT.Application/Sucursales/Validators/CreateSucursalCommandValidator.cs`
+  - `OPT.Application/Sucursales/Validators/UpdateSucursalCommandValidator.cs`
+  - `OPT.Infrastructure/Persistence/Repositories/SucursalRepository.cs`
+  - `OPT.API/Controllers/SucursalController.cs` — CRUD completo en `/api/sucursales`
+- **Archivos modificados** (3 archivos):
+  - `OPT.Infrastructure/Persistence/OPTDbContext.cs` — DbSet<Sucursal> + configuración EF (HasMaxLength, HasQueryFilter, NEWSEQUENTIALID, índice TenantId)
+  - `OPT.Infrastructure/DependencyInjection.cs` — registro `ISucursalRepository`
+  - `CLAUDE.md` — actualizado: script 012, Signal Forms, UUID string, takeUntilDestroyed, módulos pendientes
+- **Nota**: La tabla `OPT_Sucursal` ya existía en `004_OPT_Sucursal.sql` — no se requirió nuevo script SQL.
+- **Build**: `dotnet build` exitoso — 0 errores, 0 advertencias en todos los proyectos.
+- **Documentación actualizada** (7 archivos):
+  - `AGENTS.md` raíz — Sucursal ✅ en tablas backend y módulos
+  - `src/backend/AGENTS.md` — módulo Sucursal, endpoints, interfaz, repositorio, entidad
+  - `.agents/progress.md` — esta entrada
+  - `docs/api/README.md` — módulo Sucursal en tabla + sección endpoints
+  - `docs/api/frontend-api-contracts.md` — modelos TypeScript Sucursal
+  - `docs/technical-manual/backend-arquitectura.html` — entidad, interfaz, repositorio, controller
+  - `docs/technical-manual/base-datos.html` — sección "Guía nuevo módulo" actualizada
 
 ### 2026-05-15 - Sesión 10: Backend RecetaCristales CRUD + documentación
 - **Work**: Implementación completa del módulo backend de RecetaCristales. Actualización de todos los archivos de contexto IA y manuales técnicos.

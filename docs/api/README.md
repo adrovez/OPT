@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-15 (Sesión 10)
+> **Última actualización:** 2026-05-20 (Sesión 13 — Frontend Usuarios implementado + mejoras Rol planeadas)
 
 ## Overview
 
@@ -22,6 +22,9 @@
 | Regiones | `/api/Regiones` | JWT | ✅ GET /WithComunas (catálogo Chile) |
 | Anamnesis | `/api/Anamnesis` | JWT | ✅ Completo — CRUD por clienteId |
 | RecetaCristales | `/api/RecetaCristales` | JWT | ✅ Completo — CRUD por clienteId |
+| Sucursales | `/api/sucursales` | JWT | ✅ Completo — CRUD por tenant |
+| Usuarios | `/api/usuarios` | JWT | ✅ Completo — CRUD + password + sucursales M:N |
+| Roles | `/api/roles` | — | ⏳ Planeado — GET solo lectura (catálogo) |
 
 ---
 
@@ -567,6 +570,169 @@ Soft-delete de receta (IsDeleted = true).
 
 **Response 204:** No Content  
 **Response 404:** `"RecetaCristales no encontrada"`
+
+---
+
+---
+
+## 7. Sucursales API
+
+**Auth:** Requiere JWT (TenantId extraído del token)
+
+Sucursales de la óptica. Un tenant puede tener múltiples sucursales. El campo `Matriz` indica la sede principal.
+
+### GET /api/sucursales
+
+Listar todas las sucursales activas del tenant autenticado, ordenadas por nombre.
+
+**Response 200:**
+```json
+[
+  {
+    "sucursalId": "4e9f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+    "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+    "nombre": "Sucursal Centro",
+    "direccion": "Av. Principal 123, Santiago",
+    "telefono": "+56 2 2345 6789",
+    "matriz": true,
+    "fechaRegistro": "2026-05-19T10:00:00Z",
+    "createdAt": "2026-05-19T10:00:00Z",
+    "createdBy": "12345678-9"
+  }
+]
+```
+
+### GET /api/sucursales/{id}
+
+Obtener detalle de una sucursal por ID.
+
+**Response 200:** SucursalDto  
+**Response 404:** `"Sucursal {id} no encontrada."`
+
+### POST /api/sucursales
+
+Crear una nueva sucursal.
+
+**Request:**
+```json
+{
+  "nombre": "Sucursal Norte",
+  "direccion": "Calle Los Álamos 456",
+  "telefono": "+56 9 8765 4321",
+  "matriz": false
+}
+```
+
+**Response 201:** `{ "id": "uuid-nueva-sucursal" }`
+
+### PUT /api/sucursales/{id}
+
+Actualizar datos de una sucursal existente.
+
+**Request:** Mismo body que POST.
+
+**Response 204:** No Content  
+**Response 404:** `"Sucursal {id} no encontrada."`
+
+### DELETE /api/sucursales/{id}
+
+Soft-delete de sucursal (IsDeleted = true).
+
+**Response 204:** No Content  
+**Response 404:** `"Sucursal {id} no encontrada."`
+
+---
+
+---
+
+## 8. Usuarios API
+
+**Auth:** Requiere JWT (TenantId extraído del token)
+
+Gestión de usuarios del tenant. Incluye CRUD, cambio de contraseña y asignación de sucursales (relación M:N).
+
+### GET /api/usuarios
+
+Lista todos los usuarios activos del tenant, con sus sucursales asignadas.
+
+**Response 200:**
+```json
+[
+  {
+    "usuarioId": "b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27",
+    "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+    "rutUsuario": "12345678-9",
+    "nombre": "Juan Pérez",
+    "email": "juan@opticademo.cl",
+    "rol": "Operador",
+    "fechaIngreso": "2026-05-19T10:00:00Z",
+    "sucursales": [
+      { "sucursalId": "4e9f1a2b-...", "nombre": "Sucursal Centro" }
+    ],
+    "createdAt": "2026-05-19T10:00:00Z",
+    "createdBy": "Admin Demo"
+  }
+]
+```
+
+### GET /api/usuarios/{id}
+
+**Response 200:** UsuarioDto con sucursales asignadas
+**Response 404:** `"Usuario {id} no encontrado."`
+
+### POST /api/usuarios
+
+Crea un usuario. La contraseña se hashea con BCrypt.
+
+**Request:**
+```json
+{
+  "rutUsuario": "98765432-1",
+  "nombre": "María López",
+  "email": "maria@opticademo.cl",
+  "password": "ClaveSegura123",
+  "rol": "Operador"
+}
+```
+
+**Response 201:** `{ "id": "uuid-nuevo-usuario" }`
+
+**Roles válidos:** `Admin` · `Operador` · `Lectura`
+
+### PUT /api/usuarios/{id}
+
+Actualiza Nombre, Email y Rol. No modifica contraseña ni RUT.
+
+**Response 204:** No Content
+**Response 404:** `"Usuario {id} no encontrado."`
+
+### DELETE /api/usuarios/{id}
+
+Soft delete (IsDeleted = true).
+
+**Response 204:** No Content
+
+### PUT /api/usuarios/{id}/password
+
+Cambia la contraseña (nueva contraseña en texto plano, hasheada internamente).
+
+**Request:** `{ "newPassword": "NuevaClave456" }`
+**Response 204:** No Content
+
+### POST /api/usuarios/{id}/sucursales
+
+Asigna una sucursal al usuario.
+
+**Request:** `{ "sucursalId": "4e9f1a2b-..." }`
+**Response 204:** No Content
+**Response 409:** `"La sucursal ya está asignada al usuario."`
+
+### DELETE /api/usuarios/{id}/sucursales/{sucursalId}
+
+Desasigna una sucursal del usuario.
+
+**Response 204:** No Content
+**Response 404:** `"La sucursal no está asignada al usuario."`
 
 ---
 

@@ -1,6 +1,6 @@
 # OPT - Project Agent Instructions
 
-> **Última actualización:** 2026-05-15 (Sesión 10 — Backend RecetaCristales CRUD completo)
+> **Última actualización:** 2026-05-20 (Sesión 13 — Frontend Usuarios completo + mejoras planeadas Rol)
 
 ## About This Project
 
@@ -86,7 +86,7 @@ OPT/
 7. **NUNCA lógica de negocio en controllers** — controllers delegan a handlers via MediatR.
 8. **NUNCA acceder a DbContext directamente desde Application** — usar repositorios.
 9. **NUNCA try/catch en controllers** — el `ExceptionHandlingMiddleware` lo maneja.
-10. **Si cambia el esquema DB**, crear script SQL incremental en `src/basedatos/` (siguiente número secuencial: `011_...`).
+10. **Si cambia el esquema DB**, crear script SQL incremental en `src/basedatos/` (siguiente número secuencial: `013_...`).
 11. **SIEMPRE actualizar `.agents/progress.md`** al finalizar sesiones significativas.
 12. **NUNCA usar `int` como tipo de PK/FK en entidades de negocio** — todas usan `Guid` en C# / `UNIQUEIDENTIFIER` en SQL. Solo catálogos (Region, Comuna) mantienen `int`/`INT IDENTITY`.
 13. **NUNCA usar `GreaterThan(0)` en FluentValidation para IDs tipo Guid** — usar `.NotEmpty()` en su lugar.
@@ -107,6 +107,8 @@ OPT/
 | **Regiones** | `RegionController` | JWT | ✅ GET /WithComunas (catálogo anidado) |
 | **Anamnesis** | `AnamnesisController` | JWT | ✅ CRUD completo (por ClienteId) |
 | **RecetaCristales** | `RecetaCristalesController` | JWT | ✅ CRUD completo (por ClienteId) |
+| **Sucursales** | `SucursalController` | JWT | ✅ CRUD completo (por Tenant) |
+| **Usuarios** | `UsuarioController` | JWT | ✅ CRUD + cambio contraseña + asignar/desasignar sucursales |
 
 ### Frontend (Angular)
 
@@ -128,6 +130,14 @@ OPT/
 | Core | `core/services/anamnesis.service.ts` | ✅ Implementado (CRUD por clienteId) |
 | Anamnesis | `features/anamnesis/anamnesis-list/anamnesis-list.component.ts` | ✅ Implementado (ruta `/clientes/:id/anamnesis`) |
 | Anamnesis | `features/anamnesis/anamnesis-form/anamnesis-form.component.ts` | ✅ Implementado (modal create/edit) |
+| Core | `core/models/sucursal.model.ts` | ✅ Implementado |
+| Core | `core/services/sucursal.service.ts` | ✅ Implementado |
+| Sucursales | `features/sucursales/sucursales-list/sucursales-list.component.ts` | ✅ Implementado (lista + modal crear/editar) |
+| Core | `core/models/usuario.model.ts` | ✅ Implementado |
+| Core | `core/services/usuario.service.ts` | ✅ Implementado (CRUD + password + sucursales M:N) |
+| Usuarios | `features/usuarios/usuarios-list/usuarios-list.component.ts` | ✅ Implementado (badges Rol + chips Sucursales) |
+| Usuarios | `features/usuarios/usuario-form/usuario-form.component.ts` | ✅ Implementado (crear/editar + gestión sucursales) |
+| Usuarios | `features/usuarios/usuario-password/usuario-password.component.ts` | ✅ Implementado (modal cambio contraseña) |
 | Core | `core/models/receta-cristales.model.ts` | ⏳ Pendiente (solo backend implementado) |
 | Core | `core/services/receta-cristales.service.ts` | ⏳ Pendiente |
 
@@ -146,8 +156,9 @@ OPT/
 | `008_OPT_Usuario.sql` | OPT_Usuario — **PK + FK TenantId: UNIQUEIDENTIFIER** |
 | `010_OPT_Anamnesis.sql` | OPT_Anamnesis — **PK + FK TenantId + FK ClienteId: UNIQUEIDENTIFIER** |
 | `011_OPT_RecetaCristales.sql` | OPT_RecetaCristales — **PK + FK TenantId + FK ClienteId: UNIQUEIDENTIFIER** · Campos Lejos/Cerca/DP/ADD + flags |
+| `012_OPT_UsuarioSucursal.sql` | OPT_UsuarioSucursal — tabla pivote M:N (UsuarioId + SucursalId, PK compuesta) + AssignedAt + AssignedBy |
 
-> El próximo script incremental debe ser `012_...`
+> **Próximo script incremental: `013_OPT_Rol.sql`** (tabla catálogo de roles — mejora planeada para Sesión 14)
 
 > **Regla de tipo de PK:** Las tablas de negocio (tenant-aware) usan `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()`. Los catálogos compartidos (Region, Comuna) mantienen `INT IDENTITY`. Ver ADR: `.agents/decisions/2026-05-08-migracion-pk-guid.md`
 

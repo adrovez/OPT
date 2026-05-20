@@ -11,11 +11,13 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<UsuarioSucursal> UsuarioSucursales => Set<UsuarioSucursal>();
     public DbSet<Region> Regiones => Set<Region>();
     public DbSet<Comuna> Comunas => Set<Comuna>();
     public DbSet<Contacto> Contactos => Set<Contacto>();
     public DbSet<Anamnesis> Anamnesis => Set<Anamnesis>();
     public DbSet<RecetaCristales> RecetasCristales => Set<RecetaCristales>();
+    public DbSet<Sucursal> Sucursales => Set<Sucursal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -238,6 +240,50 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 
             // Filtro global: excluye eliminados lógicamente
             e.HasQueryFilter(r => !r.IsDeleted);
+        });
+
+        // ── UsuarioSucursal ────────────────────────────────────────────────
+        modelBuilder.Entity<UsuarioSucursal>(e =>
+        {
+            e.ToTable("OPT_UsuarioSucursal");
+            e.HasKey(us => new { us.UsuarioId, us.SucursalId });
+
+            e.Property(us => us.AssignedBy).HasMaxLength(100);
+
+            e.HasOne(us => us.Usuario)
+             .WithMany(u => u.UsuarioSucursales)
+             .HasForeignKey(us => us.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(us => us.Sucursal)
+             .WithMany()
+             .HasForeignKey(us => us.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Sucursal ───────────────────────────────────────────────────────
+        modelBuilder.Entity<Sucursal>(e =>
+        {
+            e.ToTable("OPT_Sucursal");
+            e.HasKey(s => s.SucursalId);
+
+            e.Property(s => s.SucursalId)
+             .HasColumnName("idSucursal")
+             .HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(s => s.TenantId)
+             .IsRequired();
+
+            e.Property(s => s.Nombre).HasMaxLength(150).IsRequired();
+            e.Property(s => s.Direccion).HasMaxLength(250);
+            e.Property(s => s.Telefono).HasMaxLength(50);
+            e.Property(s => s.CreatedBy).HasMaxLength(100);
+            e.Property(s => s.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(s => s.TenantId)
+             .HasFilter("[IsDeleted] = 0");
+
+            // Filtro global: excluye eliminados lógicamente
+            e.HasQueryFilter(s => !s.IsDeleted);
         });
     }
 }
