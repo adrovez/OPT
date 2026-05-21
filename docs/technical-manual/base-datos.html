@@ -119,7 +119,7 @@
       <p>OPT SaaS · SQL Server 2022 · Azure SQL Compatible · Multi-Tenant</p>
       <div class="chips">
         <span class="chip chip-cyan">Base de datos: dbOPT</span>
-        <span class="chip chip-cyan">8 tablas</span>
+        <span class="chip chip-cyan">11 tablas</span>
         <span class="chip chip-cyan">Soft-delete en todas</span>
         <span class="chip chip-cyan">Multi-tenant</span>
       </div>
@@ -154,6 +154,8 @@
         <tr><td>Negocio</td><td>OPT_Anamnesis</td><td>Sí</td><td>Historial de salud del cliente</td></tr>
         <tr><td>Negocio</td><td>OPT_RecetaCristales</td><td>Sí</td><td>Receta óptica (lejos/cerca/DP/ADD + flags)</td></tr>
         <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de sucursales a usuarios (PK compuesta: UsuarioId + SucursalId)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_Rol</td><td>No</td><td>Catálogo de roles del sistema (Admin, Operador, Lectura, etc.) — INT IDENTITY PK</td></tr>
+        <tr><td>Negocio</td><td>OPT_Agenda</td><td>Sí</td><td>Citas de clientes — asociadas a la Sucursal activa del usuario. API CRUD (<code>/api/agenda</code>)</td></tr>
       </table>
 
       <!-- SCRIPTS -->
@@ -173,14 +175,13 @@
         <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices)</td><td><span class="status-ok">✓ corregido</span></td></tr>
         <tr><td><span class="script-num">010</span> OPT_Anamnesis.sql</td><td>Historial de salud del cliente (antecedentes médicos)</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">011</span> OPT_RecetaCristales.sql</td><td>Receta óptica — Lejos/Cerca (OD, OI, DP) + ADD + flags + auditoría</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓ Sesión 12</span></td></tr>
+        <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">013</span> OPT_Rol.sql</td><td>Catálogo de roles — <code>RolId INT IDENTITY PK</code>, sin TenantId, datos semilla: Admin/Operador/Lectura/etc.</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">014</span> OPT_Agenda.sql</td><td>Citas de clientes — FK a Sucursal, Cliente y Usuario. Estado con CHECK constraint. 3 índices filtrados.</td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> <code>013_OPT_Rol.sql</code> — tabla catálogo de roles del sistema (planeado Sesión 14). Para nuevas tablas o cambios de esquema, crear <code>014_...</code> etc. Nunca modificar scripts anteriores ya ejecutados en producción.
-      </div>
-      <div class="alert alert-blue">
-        <strong>013_OPT_Rol.sql (planeado):</strong> Tabla catálogo <code>OPT_Rol</code> — <code>RolId INT IDENTITY PK</code>, <code>Nombre NVARCHAR(50)</code>. Sin TenantId (catálogo global compartido). Sin <code>IsDeleted</code> (catálogo no se borra). Poblar con: Admin, Operador, Lectura. Expondrá <code>GET /api/roles</code> para que el frontend cargue el combobox dinámicamente.
+        <strong>Próximo script:</strong> <code>015_...</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
       </div>
 
       <!-- DIAGRAMA -->
@@ -399,8 +400,8 @@
 
       <!-- NUEVO SCRIPT -->
       <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
-      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>012_</code></strong>.</p>
-      <pre>-- Nombrar: 012_descripcion.sql
+      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>015_</code></strong>.</p>
+      <pre>-- Nombrar: 015_descripcion.sql
 -- Siempre: USE [dbOPT]; GO
 
 -- Para tablas nuevas: verificar existencia

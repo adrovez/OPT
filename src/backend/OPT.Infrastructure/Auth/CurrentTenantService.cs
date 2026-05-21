@@ -24,6 +24,20 @@ public class CurrentTenantService(IHttpContextAccessor httpContextAccessor) : IC
         }
     }
 
+    public Guid UsuarioId
+    {
+        get
+        {
+            var claim = httpContextAccessor.HttpContext?.User
+                .FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(claim) || !Guid.TryParse(claim, out var id))
+                throw new InvalidOperationException("No hay usuario autenticado o el UsuarioId es inválido.");
+
+            return id;
+        }
+    }
+
     public string RutUsuario
     {
         get

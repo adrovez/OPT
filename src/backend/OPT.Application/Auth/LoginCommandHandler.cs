@@ -1,5 +1,6 @@
 using MediatR;
 using OPT.Application.Interfaces;
+using OPT.Application.Usuarios.DTOs;
 
 namespace OPT.Application.Auth;
 
@@ -26,12 +27,18 @@ public class LoginCommandHandler(
 
         var token = jwtService.GenerateToken(usuario);
 
+        var sucursales = usuario.UsuarioSucursales
+            .Where(us => us.Sucursal is not null)
+            .Select(us => new SucursalResumenDto(us.Sucursal!.SucursalId, us.Sucursal!.Nombre))
+            .ToList();
+
         return new LoginResponse(
             Token: token,
             Nombre: usuario.Nombre,
             Rol: usuario.Rol,
             UsuarioId: usuario.UsuarioId,
             TenantId: usuario.TenantId,
-            Expiracion: DateTime.UtcNow.AddHours(1));
+            Expiracion: DateTime.UtcNow.AddHours(1),
+            Sucursales: sucursales);
     }
 }

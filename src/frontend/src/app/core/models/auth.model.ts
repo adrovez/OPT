@@ -1,13 +1,20 @@
+export interface SucursalResumen {
+  sucursalId: string;
+  nombre: string;
+}
+
 export interface LoginRequest {
-  tenantId: string;  // UUID — UNIQUEIDENTIFIER en SQL Server
+  tenantId: string;
   rut: string;
   password: string;
 }
 
 export interface LoginResponse {
   token: string;
-  expiresIn: number;
-  userId: string;    // UUID
-  userName: string;
-  tenantId: string;  // UUID
+  nombre: string;
+  rol: string;
+  usuarioId: string;
+  tenantId: string;
+  expiracion: string;
+  sucursales: SucursalResumen[];
 }

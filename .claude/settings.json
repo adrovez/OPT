@@ -5,7 +5,10 @@
       "Bash(Select-Object FullName)",
       "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(npm run *)",
+      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj OPT.Infrastructure/OPT.Infrastructure.csproj OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error|warning|Compilación|Errores\" } | Select-Object -Last 15)",
+      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.Infrastructure/OPT.Infrastructure.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error CS|Compilación|Errores\" } | Select-Object -Last 10)"
     ]
   }
 }

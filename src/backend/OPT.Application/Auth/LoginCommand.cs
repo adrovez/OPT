@@ -1,4 +1,5 @@
 using MediatR;
+using OPT.Application.Usuarios.DTOs;
 
 namespace OPT.Application.Auth;
 
@@ -12,4 +13,5 @@ public record LoginResponse(
     string Rol,
     Guid UsuarioId,
     Guid TenantId,
-    DateTime Expiracion);
+    DateTime Expiracion,
+    IReadOnlyList<SucursalResumenDto> Sucursales);

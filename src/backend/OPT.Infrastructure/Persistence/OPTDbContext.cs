@@ -18,6 +18,8 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Anamnesis> Anamnesis => Set<Anamnesis>();
     public DbSet<RecetaCristales> RecetasCristales => Set<RecetaCristales>();
     public DbSet<Sucursal> Sucursales => Set<Sucursal>();
+    public DbSet<Rol> Roles => Set<Rol>();
+    public DbSet<Agenda> Agendas => Set<Agenda>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -259,6 +261,51 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(us => us.SucursalId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Rol ────────────────────────────────────────────────────────────
+        modelBuilder.Entity<Rol>(e =>
+        {
+            e.ToTable("OPT_Rol");
+            e.HasKey(r => r.RolId);
+            e.Property(r => r.Nombre).HasMaxLength(50).IsRequired();
+        });
+
+        // ── Agenda ─────────────────────────────────────────────────────────
+        modelBuilder.Entity<Agenda>(e =>
+        {
+            e.ToTable("OPT_Agenda");
+            e.HasKey(a => a.AgendaId);
+
+            e.Property(a => a.AgendaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(a => a.Motivo).HasMaxLength(200).IsRequired();
+            e.Property(a => a.Estado).HasMaxLength(20).IsRequired().HasDefaultValue("Pendiente");
+            e.Property(a => a.Observaciones).HasMaxLength(500);
+            e.Property(a => a.CreatedBy).HasMaxLength(100);
+            e.Property(a => a.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(a => new { a.TenantId, a.SucursalId, a.FechaHora })
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasIndex(a => a.ClienteId)
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasOne(a => a.Sucursal)
+             .WithMany()
+             .HasForeignKey(a => a.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.Cliente)
+             .WithMany()
+             .HasForeignKey(a => a.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.Usuario)
+             .WithMany()
+             .HasForeignKey(a => a.UsuarioId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasQueryFilter(a => !a.IsDeleted);
         });
 
         // ── Sucursal ───────────────────────────────────────────────────────

@@ -124,6 +124,12 @@
       <li><a href="#post-cliente">POST /cliente</a></li>
       <li><a href="#put-cliente">PUT /cliente/{id}</a></li>
       <li><a href="#delete-cliente">DELETE /cliente/{id}</a></li>
+      <li><a class="section-label">Módulo Agenda</a></li>
+      <li><a href="#get-agenda">GET /agenda</a></li>
+      <li><a href="#post-agenda">POST /agenda</a></li>
+      <li><a href="#put-agenda">PUT /agenda/{id}</a></li>
+      <li><a href="#patch-agenda-estado">PATCH /agenda/{id}/estado</a></li>
+      <li><a href="#delete-agenda">DELETE /agenda/{id}</a></li>
       <li><a class="section-label">Referencia</a></li>
       <li><a href="#schemas">Schemas</a></li>
       <li><a href="#codigos">Códigos de Error</a></li>
@@ -204,10 +210,15 @@
   "token":     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "nombre":    "Juan Pérez",
   "rol":       "Admin",
-  "usuarioId": 1,
-  "tenantId":  1,
-  "expiracion": "2026-05-05T15:30:00Z"
+  "usuarioId": "b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27",
+  "tenantId":  "550e8400-e29b-41d4-a716-446655440000",
+  "expiracion": "2026-05-20T15:30:00Z",
+  "sucursales": [
+    { "sucursalId": "4e9f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b", "nombre": "Sucursal Centro" },
+    { "sucursalId": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d", "nombre": "Sucursal Norte"  }
+  ]
 }</pre>
+          <div class="alert alert-blue"><strong>sucursales[]</strong>: lista de todas las sucursales asignadas al usuario. El frontend muestra un selector si hay más de una.</div>
 
           <h3>Códigos de respuesta</h3>
           <div class="response-grid">
@@ -419,6 +430,127 @@ GET /api/cliente?busqueda=pérez&amp;page=2&amp;pageSize=10</pre>
             <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Eliminación lógica exitosa.</div></div>
             <div class="response-row"><span class="status-code s403">403</span><div class="response-desc">El usuario tiene rol "Lectura" y no puede eliminar.</div></div>
             <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cliente no encontrado en este tenant.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────── AGENDA ──────────────────── -->
+      <div class="section-break">Módulo Agenda</div>
+
+      <div class="alert alert-amber">
+        <strong>Header requerido:</strong> Todos los endpoints de Agenda requieren el header <code>X-Sucursal-Id: {guid}</code> con la sucursal activa del usuario. Si falta → <span class="status-code s400" style="display:inline;">400</span>.
+      </div>
+
+      <h2 id="get-agenda">Listar Citas</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/api/agenda</span>
+          <span class="auth-badge auth-required">🔒 JWT + X-Sucursal-Id</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Devuelve las citas de la sucursal indicada en el header, ordenadas por <code>FechaHora ASC</code>. Todos los filtros son opcionales.</p>
+          <h3>Query Parameters</h3>
+          <table>
+            <tr><th>Parámetro</th><th>Tipo</th><th>Descripción</th></tr>
+            <tr><td><code>desde</code></td><td>DateTime</td><td>Fecha/hora de inicio del rango (inclusive)</td></tr>
+            <tr><td><code>hasta</code></td><td>DateTime</td><td>Fecha/hora de fin del rango (inclusive)</td></tr>
+            <tr><td><code>estado</code></td><td>string</td><td>Pendiente · Confirmada · Atendida · Cancelada · NoShow</td></tr>
+            <tr><td><code>usuarioId</code></td><td>Guid</td><td>Filtrar por profesional asignado</td></tr>
+          </table>
+          <h3>Respuesta 200</h3>
+          <pre>[{
+  "agendaId":        "7f4a1b2c-...",
+  "sucursalId":      "4e9f1a2b-...",
+  "sucursalNombre":  "Sucursal Centro",
+  "clienteId":       "3fa85f64-...",
+  "clienteNombre":   "Juan Pérez",
+  "usuarioId":       "b3785e25-...",
+  "usuarioNombre":   "Dra. López",
+  "fechaHora":       "2026-05-21T10:30:00Z",
+  "duracionMinutos": 30,
+  "motivo":          "Control visual anual",
+  "estado":          "Pendiente",
+  "observaciones":   null,
+  "createdAt":       "2026-05-20T15:00:00Z",
+  "updatedAt":       null
+}]</pre>
+        </div>
+      </div>
+
+      <h2 id="post-agenda">Crear Cita</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/api/agenda</span>
+          <span class="auth-badge auth-required">🔒 JWT + X-Sucursal-Id</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Crea una nueva cita. El estado inicial siempre es <code>Pendiente</code>. El <code>SucursalId</code> se obtiene del header <code>X-Sucursal-Id</code>.</p>
+          <h3>Request Body</h3>
+          <table>
+            <tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descripción</th></tr>
+            <tr><td><code>clienteId</code></td><td>Guid</td><td><span class="required">*</span></td><td>Cliente citado</td></tr>
+            <tr><td><code>usuarioId</code></td><td>Guid?</td><td><span class="optional">—</span></td><td>Profesional asignado (opcional al crear)</td></tr>
+            <tr><td><code>fechaHora</code></td><td>DateTime</td><td><span class="required">*</span></td><td>Fecha y hora de la cita (UTC)</td></tr>
+            <tr><td><code>duracionMinutos</code></td><td>short</td><td><span class="required">*</span></td><td>Duración en minutos (mín. 1, default 30)</td></tr>
+            <tr><td><code>motivo</code></td><td>string</td><td><span class="required">*</span></td><td>Razón de la cita (máx. 200 chars)</td></tr>
+            <tr><td><code>observaciones</code></td><td>string?</td><td><span class="optional">—</span></td><td>Notas adicionales (máx. 500 chars)</td></tr>
+          </table>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s201">201</span><div class="response-desc">Cita creada. Header <code>Location: /api/agenda/{id}</code>.</div></div>
+            <div class="response-row"><span class="status-code s400">400</span><div class="response-desc">Validación fallida o header <code>X-Sucursal-Id</code> ausente/inválido.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="put-agenda">Editar Cita</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method PUT">PUT</span>
+          <span class="endpoint-path">/api/agenda/{id}</span>
+          <span class="auth-badge auth-required">🔒 JWT</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Actualiza fecha/hora, duración, profesional asignado y observaciones. El estado y el cliente no se pueden cambiar aquí.</p>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Actualización exitosa.</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cita no encontrada en este tenant.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="patch-agenda-estado">Cambiar Estado</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method" style="background:#e0e7ff;color:#3730a3;">PATCH</span>
+          <span class="endpoint-path">/api/agenda/{id}/estado</span>
+          <span class="auth-badge auth-required">🔒 JWT</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Cambia el estado de la cita. Endpoint dedicado para no mezclar transiciones de estado con ediciones de datos.</p>
+          <pre>{ "estado": "Confirmada" }</pre>
+          <p>Estados válidos: <code>Pendiente</code> · <code>Confirmada</code> · <code>Atendida</code> · <code>Cancelada</code> · <code>NoShow</code></p>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Estado cambiado.</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cita no encontrada.</div></div>
+            <div class="response-row"><span class="status-code s409">409</span><div class="response-desc">Estado inválido (no es uno de los 5 valores permitidos).</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="delete-agenda">Eliminar Cita (Soft Delete)</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/api/agenda/{id}</span>
+          <span class="auth-badge auth-required">🔒 JWT</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-desc">Marca la cita como eliminada (<code>IsDeleted = true</code>). No es un delete físico.</p>
+          <div class="response-grid">
+            <div class="response-row"><span class="status-code s204">204</span><div class="response-desc">Eliminación lógica exitosa.</div></div>
+            <div class="response-row"><span class="status-code s404">404</span><div class="response-desc">Cita no encontrada.</div></div>
           </div>
         </div>
       </div>

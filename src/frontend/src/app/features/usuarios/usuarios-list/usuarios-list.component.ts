@@ -305,12 +305,12 @@ export class UsuariosListComponent implements OnInit {
 
   rolBadgeClass(rol: string): string {
     switch (rol) {
-      case 'Admin':
-        return 'bg-violet-50 text-violet-700 ring-violet-200';
-      case 'Operador':
-        return 'bg-blue-50 text-blue-700 ring-blue-200';
-      default:
-        return 'bg-gray-50 text-gray-500 ring-gray-200';
+      case 'Administrador':   return 'bg-violet-50 text-violet-700 ring-violet-200';
+      case 'Jefe Sucursal':   return 'bg-blue-50 text-blue-700 ring-blue-200';
+      case 'Vendedor':        return 'bg-green-50 text-green-700 ring-green-200';
+      case 'Tecnico Medico':  return 'bg-teal-50 text-teal-700 ring-teal-200';
+      case 'Control Calidad': return 'bg-amber-50 text-amber-700 ring-amber-200';
+      default:                return 'bg-gray-50 text-gray-500 ring-gray-200';
     }
   }
 }

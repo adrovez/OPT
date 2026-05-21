@@ -12,6 +12,9 @@ public interface ICurrentTenantService
     /// </summary>
     Guid TenantId { get; }
 
+    /// <summary>UsuarioId (sub claim) del usuario autenticado.</summary>
+    Guid UsuarioId { get; }
+
     /// <summary>RUT del usuario autenticado.</summary>
     string RutUsuario { get; }
 }

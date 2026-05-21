@@ -9,7 +9,7 @@ export interface UsuarioDto {
   rutUsuario: string;
   nombre: string;
   email: string;
-  rol: 'Admin' | 'Operador' | 'Lectura';
+  rol: string;
   fechaIngreso: string;
   sucursales: SucursalResumen[];
   createdAt: string;
@@ -23,13 +23,13 @@ export interface CreateUsuarioRequest {
   nombre: string;
   email: string;
   password: string;
-  rol: 'Admin' | 'Operador' | 'Lectura';
+  rol: string;
 }
 
 export interface UpdateUsuarioRequest {
   nombre: string;
   email: string;
-  rol: 'Admin' | 'Operador' | 'Lectura';
+  rol: string;
 }
 
 export interface ChangePasswordRequest {

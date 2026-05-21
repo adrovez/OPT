@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { SucursalContextService } from '../../core/services/sucursal-context.service';
+import { SucursalResumen } from '../../core/models/auth.model';
 
 @Component({
   selector: 'app-main-layout',
@@ -28,6 +30,71 @@ import { AuthService } from '../../core/services/auth.service';
             <p class="text-xs text-gray-400 truncate">Gestión de Óptica</p>
           </div>
         </div>
+
+        <!-- Selector de sucursal -->
+        @if (sucursalActual()) {
+          <div class="px-3 py-3 border-b border-gray-100 relative">
+            <button
+              (click)="toggleDropdown()"
+              [disabled]="!tieneMuchas()"
+              class="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors"
+              [class.hover:bg-gray-50]="tieneMuchas()"
+              [class.cursor-default]="!tieneMuchas()"
+              aria-label="Cambiar sucursal"
+            >
+              <div class="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5
+                       M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-gray-400 leading-none mb-0.5">Sucursal activa</p>
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ sucursalActual()!.nombre }}</p>
+              </div>
+              @if (tieneMuchas()) {
+                <svg
+                  class="w-4 h-4 text-gray-400 shrink-0 transition-transform"
+                  [class.rotate-180]="dropdownOpen()"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              }
+            </button>
+
+            @if (dropdownOpen()) {
+              <div
+                class="fixed inset-0"
+                (click)="dropdownOpen.set(false)"
+                aria-hidden="true"
+              ></div>
+              <div class="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl border border-gray-100 shadow-lg z-50 py-1 overflow-hidden">
+                @for (s of sucursales(); track s.sucursalId) {
+                  <button
+                    (click)="cambiarSucursal(s)"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-blue-50"
+                    [class.text-blue-700]="s.sucursalId === sucursalActual()?.sucursalId"
+                    [class.font-semibold]="s.sucursalId === sucursalActual()?.sucursalId"
+                    [class.text-gray-700]="s.sucursalId !== sucursalActual()?.sucursalId"
+                  >
+                    @if (s.sucursalId === sucursalActual()?.sucursalId) {
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd"/>
+                      </svg>
+                    } @else {
+                      <span class="w-3.5 shrink-0"></span>
+                    }
+                    {{ s.nombre }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
 
         <!-- Navegación -->
         <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Menú principal">
@@ -95,7 +162,7 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-gray-900 truncate">{{ userName() }}</p>
-              <p class="text-xs text-gray-400 truncate">Tenant {{ tenantId() }}</p>
+              <p class="text-xs text-gray-400 truncate capitalize">{{ userRol() }}</p>
             </div>
           </div>
           <button
@@ -124,17 +191,32 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class MainLayoutComponent {
   private readonly authService = inject(AuthService);
+  private readonly sucursalContext = inject(SucursalContextService);
+
+  readonly dropdownOpen = signal(false);
+  readonly sucursalActual = this.sucursalContext.sucursalActual;
+  readonly sucursales = this.sucursalContext.sucursales;
+  readonly tieneMuchas = this.sucursalContext.tieneMuchas;
 
   userInitial(): string {
-    return this.authService.currentUser()?.userName?.charAt(0).toUpperCase() ?? 'U';
+    return this.authService.currentUser()?.nombre?.charAt(0).toUpperCase() ?? 'U';
   }
 
   userName(): string {
-    return this.authService.currentUser()?.userName ?? 'Usuario';
+    return this.authService.currentUser()?.nombre ?? 'Usuario';
   }
 
-  tenantId(): number | string {
-    return this.authService.currentUser()?.tenantId ?? '-';
+  userRol(): string {
+    return this.authService.currentUser()?.rol ?? '';
+  }
+
+  toggleDropdown(): void {
+    this.dropdownOpen.update(v => !v);
+  }
+
+  cambiarSucursal(s: SucursalResumen): void {
+    this.sucursalContext.cambiar(s);
+    this.dropdownOpen.set(false);
   }
 
   logout(): void {

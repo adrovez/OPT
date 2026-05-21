@@ -1,8 +1,11 @@
-import { Component, inject, input, output, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, input, output, OnInit, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsuarioDto, CreateUsuarioRequest, UpdateUsuarioRequest, SucursalResumen } from '../../../core/models/usuario.model';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { SucursalService } from '../../../core/services/sucursal.service';
+import { RolService } from '../../../core/services/rol.service';
+import { RolDto } from '../../../core/models/rol.model';
 import { SucursalDto } from '../../../core/models/sucursal.model';
 import Swal from 'sweetalert2';
 
@@ -153,9 +156,9 @@ import Swal from 'sweetalert2';
               [class.border-red-300]="form.get('rol')?.invalid && form.get('rol')?.touched"
             >
               <option value="">Seleccione un rol</option>
-              <option value="Admin">Admin</option>
-              <option value="Operador">Operador</option>
-              <option value="Lectura">Lectura</option>
+              @for (r of roles(); track r.rolId) {
+                <option [value]="r.nombre">{{ r.nombre }}</option>
+              }
             </select>
             @if (form.get('rol')?.invalid && form.get('rol')?.touched) {
               <p class="mt-1 text-xs text-red-600">Seleccione un rol.</p>
@@ -269,11 +272,14 @@ export class UsuarioFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly usuarioService = inject(UsuarioService);
   private readonly sucursalService = inject(SucursalService);
+  private readonly rolService = inject(RolService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly usuario = input<UsuarioDto | null>(null);
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
+  readonly roles = signal<RolDto[]>([]);
   readonly loading = signal(false);
   readonly loadingSucursal = signal(false);
   readonly errorSucursal = signal('');
@@ -296,6 +302,10 @@ export class UsuarioFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.rolService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (lista) => this.roles.set(lista) });
+
     const u = this.usuario();
 
     if (u) {
@@ -326,7 +336,7 @@ export class UsuarioFormComponent implements OnInit {
       const req: UpdateUsuarioRequest = {
         nombre: values.nombre!.trim(),
         email:  values.email!.trim(),
-        rol:    values.rol as 'Admin' | 'Operador' | 'Lectura',
+        rol:    values.rol!,
       };
       this.usuarioService.update(existing.usuarioId, req).subscribe({
         next: () => this.onSuccess('actualizado'),
@@ -338,7 +348,7 @@ export class UsuarioFormComponent implements OnInit {
         nombre:     values.nombre!.trim(),
         email:      values.email!.trim(),
         password:   values.password!,
-        rol:        values.rol as 'Admin' | 'Operador' | 'Lectura',
+        rol:        values.rol!,
       };
       this.usuarioService.create(req).subscribe({
         next: () => this.onSuccess('creado'),

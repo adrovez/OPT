@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<IAnamnesisRepository, AnamnesisRepository>();
         services.AddScoped<IRecetaCristalesRepository, RecetaCristalesRepository>();
         services.AddScoped<ISucursalRepository, SucursalRepository>();
+        services.AddScoped<IRolRepository, RolRepository>();
+        services.AddScoped<IAgendaRepository, AgendaRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

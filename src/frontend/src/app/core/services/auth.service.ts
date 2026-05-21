@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
+import { SucursalContextService } from './sucursal-context.service';
 import { environment } from '../../../environments/environment';
 
 const TOKEN_KEY = 'opt_token';
@@ -12,6 +13,7 @@ const USER_KEY = 'opt_user';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private sucursalContext = inject(SucursalContextService);
   private readonly apiUrl = `${environment.apiUrl}/Auth`;
 
   readonly currentUser = signal<LoginResponse | null>(this.loadSession());
@@ -19,7 +21,10 @@ export class AuthService {
   private loadSession(): LoginResponse | null {
     try {
       const user = localStorage.getItem(USER_KEY);
-      return user ? (JSON.parse(user) as LoginResponse) : null;
+      if (!user) return null;
+      const response = JSON.parse(user) as LoginResponse;
+      this.sucursalContext.init(response.sucursales ?? []);
+      return response;
     } catch {
       return null;
     }
@@ -31,6 +36,7 @@ export class AuthService {
         localStorage.setItem(TOKEN_KEY, response.token);
         localStorage.setItem(USER_KEY, JSON.stringify(response));
         this.currentUser.set(response);
+        this.sucursalContext.init(response.sucursales ?? []);
       }),
     );
   }
@@ -39,6 +45,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.currentUser.set(null);
+    this.sucursalContext.clear();
     this.router.navigate(['/login']);
   }
 

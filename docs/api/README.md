@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-20 (Sesión 13 — Frontend Usuarios implementado + mejoras Rol planeadas)
+> **Última actualización:** 2026-05-20 (Sesión 14 — Módulo Agenda API CRUD + SucursalId header + switcher de sucursal frontend)
 
 ## Overview
 
@@ -24,7 +24,8 @@
 | RecetaCristales | `/api/RecetaCristales` | JWT | ✅ Completo — CRUD por clienteId |
 | Sucursales | `/api/sucursales` | JWT | ✅ Completo — CRUD por tenant |
 | Usuarios | `/api/usuarios` | JWT | ✅ Completo — CRUD + password + sucursales M:N |
-| Roles | `/api/roles` | — | ⏳ Planeado — GET solo lectura (catálogo) |
+| Roles | `/api/roles` | JWT | ⏳ Pendiente — GET solo lectura (catálogo), script `013_OPT_Rol.sql` listo |
+| Agenda | `/api/agenda` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + cambio de estado |
 
 ---
 
@@ -45,12 +46,20 @@ curl -X POST https://localhost:5001/api/auth/login \
 
 | Claim | Tipo | Descripcion |
 |-------|------|-------------|
-| `sub` | string | UsuarioId |
-| `email` | string | Email del usuario |
-| `UserId` | string | ID numerico del usuario |
-| `TenantId` | string | ID del tenant asignado |
-| `role` | string | Rol del usuario |
-| `jti` | string | Token unique identifier |
+| `sub` | Guid | UsuarioId |
+| `tenant_id` | Guid | TenantId del usuario |
+| `rut_usuario` | string | RUT del usuario autenticado |
+| `name` | string | Nombre completo |
+| `role` | string | Rol: `Admin`, `Operador` o `Lectura` |
+| `jti` | Guid | Token unique identifier |
+
+### Header requerido por módulos sucursal-scoped
+
+Los módulos que filtran datos por sucursal (Agenda y futuros) requieren:
+```
+X-Sucursal-Id: {sucursalId-guid}
+```
+El frontend lo envía automáticamente desde `SucursalContextService.sucursalActual()`. Si falta o es inválido → `400 Bad Request`.
 
 ---
 
@@ -733,6 +742,97 @@ Desasigna una sucursal del usuario.
 
 **Response 204:** No Content
 **Response 404:** `"La sucursal no está asignada al usuario."`
+
+---
+
+## 9. Agenda API
+
+**Auth:** Requiere JWT  
+**Header adicional:** `X-Sucursal-Id: {guid}` — sucursal activa del usuario (obligatorio en todos los endpoints)
+
+Estados válidos: `Pendiente` · `Confirmada` · `Atendida` · `Cancelada` · `NoShow`
+
+### GET /api/agenda
+
+Lista las citas de la sucursal activa. Filtros opcionales por fecha, estado y profesional.
+
+**Query Parameters:**
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `desde` | DateTime | Filtro fecha inicio (inclusive) |
+| `hasta` | DateTime | Filtro fecha fin (inclusive) |
+| `estado` | string | Pendiente / Confirmada / Atendida / Cancelada / NoShow |
+| `usuarioId` | Guid | Filtrar por profesional asignado |
+
+**Response 200:**
+```json
+[
+  {
+    "agendaId":        "7f4a1b2c-3d5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "sucursalId":      "4e9f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+    "sucursalNombre":  "Sucursal Centro",
+    "clienteId":       "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "clienteNombre":   "Juan Pérez",
+    "usuarioId":       "b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27",
+    "usuarioNombre":   "Dra. López",
+    "fechaHora":       "2026-05-21T10:30:00Z",
+    "duracionMinutos": 30,
+    "motivo":          "Control visual anual",
+    "estado":          "Pendiente",
+    "observaciones":   null,
+    "createdAt":       "2026-05-20T15:00:00Z",
+    "updatedAt":       null
+  }
+]
+```
+
+### GET /api/agenda/{id}
+
+**Response 200:** AgendaDto  
+**Response 404:** `"Agenda {id} no encontrada."`
+
+### POST /api/agenda
+
+Crea una cita. El estado inicial siempre es `Pendiente`. `SucursalId` se toma del header `X-Sucursal-Id`.
+
+**Request:**
+```json
+{
+  "clienteId":       "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "usuarioId":       "b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27",
+  "fechaHora":       "2026-05-21T10:30:00Z",
+  "duracionMinutos": 30,
+  "motivo":          "Control visual anual",
+  "observaciones":   null
+}
+```
+
+> `usuarioId` es opcional. Se puede asignar el profesional después con `PUT`.
+
+**Response 201:** `Location: /api/agenda/{id}`
+
+### PUT /api/agenda/{id}
+
+Actualiza fecha/hora, duración, profesional y observaciones. No cambia el estado.
+
+**Response 204:** No Content  
+**Response 404:** `"Agenda {id} no encontrada."`
+
+### PATCH /api/agenda/{id}/estado
+
+Cambia el estado de la cita.
+
+**Request:** `{ "estado": "Confirmada" }`
+
+**Response 204:** No Content  
+**Response 409:** Estado inválido (no es uno de los 5 valores permitidos)
+
+### DELETE /api/agenda/{id}
+
+Soft delete (IsDeleted = true).
+
+**Response 204:** No Content  
+**Response 404:** `"Agenda {id} no encontrada."`
 
 ---
 
