@@ -8,7 +8,10 @@
       "Bash(dotnet build *)",
       "Bash(npm run *)",
       "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj OPT.Infrastructure/OPT.Infrastructure.csproj OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error|warning|Compilación|Errores\" } | Select-Object -Last 15)",
-      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.Infrastructure/OPT.Infrastructure.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error CS|Compilación|Errores\" } | Select-Object -Last 10)"
+      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.Infrastructure/OPT.Infrastructure.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error CS|Compilación|Errores\" } | Select-Object -Last 10)",
+      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\015_OPT_ProductoCategoria.sql\")",
+      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\016_OPT_Producto.sql\")",
+      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\017_OPT_ProductoVariante.sql\")"
     ]
   }
 }

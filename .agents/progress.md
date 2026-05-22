@@ -3,10 +3,10 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-20 (Sesión 13 — Frontend Usuarios completo + mejoras planeadas módulo Rol)
+> Updated: 2026-05-22 (Sesión 15 — Módulo Productos: API CRUD completo sin precios/stock + decisión arquitectural separar Precios e Inventario)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts 000–011, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales
+- [x] Base de datos: scripts 000–017, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales/Rol/Agenda/ProductoCategoria/Producto/ProductoVariante
 - [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), Anamnesis, RecetaCristales, **Sucursales**
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21: Login, Clientes (lista + form + detalle), Layout, AuthGuard, HTTP Interceptor JWT, RUT Validator
@@ -24,6 +24,11 @@ Track work sessions and current state for continuity between AI agent sessions.
 - [x] **Backend Sucursales**: entidad Domain, ISucursalRepository, Commands/Queries/Validators, SucursalRepository, DbContext, DI, Controller CRUD completo (`/api/sucursales`)
 - [x] **Backend Usuarios**: entidad UsuarioSucursal (M:N), IUsuarioRepository expandido, Commands (CRUD + ChangePassword + AssignSucursal + RemoveSucursal), Queries, Validators, UsuarioRepository, DbContext, Controller CRUD completo (`/api/usuarios`) con endpoints de sucursales
 - [x] **Frontend Usuarios**: `usuario.model.ts`, `usuario.service.ts`, `usuarios-list` (tabla con badges de rol + chips de sucursales), `usuario-form` (modal crear/editar + gestión de sucursales en tiempo real), `usuario-password` (modal cambio contraseña), rutas lazy `/usuarios`, link en sidebar
+
+### Módulos Futuros Planificados
+- [ ] **Precios** (`018_OPT_Precio.sql`): `PrecioProducto(ProductoId|VarianteId, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta)` — separado de Productos por diseño
+- [ ] **Stock/Inventario** (`019_OPT_Stock.sql`): `Stock(VarianteId, SucursalId, CantidadDisponible, StockMinimo)` + `MovimientoStock` — scoped por `X-Sucursal-Id`
+- [ ] **Frontend Productos**: lista con tabs Productos/Categorías, form modal, gestión de variantes
 
 ### Mejoras Anotadas — Módulo Rol (próxima sesión)
 - [ ] **BD**: Crear `013_OPT_Rol.sql` — tabla catálogo `OPT_Rol` (`RolId INT IDENTITY PK`, `Nombre NVARCHAR(50)`, sin TenantId — catálogo compartido). Poblar con Admin, Operador, Lectura.
@@ -54,17 +59,41 @@ Track work sessions and current state for continuity between AI agent sessions.
   - Memoria IA: `project_opt_estado.md`, `project_opt_reglas.md` (lecciones EF Core, replace strategy, shareReplay)
 
 ### Next Steps Sugeridos
+- [ ] **Frontend Productos**: `producto.model.ts` + `producto.service.ts` + `producto-categoria.service.ts` ya creados → implementar `features/productos/` (lista con tabs Productos/Categorías, form modal con variantes, rutas lazy)
 - [ ] **Frontend RecetaCristales**: model (`receta-cristales.model.ts`), service, lista + formulario modal (igual patrón que Anamnesis), botón en `cliente-detail`
-- [ ] **Mejoras Módulo Rol**: BD (`013_OPT_Rol.sql`) + API (`GET /api/roles`) + Frontend (`rol.service.ts` + combobox dinámico en usuario-form) — ver sección "Mejoras Anotadas" arriba
+- [ ] **Frontend Agenda**: model, service, componente calendario/lista por sucursal (usa `X-Sucursal-Id`)
+- [ ] **Módulo Precios** (`018_OPT_Precio.sql`): diseño e implementación — ver sección "Módulos Futuros" arriba
+- [ ] **Módulo Stock/Inventario** (`019_OPT_Stock.sql`): diseño e implementación — ver sección "Módulos Futuros" arriba
+- [ ] **Mejoras Módulo Rol**: `GET /api/roles` + Frontend combobox dinámico en usuario-form
 - [ ] Unit tests backend con xUnit + Moq (IClienteRepository, handlers)
-- [ ] Validación de formato RUT chileno en FluentValidation (backend)
 - [ ] Dashboard / Home screen en Angular
-- [ ] Definir autorización por rol en UsuarioController (actualmente solo [Authorize])
-- [ ] Sidebar con acceso directo a Anamnesis (requiere selector de cliente)
+- [ ] Definir autorización por rol en controllers (actualmente solo [Authorize])
 
 ---
 
 ## Session History
+
+### 2026-05-22 - Sesión 15: Módulo Productos API CRUD + decisión arquitectural Precios/Stock
+- **Work**: Implementación completa del módulo backend de Productos (Catálogo puro, sin precios ni stock). Decisión arquitectural de separar Precios e Inventario como módulos independientes. Limpieza de campos de precio/stock en toda la pila.
+- **Decisión clave**: `PrecioVenta`, `Costo` eliminados de `Producto` y `ProductoVariante`. `CantidadDisponible`, `StockMinimo`, `BajoStock` eliminados de `ProductoVariante`. Justificación: precios varían por sucursal e historial; stock es por sucursal; servicios no tienen stock.
+- **SQL creado** (3 scripts):
+  - `015_OPT_ProductoCategoria.sql` — catálogo de categorías (TenantId, Nombre, soft delete)
+  - `016_OPT_Producto.sql` — catálogo maestro (TipoProducto CHECK: Almacenable/Consumible/Servicio, CodigoInterno único por tenant, FK a categoría)
+  - `017_OPT_ProductoVariante.sql` — SKUs del producto (CodigoBarras único por tenant, FK cascade a Producto)
+- **Archivos creados** (backend — 30+ archivos):
+  - Domain: `Producto.cs`, `ProductoCategoria.cs`, `ProductoVariante.cs`
+  - Application/Interfaces: `IProductoRepository`, `IProductoCategoriaRepository`, `IProductoVarianteRepository`
+  - Application/Productos: DTOs (3), Commands (9 + handlers), Queries (4 + handlers), Validators (6)
+  - Infrastructure: 3 repositorios, config EF Core en `OPTDbContext`, registro en `DependencyInjection`
+  - API: `ProductoController` (9 endpoints), `ProductoCategoriaController` (4 endpoints)
+- **Frontend** (archivos ya creados antes de esta sesión):
+  - `core/models/producto.model.ts` — interfaces limpias (sin precios/stock)
+  - `core/services/producto.service.ts`, `producto-categoria.service.ts`
+  - `features/productos/` — pendiente de implementar componentes
+- **Limpieza realizada**: eliminados `PrecioVenta`, `Costo` de Producto; `PrecioVenta`, `Costo`, `CantidadDisponible`, `StockMinimo`, `BajoStock` de ProductoVariante — en Domain, Application, Infrastructure, API y SQL.
+- **Módulos futuros planificados**: Precios (`018_`) e Inventario/Stock (`019_`) — ver sección "Módulos Futuros Planificados"
+- **Build**: Application y Domain compilaron con exit 0. API/Infrastructure bloqueadas por Visual Studio (file lock, no errores de código).
+- **Documentación actualizada**: CLAUDE.md, progress.md, docs/api/README.md, docs/api/frontend-api-contracts.md, manuales HTML.
 
 ### 2026-05-20 - Sesión 13: Frontend Usuarios completo + mejoras planeadas Rol
 - **Work**: Implementación completa del módulo frontend de Usuarios. Corrección de bug ngModel. Actualización de documentación y anotación de mejoras para módulo Rol.

@@ -462,8 +462,8 @@ public class NuevoModuloController(IMediator mediator, ICurrentTenantService ten
 }</pre>
 
         <h3>Paso 5 — Script SQL (si hay nuevas tablas)</h3>
-        <pre>-- src/basedatos/012_OPT_NuevoModulo.sql
--- Próximo número secuencial disponible: 012
+        <pre>-- src/basedatos/018_OPT_NuevoModulo.sql
+-- Próximo número secuencial disponible: 018
 CREATE TABLE [dbo].[OPT_NuevoModulo] (
     [NuevoModuloId] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
     [TenantId]      UNIQUEIDENTIFIER NOT NULL,
@@ -482,12 +482,31 @@ CREATE TABLE [dbo].[OPT_NuevoModulo] (
           <strong>Frontend Usuarios (Sesión 13):</strong> Módulo Angular completo en <code>features/usuarios/</code>: lista con badges de rol (Admin=violeta, Operador=azul, Lectura=gris) y chips de sucursales, modal crear/editar con gestión de sucursales en tiempo real, modal exclusivo de cambio de contraseña. Rutas lazy en <code>app.routes.ts</code>, link en sidebar.
         </div>
         <div class="alert alert-amber">
-          <strong>Mejora Planeada — Módulo Rol (Sesión 14):</strong>
+          <strong>Mejora Planeada — Módulo Rol:</strong>
           <ol style="margin: 8px 0 0 16px; line-height: 1.8;">
             <li>BD: <code>013_OPT_Rol.sql</code> — tabla catálogo <code>OPT_Rol</code> (<code>RolId INT IDENTITY</code>, <code>Nombre NVARCHAR(50)</code>, sin TenantId). Poblar con Admin, Operador, Lectura.</li>
             <li>Backend: <code>GET /api/roles</code> — endpoint solo lectura, retorna <code>RolDto[]</code>. Sin CRUD (catálogo gestionado en BD).</li>
             <li>Frontend: <code>rol.service.ts</code> con <code>shareReplay(1)</code> + <code>rol.model.ts</code> → reemplazar opciones hardcodeadas del <code>&lt;select&gt;</code> de Rol en <code>usuario-form.component.ts</code> por datos dinámicos de la API.</li>
           </ol>
+        </div>
+        <div class="alert alert-green">
+          <strong>Sesión 15 — Módulo Productos (catálogo puro):</strong> API CRUD completo implementado.<br>
+          <ul style="margin: 8px 0 0 16px; line-height: 1.8;">
+            <li>Scripts: <code>015_OPT_ProductoCategoria.sql</code>, <code>016_OPT_Producto.sql</code>, <code>017_OPT_ProductoVariante.sql</code></li>
+            <li>Domain: <code>Producto</code>, <code>ProductoCategoria</code>, <code>ProductoVariante</code> — sin <code>PrecioVenta</code>, <code>Costo</code>, <code>CantidadDisponible</code>, <code>StockMinimo</code></li>
+            <li>API: <code>GET|POST /api/productos</code>, <code>GET|PUT|DELETE /api/productos/{id}</code>, variantes anidadas en <code>/api/productos/{id}/variantes</code></li>
+            <li>API: <code>GET|POST|PUT|DELETE /api/categorias-producto</code></li>
+            <li>TipoProducto: <code>CHECK ('Almacenable', 'Consumible', 'Servicio')</code> — los Servicios no admiten variantes</li>
+          </ul>
+          <strong>Decisión arquitectural:</strong> Precios y stock son módulos separados por diseño — ver próximas secciones.
+        </div>
+        <div class="alert alert-cyan">
+          <strong>Módulos Futuros Planificados:</strong>
+          <ul style="margin: 8px 0 0 16px; line-height: 1.8;">
+            <li><strong>Precios</strong> (<code>018_OPT_Precio.sql</code>): <code>PrecioId, ProductoId?, VarianteId?, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta</code>. Soporta precios por sucursal e historial de cambios.</li>
+            <li><strong>Stock/Inventario</strong> (<code>019_OPT_Stock.sql</code>): <code>StockId, VarianteId, SucursalId, CantidadDisponible, StockMinimo</code> + <code>OPT_MovimientoStock</code>. Siempre scoped a <code>X-Sucursal-Id</code>.</li>
+          </ul>
+          Motivo: los precios varían por sucursal; el stock es siempre por sucursal; los servicios no tienen stock. Separar ahora evita un refactor mayor.
         </div>
       </section>
 

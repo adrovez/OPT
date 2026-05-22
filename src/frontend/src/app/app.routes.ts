@@ -53,6 +53,13 @@ export const routes: Routes = [
             (m) => m.UsuariosListComponent,
           ),
       },
+      {
+        path: 'productos',
+        loadComponent: () =>
+          import('./features/productos/productos-list/productos-list.component').then(
+            (m) => m.ProductosListComponent,
+          ),
+      },
     ],
   },
   {

@@ -85,6 +85,19 @@ Las llamadas HTTP siempre van a través de servicios en `core/services/`, nunca 
 ### Multi-tenancy
 Toda entidad de negocio tiene `TenantId` (Guid). Los query filters de EF Core aplican `!IsDeleted` y aislamiento de tenant automáticamente. Nunca consultar datos entre tenants.
 
+Los handlers acceden al tenant actual vía `ICurrentTenantService` (inyectado por DI), que extrae `TenantId`, `UsuarioId` y `RutUsuario` del JWT del request:
+
+```csharp
+// En cualquier handler de Application:
+public class MiHandler(IMiRepositorio repo, ICurrentTenantService tenant) : IRequestHandler<...>
+{
+    public async Task<...> Handle(...) =>
+        await repo.GetPagedAsync(tenant.TenantId, ...);
+}
+```
+
+Lanza `InvalidOperationException` si no hay usuario autenticado — el middleware convierte esto en 409 (raro en endpoints protegidos, porque TenantValidation ya filtra antes).
+
 ### Claves primarias
 - Entidades de negocio (tenant-aware): `Guid` en C# / `UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()` en SQL
 - Catálogos compartidos (Region, Comuna): `int` / `INT IDENTITY`
@@ -99,6 +112,9 @@ private static readonly UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // ❌ NUNCA: Number(id) + isNaN() — no aplica a GUIDs
 ```
+
+### Paginación
+Las queries de listado usan `PagedResult<T>` (`OPT.Application.Common`). El repositorio recibe `page` (1-based) y `pageSize`, y devuelve `Items`, `TotalCount`, `TotalPages`, `HasNextPage`, `HasPreviousPage`. Los controllers exponen estos parámetros como query string.
 
 ### Soft delete
 Todos los borrados setean `IsDeleted = true`. Nunca usar `DELETE` físico.
@@ -125,6 +141,20 @@ Siempre usar `takeUntilDestroyed(this.destroyRef)` en componentes. Nunca suscrib
 ### Formularios Angular
 Usar **Signal Forms** de Angular 21. No usar `ReactiveFormsModule` ni `FormsModule`.
 
+> **Excepción conocida (tech debt):** `usuario-form.component.ts` fue creado con `ReactiveFormsModule` y pendiente de migrar a Signal Forms.
+
+### Librerías UI del frontend
+- **Tailwind CSS v4** — clases utilitarias directamente en templates
+- **SweetAlert2 (`Swal`)** — para diálogos de confirmación antes de eliminar o acciones destructivas
+
+### Servicios de catálogo
+Los servicios de catálogos compartidos (Regiones, Roles) usan `shareReplay(1)` para evitar múltiples llamadas HTTP. Al crear un nuevo servicio de catálogo, aplicar este mismo patrón:
+
+```typescript
+readonly getAll = (): Observable<RolDto[]> =>
+  this.http.get<RolDto[]>('/api/roles').pipe(shareReplay(1));
+```
+
 ### EF Core — relación uno-a-muchos (gotcha conocido)
 Al configurar una relación bidireccional en `OPTDbContext.OnModelCreating`, siempre especificar la propiedad de navegación en `WithMany()`:
 
@@ -135,6 +165,9 @@ entity.HasOne(ct => ct.Cliente).WithMany(cl => cl.Contactos).HasForeignKey(ct =>
 entity.HasOne(ct => ct.Cliente).WithMany().HasForeignKey(ct => ct.ClienteId);
 ```
 
+### Columna `idSucursal` en SQL (gotcha conocido)
+La entidad `Sucursal` mapea su PK con `HasColumnName("idSucursal")` porque la tabla SQL legacy usa ese nombre de columna. En C# la propiedad se llama `SucursalId` — al escribir SQL directo o scripts de migración, recordar que la columna en BD es `idSucursal`, no `SucursalId`.
+
 ### Conflicto namespace/clase en Application (gotcha conocido)
 Cuando el namespace del módulo coincide con el nombre de la entidad (ej. `OPT.Application.RecetaCristales` + clase `RecetaCristales`), usar alias en los archivos afectados:
 
@@ -143,7 +176,7 @@ using RecetaCristalesEntity = OPT.Domain.Entities.RecetaCristales;
 ```
 
 ### Checklist para nuevo módulo
-**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`015_...`)
+**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`018_...`)
 
 **Frontend:** `core/models/<mod>.model.ts` → `core/services/<mod>.service.ts` → componentes en `features/<mod>/` → ruta en `app.routes.ts`
 
@@ -162,6 +195,15 @@ using RecetaCristalesEntity = OPT.Domain.Entities.RecetaCristales;
 | Usuarios | ✅ | ✅ |
 | Roles (catálogo) | ✅ (`013_OPT_Rol.sql` creado, `GET /api/roles` ⏳) | ⏳ Pendiente (combobox en usuario-form) |
 | Agenda | ✅ (`014_OPT_Agenda.sql` + API CRUD + `X-Sucursal-Id` header) | ⏳ Pendiente |
+| Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ⏳ Pendiente |
+| Precios | 🔮 Futuro — módulo separado (`018_...`) | 🔮 Futuro |
+| Stock / Inventario | 🔮 Futuro — módulo separado, scoped por `SucursalId` (`019_...`) | 🔮 Futuro |
+
+### Arquitectura futura: Precios y Stock
+Los precios y el stock de productos fueron **deliberadamente excluidos** del módulo Productos para mantener separación de responsabilidades:
+
+- **Módulo Precios** (`018_OPT_Precio.sql`): `PrecioProducto(ProductoId|VarianteId, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta)`. Permite precios distintos por sucursal e historial de cambios.
+- **Módulo Stock/Inventario** (`019_OPT_Stock.sql`): `Stock(VarianteId, SucursalId, CantidadDisponible, StockMinimo)` + `MovimientoStock` para entradas, salidas y ajustes. Siempre scoped a `X-Sucursal-Id`.
 
 ### Regla de negocio: SucursalId en módulos sucursal-scoped
 Los módulos asociados a sucursal (Agenda y futuros) reciben el `SucursalId` via header HTTP `X-Sucursal-Id`. El frontend lo envía desde `SucursalContextService.sucursalActual().sucursalId`. Los datos generales (Clientes, Anamnesis, RecetaCristales) NO requieren este header — son datos del tenant completo.

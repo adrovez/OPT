@@ -20,6 +20,9 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Sucursal> Sucursales => Set<Sucursal>();
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<Agenda> Agendas => Set<Agenda>();
+    public DbSet<ProductoCategoria> ProductoCategorias => Set<ProductoCategoria>();
+    public DbSet<Producto> Productos => Set<Producto>();
+    public DbSet<ProductoVariante> ProductoVariantes => Set<ProductoVariante>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -306,6 +309,75 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.SetNull);
 
             e.HasQueryFilter(a => !a.IsDeleted);
+        });
+
+        // ── ProductoCategoria ──────────────────────────────────────────────
+        modelBuilder.Entity<ProductoCategoria>(e =>
+        {
+            e.ToTable("OPT_ProductoCategoria");
+            e.HasKey(c => c.CategoriaId);
+
+            e.Property(c => c.CategoriaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(c => c.TenantId).IsRequired();
+            e.Property(c => c.Nombre).HasMaxLength(100).IsRequired();
+            e.Property(c => c.CreatedBy).HasMaxLength(100);
+            e.Property(c => c.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(c => c.TenantId).HasFilter("[IsDeleted] = 0");
+
+            e.HasQueryFilter(c => !c.IsDeleted);
+        });
+
+        // ── Producto ───────────────────────────────────────────────────────
+        modelBuilder.Entity<Producto>(e =>
+        {
+            e.ToTable("OPT_Producto");
+            e.HasKey(p => p.ProductoId);
+
+            e.Property(p => p.ProductoId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(p => p.TenantId).IsRequired();
+            e.Property(p => p.Nombre).HasMaxLength(200).IsRequired();
+            e.Property(p => p.Descripcion).HasMaxLength(1000);
+            e.Property(p => p.TipoProducto).HasMaxLength(20).IsRequired();
+            e.Property(p => p.CodigoInterno).HasMaxLength(50);
+            e.Property(p => p.CreatedBy).HasMaxLength(100);
+            e.Property(p => p.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(p => new { p.TenantId, p.CodigoInterno })
+             .HasFilter("[IsDeleted] = 0 AND [CodigoInterno] IS NOT NULL")
+             .IsUnique();
+
+            e.HasOne(p => p.Categoria)
+             .WithMany(c => c.Productos)
+             .HasForeignKey(p => p.CategoriaId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(p => !p.IsDeleted);
+        });
+
+        // ── ProductoVariante ───────────────────────────────────────────────
+        modelBuilder.Entity<ProductoVariante>(e =>
+        {
+            e.ToTable("OPT_ProductoVariante");
+            e.HasKey(v => v.VarianteId);
+
+            e.Property(v => v.VarianteId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(v => v.TenantId).IsRequired();
+            e.Property(v => v.Nombre).HasMaxLength(200).IsRequired();
+            e.Property(v => v.CodigoBarras).HasMaxLength(50);
+            e.Property(v => v.CreatedBy).HasMaxLength(100);
+            e.Property(v => v.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(v => new { v.TenantId, v.CodigoBarras })
+             .HasFilter("[IsDeleted] = 0 AND [CodigoBarras] IS NOT NULL")
+             .IsUnique();
+
+            e.HasOne(v => v.Producto)
+             .WithMany(p => p.Variantes)
+             .HasForeignKey(v => v.ProductoId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasQueryFilter(v => !v.IsDeleted);
         });
 
         // ── Sucursal ───────────────────────────────────────────────────────

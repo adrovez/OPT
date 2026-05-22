@@ -150,6 +150,21 @@ import { SucursalResumen } from '../../core/models/auth.model';
             Usuarios
           </a>
 
+          <a
+            routerLink="/productos"
+            routerLinkActive="bg-blue-50 text-blue-700 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                   text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            aria-label="Productos"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            Productos
+          </a>
+
         </nav>
 
         <!-- Usuario y logout -->

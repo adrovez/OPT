@@ -1,6 +1,6 @@
 # Frontend API Contracts - OPT System
 
-> **Última actualización:** 2026-05-20 (Sesión 13 — Frontend Usuarios implementado + contrato Rol planeado)
+> **Última actualización:** 2026-05-22 (Sesión 15 — Productos: catálogo puro, modelos TypeScript limpios; Precios y Stock como módulos futuros)
 
 Este documento describe los contratos de API entre el frontend Angular y el backend .NET.
 
@@ -21,6 +21,9 @@ En TypeScript/Angular, los UUIDs se representan como **`string`** (no `number`).
 | Anamnesis | `string` | `"1d0f35a4-83a2-4a2b-8d7e-3f9b1c2e5d6f"` |
 | RecetaCristales | `string` | `"7f4a1b2c-3d5e-6f7a-8b9c-0d1e2f3a4b5c"` |
 | Sucursal | `string` | `"4e9f1a2b-3c4d-5e6f-7a8b-9c0d1e2f3a4b"` |
+| ProductoCategoria | `string` | UUID |
+| Producto | `string` | UUID |
+| ProductoVariante | `string` | UUID |
 | UsuarioSucursal | — | Join table — no tiene ID propio, PK compuesta en SQL |
 | Region (catálogo) | `number` | `7` |
 | Comuna (catálogo) | `number` | `318` |
@@ -678,6 +681,159 @@ INSERT INTO [dbo].[OPT_Rol] ([Nombre]) VALUES ('Admin'), ('Operador'), ('Lectura
 
 ---
 
+## Productos y Categorías
+
+> **Diseño:** El módulo Productos es un **catálogo puro**. No contiene precios ni stock — esos datos son módulos separados (`018_OPT_Precio`, `019_OPT_Stock`) pendientes de implementar.
+
+### Modelos TypeScript ✅ Implementado en Sesión 15
+
+**Endpoints Categorías:** `GET|POST /api/categorias-producto`, `PUT|DELETE /api/categorias-producto/{id}`  
+**Endpoints Productos:** `GET|POST /api/productos`, `GET|PUT|DELETE /api/productos/{id}`, `GET|POST /api/productos/{id}/variantes`, `PUT|DELETE /api/productos/{id}/variantes/{varianteId}`
+
+```typescript
+// core/models/producto.model.ts
+
+export interface ProductoCategoriaDto {
+  categoriaId: string;    // UUID
+  tenantId: string;       // UUID
+  nombre: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface ProductoVarianteDto {
+  varianteId: string;     // UUID
+  productoId: string;     // UUID
+  tenantId: string;       // UUID
+  nombre: string;
+  codigoBarras?: string;
+  activo: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface ProductoDto {
+  productoId: string;     // UUID
+  tenantId: string;       // UUID
+  categoriaId?: string;   // UUID opcional
+  categoriaNombre?: string;
+  nombre: string;
+  descripcion?: string;
+  tipoProducto: 'Almacenable' | 'Consumible' | 'Servicio';
+  codigoInterno?: string;
+  activo: boolean;
+  variantes: ProductoVarianteDto[];
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface CreateProductoRequest {
+  categoriaId?: string;
+  nombre: string;
+  descripcion?: string;
+  tipoProducto: 'Almacenable' | 'Consumible' | 'Servicio';
+  codigoInterno?: string;
+}
+
+export interface UpdateProductoRequest {
+  categoriaId?: string;
+  nombre: string;
+  descripcion?: string;
+  tipoProducto: 'Almacenable' | 'Consumible' | 'Servicio';
+  codigoInterno?: string;
+  activo: boolean;
+}
+
+export interface CreateProductoVarianteRequest {
+  nombre: string;
+  codigoBarras?: string;
+}
+
+export interface UpdateProductoVarianteRequest {
+  nombre: string;
+  codigoBarras?: string;
+  activo: boolean;
+}
+
+export interface CreateProductoCategoriaRequest {
+  nombre: string;
+}
+
+export interface UpdateProductoCategoriaRequest {
+  nombre: string;
+}
+
+export interface ProductosPagedResult {
+  items: ProductoDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+// Constante compartida con el backend
+export const TIPOS_PRODUCTO = ['Almacenable', 'Consumible', 'Servicio'] as const;
+export type TipoProducto = typeof TIPOS_PRODUCTO[number];
+```
+
+### Servicios Angular ⏳ Pendiente implementar componentes
+
+```typescript
+// core/services/producto.service.ts  ← creado en Sesión 15
+getAll(params): Observable<ProductosPagedResult>
+getById(id: string): Observable<ProductoDto>
+create(req: CreateProductoRequest): Observable<{ id: string }>
+update(id: string, req: UpdateProductoRequest): Observable<void>
+delete(id: string): Observable<void>
+createVariante(productoId: string, req: CreateProductoVarianteRequest): Observable<{ id: string }>
+updateVariante(productoId: string, varianteId: string, req: UpdateProductoVarianteRequest): Observable<void>
+deleteVariante(productoId: string, varianteId: string): Observable<void>
+// URL base: /api/productos
+
+// core/services/producto-categoria.service.ts  ← creado en Sesión 15
+getAll(): Observable<ProductoCategoriaDto[]>
+create(req: CreateProductoCategoriaRequest): Observable<{ id: string }>
+update(id: string, req: UpdateProductoCategoriaRequest): Observable<void>
+delete(id: string): Observable<void>
+// URL base: /api/categorias-producto
+```
+
+### Módulos futuros: Precios y Stock
+
+```typescript
+// FUTURO — core/models/precio.model.ts  (pendiente módulo 018)
+export interface PrecioProductoDto {
+  precioId: string;       // UUID
+  productoId?: string;    // UUID — precio a nivel de producto
+  varianteId?: string;    // UUID — precio a nivel de variante (más específico)
+  sucursalId?: string;    // UUID — null = precio global del tenant
+  precioVenta: number;
+  costo: number;
+  vigenciaDesde: string;  // ISO 8601
+  vigenciaHasta?: string; // null = vigente indefinidamente
+}
+
+// FUTURO — core/models/stock.model.ts  (pendiente módulo 019)
+export interface StockDto {
+  stockId: string;          // UUID
+  varianteId: string;       // UUID
+  sucursalId: string;       // UUID — siempre scoped por sucursal (X-Sucursal-Id header)
+  cantidadDisponible: number;
+  stockMinimo: number;
+  bajoStock: boolean;       // computed: cantidadDisponible <= stockMinimo
+}
+```
+
+---
+
 ## Respuestas de error (RFC 7807 ProblemDetails)
 
 Todos los endpoints devuelven errores en este formato:
@@ -713,7 +869,9 @@ Todos los endpoints devuelven errores en este formato:
 | `RecetaCristalesService` | `receta-cristales.service.ts` | `getByCliente(clienteId: string)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` — **pendiente** |
 | `SucursalService` | `sucursal.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` |
 | `UsuarioService` | `usuario.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)`, `changePassword(id, req)`, `assignSucursal(id, req)`, `removeSucursal(id, sucursalId)` |
-| `RolService` | `rol.service.ts` | `getRoles()` con `shareReplay(1)` — **pendiente Sesión 14** |
+| `RolService` | `rol.service.ts` | `getRoles()` con `shareReplay(1)` — **pendiente** |
+| `ProductoService` | `producto.service.ts` | `getAll(params)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)`, variante CRUD |
+| `ProductoCategoriaService` | `producto-categoria.service.ts` | `getAll()`, `create(req)`, `update(id, req)`, `delete(id)` |
 
 > **Todos los `id` de entidades de negocio son `string` (UUID). Los catálogos (Region, Comuna) siguen usando `number`.**
 

@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-20 (Sesión 14 — Módulo Agenda API CRUD + SucursalId header + switcher de sucursal frontend)
+> **Última actualización:** 2026-05-22 (Sesión 15 — Módulo Productos API CRUD: catálogo puro sin precios/stock)
 
 ## Overview
 
@@ -26,6 +26,10 @@
 | Usuarios | `/api/usuarios` | JWT | ✅ Completo — CRUD + password + sucursales M:N |
 | Roles | `/api/roles` | JWT | ⏳ Pendiente — GET solo lectura (catálogo), script `013_OPT_Rol.sql` listo |
 | Agenda | `/api/agenda` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + cambio de estado |
+| Categorías Producto | `/api/categorias-producto` | JWT | ✅ Completo — CRUD |
+| Productos | `/api/productos` | JWT | ✅ Completo — CRUD paginado + Variantes anidadas (catálogo puro, sin precios ni stock) |
+| Precios | `/api/precios` | JWT | 🔮 Futuro — módulo independiente (`018_OPT_Precio.sql`) |
+| Stock / Inventario | `/api/stock` | JWT + `X-Sucursal-Id` | 🔮 Futuro — módulo independiente, scoped por sucursal (`019_OPT_Stock.sql`) |
 
 ---
 
@@ -833,6 +837,89 @@ Soft delete (IsDeleted = true).
 
 **Response 204:** No Content  
 **Response 404:** `"Agenda {id} no encontrada."`
+
+---
+
+## 10. Categorías de Producto API
+
+**Auth:** Requiere JWT
+
+### GET /api/categorias-producto
+Lista todas las categorías del tenant.
+
+**Response 200:** `ProductoCategoriaDto[]`
+
+### POST /api/categorias-producto
+**Request:** `{ "nombre": "Monturas" }`
+**Response 201:** `{ "id": "uuid" }`
+
+### PUT /api/categorias-producto/{id}
+**Request:** `{ "nombre": "Monturas Metálicas" }`
+**Response 204:** No Content
+
+### DELETE /api/categorias-producto/{id}
+**Response 204:** No Content | **409:** Si existen productos en esa categoría
+
+---
+
+## 11. Productos API
+
+**Auth:** Requiere JWT  
+**Nota de diseño:** Catálogo puro. Precios y stock son módulos separados (`018_` y `019_`).
+
+### GET /api/productos
+Lista paginada. Filtros opcionales: `tipo` (Almacenable/Consumible/Servicio), `categoriaId`, `busqueda`.
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "productoId": "uuid",
+      "tenantId": "uuid",
+      "categoriaId": "uuid",
+      "categoriaNombre": "Monturas",
+      "nombre": "Marco Rayban RB4165",
+      "descripcion": "Marco acetato negro",
+      "tipoProducto": "Almacenable",
+      "codigoInterno": "RB-4165",
+      "activo": true,
+      "variantes": [],
+      "createdAt": "2026-05-22T10:00:00Z"
+    }
+  ],
+  "totalCount": 1, "page": 1, "pageSize": 20, "totalPages": 1
+}
+```
+
+### GET /api/productos/{id}
+Retorna producto con variantes incluidas.
+
+### POST /api/productos
+**Request:** `{ "categoriaId"?: "uuid", "nombre": "...", "descripcion"?: "...", "tipoProducto": "Almacenable|Consumible|Servicio", "codigoInterno"?: "..." }`
+**Response 201:** `{ "id": "uuid" }` | **409:** CodigoInterno duplicado
+
+### PUT /api/productos/{id}
+**Request:** igual que POST + `"activo": bool`
+**Response 204:** No Content
+
+### DELETE /api/productos/{id}
+**Response 204:** No Content
+
+### GET /api/productos/{id}/variantes
+**Response 200:** `ProductoVarianteDto[]`
+
+### POST /api/productos/{id}/variantes
+Solo para TipoProducto ≠ `Servicio`.
+**Request:** `{ "nombre": "Negra Talla M", "codigoBarras"?: "..." }`
+**Response 201:** `{ "id": "uuid" }` | **409:** CodigoBarras duplicado | **409:** Servicio no admite variantes
+
+### PUT /api/productos/{id}/variantes/{varianteId}
+**Request:** `{ "nombre": "...", "codigoBarras"?: "...", "activo": bool }`
+**Response 204:** No Content
+
+### DELETE /api/productos/{id}/variantes/{varianteId}
+**Response 204:** No Content
 
 ---
 

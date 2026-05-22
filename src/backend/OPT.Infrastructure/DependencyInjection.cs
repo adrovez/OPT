@@ -61,6 +61,9 @@ public static class DependencyInjection
         services.AddScoped<ISucursalRepository, SucursalRepository>();
         services.AddScoped<IRolRepository, RolRepository>();
         services.AddScoped<IAgendaRepository, AgendaRepository>();
+        services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
+        services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IProductoVarianteRepository, ProductoVarianteRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

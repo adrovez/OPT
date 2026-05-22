@@ -156,6 +156,11 @@
         <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de sucursales a usuarios (PK compuesta: UsuarioId + SucursalId)</td></tr>
         <tr><td>Catálogo</td><td>OPT_Rol</td><td>No</td><td>Catálogo de roles del sistema (Admin, Operador, Lectura, etc.) — INT IDENTITY PK</td></tr>
         <tr><td>Negocio</td><td>OPT_Agenda</td><td>Sí</td><td>Citas de clientes — asociadas a la Sucursal activa del usuario. API CRUD (<code>/api/agenda</code>)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_ProductoCategoria</td><td>Sí</td><td>Categorías de productos (ej: Monturas, Lentes de Contacto). API CRUD (<code>/api/categorias-producto</code>)</td></tr>
+        <tr><td>Negocio</td><td>OPT_Producto</td><td>Sí</td><td>Catálogo maestro de productos/servicios. TipoProducto: Almacenable/Consumible/Servicio. Sin precios ni stock. API CRUD (<code>/api/productos</code>)</td></tr>
+        <tr><td>Negocio</td><td>OPT_ProductoVariante</td><td>Sí</td><td>SKUs/variantes de un producto (ej: "Negra Talla M"). CodigoBarras único. Sin precios ni stock. FK cascade a OPT_Producto</td></tr>
+        <tr><td>Negocio</td><td>OPT_Precio <em>(futuro)</em></td><td>Sí</td><td>🔮 Módulo futuro — precio de venta y costo por variante/producto, con opción por sucursal y vigencia temporal (<code>018_OPT_Precio.sql</code>)</td></tr>
+        <tr><td>Negocio</td><td>OPT_Stock <em>(futuro)</em></td><td>Sí</td><td>🔮 Módulo futuro — stock por variante y sucursal + movimientos de inventario (<code>019_OPT_Stock.sql</code>). Scoped via <code>X-Sucursal-Id</code></td></tr>
       </table>
 
       <!-- SCRIPTS -->
@@ -178,10 +183,21 @@
         <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">013</span> OPT_Rol.sql</td><td>Catálogo de roles — <code>RolId INT IDENTITY PK</code>, sin TenantId, datos semilla: Admin/Operador/Lectura/etc.</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">014</span> OPT_Agenda.sql</td><td>Citas de clientes — FK a Sucursal, Cliente y Usuario. Estado con CHECK constraint. 3 índices filtrados.</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">015</span> OPT_ProductoCategoria.sql</td><td>Categorías de productos del tenant. Nombre único por tenant (soft delete filtrado).</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">016</span> OPT_Producto.sql</td><td>Catálogo maestro. TipoProducto CHECK (Almacenable/Consumible/Servicio). CodigoInterno único por tenant. FK Restrict a OPT_ProductoCategoria. <strong>Sin precios ni stock.</strong></td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">017</span> OPT_ProductoVariante.sql</td><td>SKUs del producto. CodigoBarras único por tenant. FK Cascade a OPT_Producto. <strong>Sin precios ni stock.</strong></td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> <code>015_...</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
+        <strong>Próximo script:</strong> <code>018_...</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
+      </div>
+      <div class="alert alert-cyan">
+        <strong>Módulos futuros planificados:</strong>
+        <ul style="margin:8px 0 0 16px; line-height:1.8;">
+          <li><code>018_OPT_Precio.sql</code> — <strong>Precios</strong>: <code>PrecioId, ProductoId?, VarianteId?, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta</code>. Permite precios distintos por sucursal e historial de cambios. No forma parte del catálogo de Productos.</li>
+          <li><code>019_OPT_Stock.sql</code> — <strong>Stock/Inventario</strong>: <code>StockId, VarianteId, SucursalId, CantidadDisponible, StockMinimo</code> + tabla <code>OPT_MovimientoStock</code> para entradas/salidas/ajustes. Siempre scoped por sucursal via header <code>X-Sucursal-Id</code>.</li>
+        </ul>
+        Motivo de separación: los precios varían por sucursal y tienen historial; el stock es siempre por sucursal; los servicios no tienen stock.
       </div>
 
       <!-- DIAGRAMA -->

@@ -299,7 +299,10 @@
             <tr><td><strong>Auth</strong></td><td>Login con JWT, registro de usuarios</td><td><span class="badge badge-green">Completo</span></td></tr>
             <tr><td><strong>Clientes</strong></td><td>CRUD de clientes (Persona/Empresa) con paginado y busqueda</td><td><span class="badge badge-green">Completo</span></td></tr>
             <tr><td><strong>Contactos</strong></td><td>CRUD de contactos asociados a clientes tipo Empresa</td><td><span class="badge badge-green">Completo</span></td></tr>
-            <tr><td><strong>Productos</strong></td><td>Gestion de productos/lentes</td><td><span class="badge badge-orange">Pendiente</span></td></tr>
+            <tr><td><strong>Categorías Producto</strong></td><td>Catálogo de categorías de productos — CRUD (<code>/api/categorias-producto</code>)</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Productos</strong></td><td>Catálogo maestro de productos/servicios (sin precios ni stock) — CRUD paginado + variantes (<code>/api/productos</code>)</td><td><span class="badge badge-green">Completo</span></td></tr>
+            <tr><td><strong>Precios</strong></td><td>Precio de venta y costo por variante/sucursal con historial — módulo independiente (<code>018_OPT_Precio.sql</code>)</td><td><span class="badge badge-orange">Planificado</span></td></tr>
+            <tr><td><strong>Stock / Inventario</strong></td><td>Stock por variante y sucursal + movimientos — módulo independiente, scoped por <code>X-Sucursal-Id</code> (<code>019_OPT_Stock.sql</code>)</td><td><span class="badge badge-orange">Planificado</span></td></tr>
             <tr><td><strong>Ordenes</strong></td><td>Ordenes de trabajo</td><td><span class="badge badge-orange">Pendiente</span></td></tr>
         </tbody>
     </table>
