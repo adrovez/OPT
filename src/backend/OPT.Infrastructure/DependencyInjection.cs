@@ -64,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IProductoVarianteRepository, ProductoVarianteRepository>();
+        services.AddScoped<IStockRepository, StockRepository>();
+        services.AddScoped<IDocumentoStockRepository, DocumentoStockRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

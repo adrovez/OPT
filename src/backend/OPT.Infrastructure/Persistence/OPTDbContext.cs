@@ -23,6 +23,11 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<ProductoCategoria> ProductoCategorias => Set<ProductoCategoria>();
     public DbSet<Producto> Productos => Set<Producto>();
     public DbSet<ProductoVariante> ProductoVariantes => Set<ProductoVariante>();
+    public DbSet<Stock> Stocks => Set<Stock>();
+    public DbSet<MovimientoStock> MovimientosStock => Set<MovimientoStock>();
+    public DbSet<PrecioProducto> PreciosProducto => Set<PrecioProducto>();
+    public DbSet<DocumentoStock> DocumentosStock => Set<DocumentoStock>();
+    public DbSet<DocumentoStockLinea> DocumentosStockLineas => Set<DocumentoStockLinea>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -378,6 +383,150 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
 
             e.HasQueryFilter(v => !v.IsDeleted);
+        });
+
+        // ── Stock ─────────────────────────────────────────────────────────
+        modelBuilder.Entity<Stock>(e =>
+        {
+            e.ToTable("OPT_Stock");
+            e.HasKey(s => s.StockId);
+
+            e.Property(s => s.StockId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(s => s.TenantId).IsRequired();
+            e.Property(s => s.CreatedBy).HasMaxLength(100);
+            e.Property(s => s.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(s => new { s.TenantId, s.VarianteId, s.SucursalId })
+             .IsUnique()
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasIndex(s => new { s.TenantId, s.SucursalId })
+             .HasFilter("[IsDeleted] = 0");
+
+            e.HasOne(s => s.Variante)
+             .WithMany()
+             .HasForeignKey(s => s.VarianteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(s => s.Sucursal)
+             .WithMany()
+             .HasForeignKey(s => s.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(s => !s.IsDeleted);
+        });
+
+        // ── MovimientoStock ────────────────────────────────────────────────
+        modelBuilder.Entity<MovimientoStock>(e =>
+        {
+            e.ToTable("OPT_MovimientoStock");
+            e.HasKey(m => m.MovimientoId);
+
+            e.Property(m => m.MovimientoId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(m => m.TenantId).IsRequired();
+            e.Property(m => m.TipoMovimiento).HasMaxLength(10).IsRequired();
+            e.Property(m => m.Referencia).HasMaxLength(100);
+            e.Property(m => m.Observacion).HasMaxLength(500);
+            e.Property(m => m.CreatedBy).HasMaxLength(100);
+
+            e.HasIndex(m => new { m.TenantId, m.VarianteId, m.SucursalId, m.FechaMovimiento });
+            e.HasIndex(m => new { m.UsuarioId, m.FechaMovimiento });
+
+            e.HasOne(m => m.Variante)
+             .WithMany()
+             .HasForeignKey(m => m.VarianteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(m => m.Sucursal)
+             .WithMany()
+             .HasForeignKey(m => m.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(m => m.Usuario)
+             .WithMany()
+             .HasForeignKey(m => m.UsuarioId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(m => m.Documento)
+             .WithMany(d => d.Movimientos)
+             .HasForeignKey(m => m.DocumentoId)
+             .OnDelete(DeleteBehavior.Restrict);
+            // Sin HasQueryFilter: los movimientos son inmutables, sin IsDeleted
+        });
+
+        // ── PrecioProducto ─────────────────────────────────────────────────
+        modelBuilder.Entity<PrecioProducto>(e =>
+        {
+            e.ToTable("OPT_PrecioProducto");
+            e.HasKey(p => p.PrecioId);
+
+            e.Property(p => p.PrecioId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(p => p.TenantId).IsRequired();
+            e.Property(p => p.PrecioCosto).HasColumnType("decimal(12,2)");
+            e.Property(p => p.PrecioVenta).HasColumnType("decimal(12,2)");
+            e.Property(p => p.CreatedBy).HasMaxLength(100);
+
+            e.HasIndex(p => new { p.TenantId, p.VarianteId, p.VigenciaDesde });
+
+            e.HasOne(p => p.Variante)
+             .WithMany()
+             .HasForeignKey(p => p.VarianteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(p => p.Sucursal)
+             .WithMany()
+             .HasForeignKey(p => p.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+            // Sin HasQueryFilter: usa VigenciaHasta para expirar, no soft delete
+        });
+
+        // ── DocumentoStock ─────────────────────────────────────────────────
+        modelBuilder.Entity<DocumentoStock>(e =>
+        {
+            e.ToTable("OPT_DocumentoStock");
+            e.HasKey(d => d.DocumentoId);
+
+            e.Property(d => d.DocumentoId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(d => d.TenantId).IsRequired();
+            e.Property(d => d.TipoDocumento).HasMaxLength(20).IsRequired();
+            e.Property(d => d.NumeroDocumento).HasMaxLength(50).IsRequired();
+            e.Property(d => d.ProveedorNombre).HasMaxLength(200);
+            e.Property(d => d.Estado).HasMaxLength(20).IsRequired().HasDefaultValue("Confirmado");
+            e.Property(d => d.Observacion).HasMaxLength(500);
+            e.Property(d => d.CreatedBy).HasMaxLength(100);
+            e.Property(d => d.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(d => new { d.TenantId, d.SucursalId, d.Fecha });
+            e.HasIndex(d => new { d.TenantId, d.TipoDocumento, d.Estado });
+
+            e.HasOne(d => d.Sucursal)
+             .WithMany()
+             .HasForeignKey(d => d.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(d => !d.IsDeleted);
+        });
+
+        // ── DocumentoStockLinea ────────────────────────────────────────────
+        modelBuilder.Entity<DocumentoStockLinea>(e =>
+        {
+            e.ToTable("OPT_DocumentoStockLinea");
+            e.HasKey(l => l.LineaId);
+
+            e.Property(l => l.LineaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(l => l.PrecioCosto).HasColumnType("decimal(12,2)");
+
+            e.HasIndex(l => l.DocumentoId);
+
+            e.HasOne(l => l.Documento)
+             .WithMany(d => d.Lineas)
+             .HasForeignKey(l => l.DocumentoId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(l => l.Variante)
+             .WithMany()
+             .HasForeignKey(l => l.VarianteId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ── Sucursal ───────────────────────────────────────────────────────

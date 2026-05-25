@@ -3,10 +3,10 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-22 (Sesión 15 — Módulo Productos: API CRUD completo sin precios/stock + decisión arquitectural separar Precios e Inventario)
+> Updated: 2026-05-24 (Sesión 16 — Stock frontend completo + Primer movimiento + Documentos de Entrada + Precios)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts 000–017, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales/Rol/Agenda/ProductoCategoria/Producto/ProductoVariante
+- [x] Base de datos: scripts 000–020, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales/Rol/Agenda/ProductoCategoria/Producto/ProductoVariante/Stock/MovimientoStock/PrecioProducto/DocumentoStock/DocumentoStockLinea
 - [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), Anamnesis, RecetaCristales, **Sucursales**
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21: Login, Clientes (lista + form + detalle), Layout, AuthGuard, HTTP Interceptor JWT, RUT Validator
@@ -26,9 +26,12 @@ Track work sessions and current state for continuity between AI agent sessions.
 - [x] **Frontend Usuarios**: `usuario.model.ts`, `usuario.service.ts`, `usuarios-list` (tabla con badges de rol + chips de sucursales), `usuario-form` (modal crear/editar + gestión de sucursales en tiempo real), `usuario-password` (modal cambio contraseña), rutas lazy `/usuarios`, link en sidebar
 
 ### Módulos Futuros Planificados
-- [ ] **Precios** (`018_OPT_Precio.sql`): `PrecioProducto(ProductoId|VarianteId, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta)` — separado de Productos por diseño
-- [ ] **Stock/Inventario** (`019_OPT_Stock.sql`): `Stock(VarianteId, SucursalId, CantidadDisponible, StockMinimo)` + `MovimientoStock` — scoped por `X-Sucursal-Id`
+- [ ] **Salida (documentos)** (`021_?`): OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form por fila
+- [ ] **Frontend RecetaCristales**: model, service, lista + form modal, botón en cliente-detail
+- [ ] **Frontend Agenda**: model, service, componente lista/calendario por sucursal (usa X-Sucursal-Id)
 - [ ] **Frontend Productos**: lista con tabs Productos/Categorías, form modal, gestión de variantes
+- [ ] **Roles GET /api/roles**: endpoint de solo lectura + combobox dinámico en usuario-form (reemplazar hardcodeado)
+- [ ] **Precios dedicados**: pantalla de gestión de PrecioVenta (PrecioCosto solo se actualiza via Entradas)
 
 ### Mejoras Anotadas — Módulo Rol (próxima sesión)
 - [ ] **BD**: Crear `013_OPT_Rol.sql` — tabla catálogo `OPT_Rol` (`RolId INT IDENTITY PK`, `Nombre NVARCHAR(50)`, sin TenantId — catálogo compartido). Poblar con Admin, Operador, Lectura.
@@ -59,19 +62,55 @@ Track work sessions and current state for continuity between AI agent sessions.
   - Memoria IA: `project_opt_estado.md`, `project_opt_reglas.md` (lecciones EF Core, replace strategy, shareReplay)
 
 ### Next Steps Sugeridos
-- [ ] **Frontend Productos**: `producto.model.ts` + `producto.service.ts` + `producto-categoria.service.ts` ya creados → implementar `features/productos/` (lista con tabs Productos/Categorías, form modal con variantes, rutas lazy)
-- [ ] **Frontend RecetaCristales**: model (`receta-cristales.model.ts`), service, lista + formulario modal (igual patrón que Anamnesis), botón en `cliente-detail`
-- [ ] **Frontend Agenda**: model, service, componente calendario/lista por sucursal (usa `X-Sucursal-Id`)
-- [ ] **Módulo Precios** (`018_OPT_Precio.sql`): diseño e implementación — ver sección "Módulos Futuros" arriba
-- [ ] **Módulo Stock/Inventario** (`019_OPT_Stock.sql`): diseño e implementación — ver sección "Módulos Futuros" arriba
-- [ ] **Mejoras Módulo Rol**: `GET /api/roles` + Frontend combobox dinámico en usuario-form
-- [ ] Unit tests backend con xUnit + Moq (IClienteRepository, handlers)
+- [ ] **Frontend RecetaCristales**: model, service, lista + form modal (patrón Anamnesis), botón en `cliente-detail`
+- [ ] **Frontend Agenda**: model, service, componente lista/calendario por sucursal (`X-Sucursal-Id`)
+- [ ] **Frontend Productos**: implementar `features/productos/` (modelos y servicios ya creados)
+- [ ] **Roles GET /api/roles**: endpoint solo lectura + combobox dinámico en `usuario-form`
+- [ ] **Salida por documentos**: diseñar e implementar OrdenTrabajo/Devoluciones (021_)
+- [ ] Unit tests backend con xUnit + Moq
 - [ ] Dashboard / Home screen en Angular
-- [ ] Definir autorización por rol en controllers (actualmente solo [Authorize])
+- [ ] Autorización por rol en controllers (actualmente solo `[Authorize]`)
 
 ---
 
 ## Session History
+
+### 2026-05-24 - Sesión 16: Stock frontend completo + Primer movimiento + Documentos de Entrada + Precios
+
+- **Work**: Completar el frontend de Stock (ruta + sidebar), agregar registro de primer movimiento para variantes sin stock, e implementar el módulo completo de Documentos de Entrada con historial de precios.
+
+- **Decisiones arquitecturales clave**:
+  - Documentos de Entrada (FacturaCompra, BoletaCompra, OtroIngreso) confirman atómicamente: MovimientoStock(Entrada) + PrecioProducto cierre/apertura — single SaveChangesAsync
+  - Anular: compensación con Ajuste negativo por línea; los precios NO se revierten
+  - Primer movimiento de variante sin stock: solo Ajuste directo (Entrada va por documento)
+  - `MovimientoForm` excluye "Entrada" de los tipos disponibles (solo Salida y Ajuste directos)
+  - Handlers de Application NO inyectan `ICurrentTenantService` — el controller pasa TenantId/SucursalId/UsuarioId/CreatedBy en el command
+
+- **SQL creado** (2 scripts):
+  - `019_OPT_Precio.sql` — `OPT_PrecioProducto(PrecioId, TenantId, VarianteId, SucursalId?, PrecioCosto, PrecioVenta?, VigenciaDesde, VigenciaHasta)` — historial; `VigenciaHasta NULL` = vigente
+  - `020_OPT_DocumentoStock.sql` — `OPT_DocumentoStock` (cabecera, TipoDocumento CHECK, Estado CHECK, IsDeleted) + `OPT_DocumentoStockLinea` (ON DELETE CASCADE, no IsDeleted) + `ALTER TABLE OPT_MovimientoStock ADD DocumentoId NULLABLE FK`
+
+- **Backend creado** (~20 archivos):
+  - Domain: `PrecioProducto.cs`, `DocumentoStock.cs`, `DocumentoStockLinea.cs`; modificado `MovimientoStock.cs` (DocumentoId nullable FK)
+  - Application: `IDocumentoStockRepository` (con record `DocumentoLineaInput`), `DocumentoStockDto`, `CrearYConfirmarDocumentoCommand`, `AnularDocumentoCommand`, `GetDocumentosQuery`, `GetDocumentoByIdQuery`, `CrearYConfirmarDocumentoCommandValidator`
+  - Infrastructure: `DocumentoStockRepository` (CrearYConfirmarAsync atómico, AnularAsync compensatorio), `OPTDbContext` (3 nuevos DbSets + configs EF), `DependencyInjection`
+  - API: `DocumentosStockController` (GET lista paginada, GET por id, POST crear+confirmar 201, POST anular 204)
+
+- **Frontend creado/modificado** (~5 archivos):
+  - `core/models/documento-stock.model.ts` — `DocumentoStockDto`, `DocumentoStockLineaDto`, `CrearDocumentoRequest`, `TIPOS_DOCUMENTO_ENTRADA`, `TIPOS_DOCUMENTO_LABEL`
+  - `core/services/documento-stock.service.ts` — `getDocumentos()`, `getById()`, `crear()`, `anular()` con X-Sucursal-Id
+  - `documento-entrada-form/` — modal full-screen 2 secciones: cabecera + tabla dinámica de líneas; filtra variantes duplicadas por línea
+  - `primer-movimiento-form/` — modal 2 pasos: selector de variante sin stock (grouped) → formulario Ajuste
+  - `stock-list/` — tab "Entradas" con tabla de documentos + botón Anular; botón "Nuevo movimiento" abre primer-movimiento-form; tab Stock muestra "Nuevo movimiento" en header
+  - `movimiento-form/` — excluye "Entrada" de tipos disponibles
+
+- **Bug fix**: `DatePipe` importado pero no usado en `documento-entrada-form` → removido
+
+- **Lección técnica**: `PagedResult<T>` usa `init` properties — usar object initializer, no constructor. Causa CS1739 si se intenta `new PagedResult<T>(Items: ...)`.
+
+- **Build**: 0 errores, 0 advertencias (backend y frontend)
+
+- **Documentación actualizada**: CLAUDE.md (scripts 000-020, patrón ICurrentTenantService, PagedResult gotcha, DateOnly), progress.md, memory/project_state.md, memory/feedback_patterns.md
 
 ### 2026-05-22 - Sesión 15: Módulo Productos API CRUD + decisión arquitectural Precios/Stock
 - **Work**: Implementación completa del módulo backend de Productos (Catálogo puro, sin precios ni stock). Decisión arquitectural de separar Precios e Inventario como módulos independientes. Limpieza de campos de precio/stock en toda la pila.

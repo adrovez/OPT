@@ -8,7 +8,9 @@
       "Bash(Select-String -Pattern \"error|Error|warning CS\")",
       "Bash(Select-Object -First 20)",
       "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; $result = dotnet build OPT.Application/OPT.Application.csproj -v quiet 2>&1; $result | Select-String \"succeeded|FAILED\"; Write-Host \"Exit: $LASTEXITCODE\")",
-      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; $result = dotnet build OPT.Domain/OPT.Domain.csproj -v quiet 2>&1; Write-Host \"Exit: $LASTEXITCODE\")"
+      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; $result = dotnet build OPT.Domain/OPT.Domain.csproj -v quiet 2>&1; Write-Host \"Exit: $LASTEXITCODE\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)"
     ]
   }
 }

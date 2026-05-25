@@ -60,6 +60,13 @@ export const routes: Routes = [
             (m) => m.ProductosListComponent,
           ),
       },
+      {
+        path: 'stock',
+        loadComponent: () =>
+          import('./features/stock/stock-list/stock-list.component').then(
+            (m) => m.StockListComponent,
+          ),
+      },
     ],
   },
   {

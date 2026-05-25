@@ -165,6 +165,23 @@ import { SucursalResumen } from '../../core/models/auth.model';
             Productos
           </a>
 
+          <a
+            routerLink="/stock"
+            routerLinkActive="bg-blue-50 text-blue-700 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                   text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            aria-label="Stock"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5
+                   m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172
+                   a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            Stock
+          </a>
+
         </nav>
 
         <!-- Usuario y logout -->
