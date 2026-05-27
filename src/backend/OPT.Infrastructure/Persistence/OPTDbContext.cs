@@ -20,6 +20,9 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Sucursal> Sucursales => Set<Sucursal>();
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<Agenda> Agendas => Set<Agenda>();
+    public DbSet<FormaPago> FormasPago => Set<FormaPago>();
+    public DbSet<Atencion> Atenciones => Set<Atencion>();
+    public DbSet<CobroServicio> CobrosServicio => Set<CobroServicio>();
     public DbSet<ProductoCategoria> ProductoCategorias => Set<ProductoCategoria>();
     public DbSet<Producto> Productos => Set<Producto>();
     public DbSet<ProductoVariante> ProductoVariantes => Set<ProductoVariante>();
@@ -194,6 +197,11 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .HasForeignKey(a => a.ClienteId)
              .OnDelete(DeleteBehavior.Restrict);
 
+            e.HasOne(a => a.Atencion)
+             .WithMany()
+             .HasForeignKey(a => a.AtencionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
             // Filtro global: excluye eliminados lógicamente
             e.HasQueryFilter(a => !a.IsDeleted);
         });
@@ -243,9 +251,16 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.HasIndex(r => new { r.TenantId, r.ClienteId })
              .HasFilter("[IsDeleted] = 0");
 
+            e.Property(r => r.Fuente).HasMaxLength(20).IsRequired().HasDefaultValue("Consulta");
+
             e.HasOne(r => r.Cliente)
              .WithMany()
              .HasForeignKey(r => r.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(r => r.Atencion)
+             .WithMany()
+             .HasForeignKey(r => r.AtencionId)
              .OnDelete(DeleteBehavior.Restrict);
 
             // Filtro global: excluye eliminados lógicamente
@@ -286,6 +301,7 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.HasKey(a => a.AgendaId);
 
             e.Property(a => a.AgendaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(a => a.SucursalId).HasColumnName("idSucursal");
             e.Property(a => a.Motivo).HasMaxLength(200).IsRequired();
             e.Property(a => a.Estado).HasMaxLength(20).IsRequired().HasDefaultValue("Pendiente");
             e.Property(a => a.Observaciones).HasMaxLength(500);
@@ -552,6 +568,95 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
 
             // Filtro global: excluye eliminados lógicamente
             e.HasQueryFilter(s => !s.IsDeleted);
+        });
+
+        // ── FormaPago ──────────────────────────────────────────────────────
+        modelBuilder.Entity<FormaPago>(e =>
+        {
+            e.ToTable("OPT_FormaPago");
+            e.HasKey(f => f.FormaPagoId);
+            e.Property(f => f.Descripcion).HasMaxLength(100).IsRequired();
+            // Catálogo compartido: sin TenantId ni soft delete
+        });
+
+        // ── Atencion ───────────────────────────────────────────────────────
+        modelBuilder.Entity<Atencion>(e =>
+        {
+            e.ToTable("OPT_Atencion");
+            e.HasKey(a => a.AtencionId);
+
+            e.Property(a => a.AtencionId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(a => a.SucursalId).HasColumnName("idSucursal");
+            e.Property(a => a.Motivo).HasMaxLength(300).IsRequired();
+            e.Property(a => a.Observaciones).HasMaxLength(2000);
+            e.Property(a => a.Estado).HasMaxLength(20).IsRequired().HasDefaultValue("Abierta");
+            e.Property(a => a.CreatedBy).HasMaxLength(100);
+            e.Property(a => a.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(a => new { a.TenantId, a.SucursalId, a.FechaHoraAtencion })
+             .HasFilter("[IsDeleted] = 0");
+            e.HasIndex(a => a.ClienteId)
+             .HasFilter("[IsDeleted] = 0");
+            e.HasIndex(a => a.AgendaId)
+             .HasFilter("[IsDeleted] = 0 AND [AgendaId] IS NOT NULL");
+
+            e.HasOne(a => a.Sucursal)
+             .WithMany()
+             .HasForeignKey(a => a.SucursalId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.Cliente)
+             .WithMany()
+             .HasForeignKey(a => a.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.UsuarioAtencion)
+             .WithMany()
+             .HasForeignKey(a => a.UsuarioAtencionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.Agenda)
+             .WithMany()
+             .HasForeignKey(a => a.AgendaId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.Anamnesis)
+             .WithMany()
+             .HasForeignKey(a => a.AnamnesisId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.RecetaCristales)
+             .WithMany()
+             .HasForeignKey(a => a.RecetaCristalesId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.CobroServicio)
+             .WithOne(c => c.Atencion)
+             .HasForeignKey<CobroServicio>(c => c.AtencionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(a => !a.IsDeleted);
+        });
+
+        // ── CobroServicio ──────────────────────────────────────────────────
+        modelBuilder.Entity<CobroServicio>(e =>
+        {
+            e.ToTable("OPT_CobroServicio");
+            e.HasKey(c => c.CobroServicioId);
+
+            e.Property(c => c.CobroServicioId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(c => c.SucursalId).HasColumnName("idSucursal");
+            e.Property(c => c.Monto).HasColumnType("decimal(12,2)");
+            e.Property(c => c.Observaciones).HasMaxLength(500);
+            e.Property(c => c.CreatedBy).HasMaxLength(100);
+            e.Property(c => c.UpdatedBy).HasMaxLength(100);
+
+            e.HasOne(c => c.FormaPago)
+             .WithMany()
+             .HasForeignKey(c => c.FormaPagoId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(c => !c.IsDeleted);
         });
     }
 }

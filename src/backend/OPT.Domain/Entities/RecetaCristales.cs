@@ -55,8 +55,14 @@ public class RecetaCristales
     /// <summary>Fecha de ingreso de la receta (UTC).</summary>
     public DateTime FechaIngreso { get; set; } = DateTime.UtcNow;
 
+    public Guid? AtencionId { get; set; }
+
+    /// <summary>'Consulta' = creada en el sistema | 'Tercero' = prescripción externa ingresada en OT.</summary>
+    public string Fuente { get; set; } = "Consulta";
+
     // ── Navegación ────────────────────────────────────────────────────────
     public Cliente Cliente { get; set; } = null!;
+    public Atencion? Atencion { get; set; }
 
     // ── Auditoría ─────────────────────────────────────────────────────────
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

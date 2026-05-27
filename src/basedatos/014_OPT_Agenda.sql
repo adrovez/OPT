@@ -18,7 +18,7 @@ BEGIN
     (
         [AgendaId]          UNIQUEIDENTIFIER NOT NULL CONSTRAINT DF_OPT_Agenda_AgendaId     DEFAULT NEWSEQUENTIALID(),
         [TenantId]          UNIQUEIDENTIFIER NOT NULL,
-        [SucursalId]        UNIQUEIDENTIFIER NOT NULL,   -- sucursal activa del usuario al agendar
+        [idSucursal]        UNIQUEIDENTIFIER NOT NULL,   -- sucursal activa del usuario al agendar
         [ClienteId]         UNIQUEIDENTIFIER NOT NULL,   -- cliente citado
         [UsuarioId]         UNIQUEIDENTIFIER NULL,       -- profesional asignado (nullable al crear)
 
@@ -44,8 +44,8 @@ BEGIN
 
         CONSTRAINT CK_OPT_Agenda_Duracion CHECK ([DuracionMinutos] > 0),
 
-        CONSTRAINT FK_OPT_Agenda_Sucursal FOREIGN KEY ([SucursalId])
-            REFERENCES [dbo].[OPT_Sucursal] ([SucursalId])
+        CONSTRAINT FK_OPT_Agenda_Sucursal FOREIGN KEY ([idSucursal])
+            REFERENCES [dbo].[OPT_Sucursal] ([idSucursal])
             ON DELETE NO ACTION
             ON UPDATE NO ACTION,
 
@@ -78,7 +78,7 @@ IF NOT EXISTS (
 )
 BEGIN
     CREATE NONCLUSTERED INDEX [IX_OPT_Agenda_TenantId_SucursalId_FechaHora]
-        ON [dbo].[OPT_Agenda] ([TenantId] ASC, [SucursalId] ASC, [FechaHora] ASC)
+        ON [dbo].[OPT_Agenda] ([TenantId] ASC, [idSucursal] ASC, [FechaHora] ASC)
         WHERE [IsDeleted] = 0;
 
     PRINT 'Índice IX_OPT_Agenda_TenantId_SucursalId_FechaHora creado.';

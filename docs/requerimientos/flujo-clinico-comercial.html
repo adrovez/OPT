@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT SaaS — Requerimientos Flujo Clínico-Comercial</title>
+<style>
+  :root {
+    --blue:#2563eb;--blue-light:#dbeafe;--blue-dark:#1e40af;
+    --green:#16a34a;--green-light:#dcfce7;
+    --amber:#d97706;--amber-light:#fef3c7;
+    --red:#dc2626;--red-light:#fee2e2;
+    --purple:#7c3aed;--purple-light:#ede9fe;
+    --cyan:#0891b2;--cyan-light:#cffafe;
+    --indigo:#4338ca;--indigo-light:#e0e7ff;
+    --teal:#0d9488;--teal-light:#ccfbf1;
+    --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+    --gray-700:#374151;--gray-900:#111827;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--gray-900);background:var(--gray-50);line-height:1.6;}
+
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  .layout{display:grid;grid-template-columns:270px 1fr;min-height:100vh;}
+  nav{background:#0c1a2e;color:white;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  nav .logo{padding:22px 20px 14px;border-bottom:1px solid #1e3352;}
+  nav .logo h1{font-size:1.05rem;font-weight:700;color:white;}
+  nav .logo p{font-size:0.72rem;color:#64748b;margin-top:3px;}
+  nav ul{list-style:none;padding:8px 0;}
+  nav li a{display:block;padding:7px 20px;color:#94a3b8;text-decoration:none;font-size:0.83rem;
+           transition:all 0.15s;border-left:3px solid transparent;}
+  nav li a:hover{background:#1e2d45;color:white;border-left-color:var(--cyan);}
+  nav li a.active{background:#1e2d45;color:white;border-left-color:var(--cyan);}
+  nav li a.section-label{color:#475569;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;
+                          text-transform:uppercase;padding:14px 20px 4px;pointer-events:none;}
+
+  /* ── Page header ────────────────────────────────────────────────────── */
+  .page-header{background:linear-gradient(135deg,#0c1a2e 0%,#0e7490 100%);color:white;padding:40px 48px;}
+  .page-header h1{font-size:1.9rem;font-weight:800;color:white;margin-bottom:6px;}
+  .page-header p{color:#a5f3fc;font-size:0.95rem;}
+  .page-header .chips{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .chip{display:inline-block;padding:3px 10px;border-radius:9999px;font-size:0.73rem;font-weight:600;}
+  .chip-cyan{background:rgba(8,145,178,0.4);color:#a5f3fc;}
+  .chip-amber{background:rgba(217,119,6,0.4);color:#fde68a;}
+  .chip-green{background:rgba(22,163,74,0.4);color:#bbf7d0;}
+
+  /* ── Main content ───────────────────────────────────────────────────── */
+  main{padding:40px 48px;max-width:980px;}
+  section{margin-bottom:48px;}
+
+  h2{font-size:1.35rem;font-weight:700;color:var(--gray-900);margin-bottom:20px;
+     padding-bottom:10px;border-bottom:2px solid var(--gray-200);display:flex;align-items:center;gap:10px;}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;
+           width:28px;height:28px;border-radius:50%;background:var(--cyan);
+           color:white;font-size:0.8rem;font-weight:700;flex-shrink:0;}
+  h3{font-size:1rem;font-weight:700;color:var(--gray-700);margin:20px 0 10px;}
+  h4{font-size:0.875rem;font-weight:700;color:var(--gray-500);margin:14px 0 8px;
+     text-transform:uppercase;letter-spacing:0.05em;}
+
+  p{margin-bottom:10px;font-size:0.9rem;color:var(--gray-700);}
+
+  /* ── Tables ─────────────────────────────────────────────────────────── */
+  .table-wrap{overflow-x:auto;margin:14px 0;border-radius:8px;
+              border:1px solid var(--gray-200);box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  table{width:100%;border-collapse:collapse;font-size:0.84rem;}
+  thead tr{background:#0c1a2e;color:white;}
+  thead th{padding:10px 14px;text-align:left;font-weight:600;white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--gray-200);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:nth-child(even){background:var(--gray-50);}
+  tbody td{padding:8px 14px;vertical-align:top;}
+  td code{font-family:var(--mono);font-size:0.8rem;background:var(--gray-100);
+           padding:1px 5px;border-radius:3px;color:var(--indigo);}
+
+  /* ── Cards / Callouts ───────────────────────────────────────────────── */
+  .card{background:white;border:1px solid var(--gray-200);border-radius:10px;
+        padding:20px 24px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .callout{border-radius:8px;padding:14px 18px;margin:14px 0;font-size:0.875rem;
+            display:flex;gap:12px;align-items:flex-start;}
+  .callout .icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+  .callout-blue{background:var(--blue-light);border-left:4px solid var(--blue);}
+  .callout-amber{background:var(--amber-light);border-left:4px solid var(--amber);}
+  .callout-green{background:var(--green-light);border-left:4px solid var(--green);}
+  .callout-red{background:var(--red-light);border-left:4px solid var(--red);}
+  .callout-purple{background:var(--purple-light);border-left:4px solid var(--purple);}
+
+  /* ── Status badges ──────────────────────────────────────────────────── */
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;}
+  .badge-green{background:var(--green-light);color:var(--green);}
+  .badge-amber{background:var(--amber-light);color:var(--amber);}
+  .badge-blue{background:var(--blue-light);color:var(--blue);}
+  .badge-gray{background:var(--gray-100);color:var(--gray-500);}
+  .badge-red{background:var(--red-light);color:var(--red);}
+  .badge-purple{background:var(--purple-light);color:var(--purple);}
+  .badge-cyan{background:var(--cyan-light);color:var(--cyan);}
+
+  /* ── Code blocks ────────────────────────────────────────────────────── */
+  .code-block{background:#0c1a2e;color:#e2e8f0;border-radius:8px;padding:20px 24px;
+               margin:14px 0;font-family:var(--mono);font-size:0.82rem;line-height:1.7;
+               overflow-x:auto;white-space:pre;}
+  .code-block .cm{color:#64748b;}
+  .code-block .kw{color:#7dd3fc;}
+  .code-block .fn{color:#a5f3fc;}
+  .code-block .st{color:#86efac;}
+  .code-block .nu{color:#fca5a5;}
+
+  /* ── Flow diagram ───────────────────────────────────────────────────── */
+  .flow{background:white;border:1px solid var(--gray-200);border-radius:10px;
+        padding:28px 32px;margin:14px 0;font-family:var(--mono);font-size:0.82rem;
+        line-height:1.8;color:var(--gray-700);overflow-x:auto;white-space:pre;}
+
+  /* ── Rules list ─────────────────────────────────────────────────────── */
+  .rules{list-style:none;margin:10px 0;}
+  .rules li{display:flex;gap:10px;padding:7px 12px;border-radius:6px;margin-bottom:4px;
+             font-size:0.875rem;align-items:flex-start;}
+  .rules li:nth-child(odd){background:var(--gray-50);}
+  .rules li .rn{font-family:var(--mono);font-size:0.75rem;font-weight:700;
+                 color:var(--cyan);flex-shrink:0;padding-top:2px;min-width:80px;}
+
+  /* ── Etapa header ───────────────────────────────────────────────────── */
+  .etapa-header{display:flex;align-items:center;gap:14px;background:white;
+                 border:1px solid var(--gray-200);border-radius:10px;padding:18px 24px;
+                 margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .etapa-num{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;
+              justify-content:center;font-size:1.2rem;font-weight:800;color:white;flex-shrink:0;}
+  .etapa-num.e1{background:linear-gradient(135deg,#0891b2,#2563eb);}
+  .etapa-num.e2{background:linear-gradient(135deg,#7c3aed,#0891b2);}
+  .etapa-num.e3{background:linear-gradient(135deg,#16a34a,#0d9488);}
+  .etapa-num.e4{background:linear-gradient(135deg,#d97706,#dc2626);}
+  .etapa-info h3{margin:0 0 4px;font-size:1rem;font-weight:700;}
+  .etapa-info p{margin:0;font-size:0.83rem;color:var(--gray-500);}
+
+  /* ── Grid 2 cols ────────────────────────────────────────────────────── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+  /* ── Payment types ──────────────────────────────────────────────────── */
+  .pago-card{background:white;border-radius:10px;padding:18px 20px;
+              border:1px solid var(--gray-200);box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .pago-card h4{margin:0 0 8px;font-size:0.85rem;font-weight:700;text-transform:none;
+                 letter-spacing:0;display:flex;align-items:center;gap:8px;}
+  .pago-card p{font-size:0.82rem;color:var(--gray-500);margin:0;}
+  .pago-card .formula{font-family:var(--mono);font-size:0.78rem;background:var(--gray-100);
+                        padding:6px 10px;border-radius:4px;margin-top:8px;color:var(--indigo);}
+
+  /* ── SQL scripts summary ────────────────────────────────────────────── */
+  .script-row{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;
+               border-radius:6px;margin-bottom:4px;}
+  .script-row:nth-child(odd){background:var(--gray-50);}
+  .script-name{font-family:var(--mono);font-size:0.8rem;font-weight:700;
+                color:var(--indigo);flex-shrink:0;min-width:240px;}
+  .script-desc{font-size:0.84rem;color:var(--gray-700);}
+  .script-dep{font-size:0.75rem;color:var(--gray-400);margin-top:2px;}
+
+  /* ── Nullable indicator ─────────────────────────────────────────────── */
+  .yes{color:var(--green);font-weight:600;}
+  .no{color:var(--red);font-weight:600;}
+  .opt{color:var(--amber);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═══════════════════════════════════════════════════════════ NAV ══ -->
+<nav>
+  <div class="logo">
+    <h1>OPT SaaS</h1>
+    <p>Documento de Requerimientos</p>
+  </div>
+  <ul>
+    <li><a class="section-label">General</a></li>
+    <li><a href="#contexto">1. Contexto y objetivo</a></li>
+    <li><a href="#decisiones">2. Decisiones de diseño</a></li>
+    <li><a href="#flujo">3. Flujo general</a></li>
+
+    <li><a class="section-label">Etapa 1</a></li>
+    <li><a href="#forma-pago">4. Catálogo FormaPago</a></li>
+    <li><a href="#atencion">5. Módulo Atención</a></li>
+    <li><a href="#cobro-servicio">6. Cobro Servicio</a></li>
+
+    <li><a class="section-label">Etapa 2</a></li>
+    <li><a href="#ot">7. Orden de Trabajo</a></li>
+    <li><a href="#ot-lineas">8. Líneas de OT</a></li>
+
+    <li><a class="section-label">Etapa 3</a></li>
+    <li><a href="#pago">9. Tipos de Pago</a></li>
+    <li><a href="#cuotas">10. Cuotas</a></li>
+
+    <li><a class="section-label">Transversal</a></li>
+    <li><a href="#alteraciones">11. Alter tablas existentes</a></li>
+    <li><a href="#scripts">12. Scripts SQL</a></li>
+    <li><a href="#backend">13. Backend por módulo</a></li>
+    <li><a href="#frontend">14. Frontend — rutas</a></li>
+    <li><a href="#fuera-alcance">15. Fuera de alcance</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ MAIN ══ -->
+<div>
+  <div class="page-header">
+    <h1>Flujo Clínico-Comercial</h1>
+    <p>Documento de requerimientos — Módulos Atención, Cobro Servicio, Orden de Trabajo, Pago y Cuotas</p>
+    <div class="chips">
+      <span class="chip chip-cyan">Versión 1.0</span>
+      <span class="chip chip-amber">Mayo 2026</span>
+      <span class="chip chip-green">3 Etapas</span>
+      <span class="chip chip-cyan">7 Scripts SQL</span>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── 1. Contexto ─────────────────────────────────────────────── -->
+    <section id="contexto">
+      <h2><span class="num">1</span>Contexto y objetivo</h2>
+      <p>OPT gestiona el ciclo completo de atención en una óptica: desde la cita agendada hasta el cobro final. Este documento especifica los módulos necesarios para cubrir ese ciclo, a partir de lo que ya existe en el sistema.</p>
+
+      <h3>Módulos existentes (base de este desarrollo)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Módulo</th><th>Estado</th><th>Notas</th></tr></thead>
+          <tbody>
+            <tr><td>Agenda (citas)</td><td><span class="badge badge-green">✅ Completo</span></td><td>CRUD + estados Pendiente / Confirmada / Atendida / Cancelada / NoShow</td></tr>
+            <tr><td>Cliente (Persona / Empresa)</td><td><span class="badge badge-green">✅ Completo</span></td><td>Campo <code>TipoCliente</code> unificado</td></tr>
+            <tr><td>Anamnesis</td><td><span class="badge badge-green">✅ Completo</span></td><td>FK <code>AtencionId</code> agregada (script 024 ejecutado)</td></tr>
+            <tr><td>RecetaCristales</td><td><span class="badge badge-green">✅ Completo</span></td><td><code>AtencionId</code> + <code>Fuente</code> agregados (script 024 ejecutado)</td></tr>
+            <tr><td>Productos / Variantes / Stock</td><td><span class="badge badge-green">✅ Completo</span></td><td></td></tr>
+            <tr><td>Usuarios / Sucursales / Auth</td><td><span class="badge badge-green">✅ Completo</span></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Módulos a crear</h3>
+      <div class="grid2">
+        <div class="etapa-header">
+          <div class="etapa-num e1">1</div>
+          <div class="etapa-info">
+            <h3>Catálogo + Atención + Cobro Servicio</h3>
+            <p>FormaPago · Atención · CobroServicio</p>
+          </div>
+        </div>
+        <div class="etapa-header">
+          <div class="etapa-num e2">2</div>
+          <div class="etapa-info">
+            <h3>Orden de Trabajo</h3>
+            <p>OT cabecera · OTLinea · receta tercero</p>
+          </div>
+        </div>
+        <div class="etapa-header">
+          <div class="etapa-num e3">3</div>
+          <div class="etapa-info">
+            <h3>Pago y Cuotas</h3>
+            <p>Contado · Cuotas · Abono + Cuotas</p>
+          </div>
+        </div>
+        <div class="etapa-header">
+          <div class="etapa-num e4">4</div>
+          <div class="etapa-info">
+            <h3>Import Excel cuotas <span class="badge badge-gray">Futuro</span></h3>
+            <p>Carga de pagos del Cliente Empresa</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. Decisiones ───────────────────────────────────────────── -->
+    <section id="decisiones">
+      <h2><span class="num">2</span>Decisiones de diseño</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pregunta</th><th>Respuesta</th><th>Impacto</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>¿Atención sin cita previa?</td>
+              <td><span class="badge badge-green">Sí — walk-in</span></td>
+              <td><code>AgendaId</code> es <code>NULL</code> en <code>OPT_Atencion</code></td>
+            </tr>
+            <tr>
+              <td>Cobro de servicio (sin OT)</td>
+              <td>Monto + FormaPago</td>
+              <td>Tabla <code>OPT_CobroServicio</code> (1:1 con Atención)</td>
+            </tr>
+            <tr>
+              <td>¿OT sin Atención previa?</td>
+              <td><span class="badge badge-green">Sí — OT directa</span></td>
+              <td><code>AtencionId</code> es <code>NULL</code> en <code>OPT_OrdenDeTrabajo</code></td>
+            </tr>
+            <tr>
+              <td>Receta en OT</td>
+              <td>Existente del cliente <strong>o</strong> ingresada como tercero</td>
+              <td>Campo <code>Fuente</code> en <code>OPT_RecetaCristales</code>: <code>'Consulta'</code> | <code>'Tercero'</code></td>
+            </tr>
+            <tr>
+              <td>Cliente empresa en OT</td>
+              <td>Se elige de los clientes con <code>TipoCliente='Empresa'</code></td>
+              <td>FK <code>ClienteEmpresaId</code> nullable en OT</td>
+            </tr>
+            <tr>
+              <td>Descuento en OT</td>
+              <td>A nivel del total de la OT</td>
+              <td>Un campo <code>Descuento DECIMAL</code> en cabecera de OT</td>
+            </tr>
+            <tr>
+              <td>Número de OT</td>
+              <td>Lo ingresa el usuario manualmente</td>
+              <td><code>NumeroOT NVARCHAR(50)</code>, UNIQUE por sucursal y tenant</td>
+            </tr>
+            <tr>
+              <td>Estado inicial de Atención</td>
+              <td><code>Abierta</code> → <code>TerminadaServicio</code> | <code>DerivoOT</code></td>
+              <td>Transición explícita; sin retroceso</td>
+            </tr>
+            <tr>
+              <td>Pago de cuotas</td>
+              <td>El Cliente Empresa descuenta en liquidación y envía Excel</td>
+              <td>Cuotas se generan en <code>Pendiente</code>; import Excel es Etapa 4 (futura)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 3. Flujo ────────────────────────────────────────────────── -->
+    <section id="flujo">
+      <h2><span class="num">3</span>Flujo general del sistema</h2>
+      <div class="flow"><span style="color:#7dd3fc">[ Agenda ]</span> ──(opcional)──► <span style="color:#a5f3fc">[ Atención ]</span>
+                              │  Estado inicial: <span style="color:#86efac">Abierta</span>
+                              │
+                    ┌─────────┴──────────┐
+                    │                    │
+           <span style="color:#fca5a5">TerminadaServicio</span>         <span style="color:#c4b5fd">DerivoOT</span>
+                    │                    │
+          <span style="color:#fca5a5">[ CobroServicio ]</span>   <span style="color:#c4b5fd">[ Orden de Trabajo ]</span> ◄──── también creación directa
+                                         │
+                              ┌──────────┴───────────────┐
+                              │                          │
+                           <span style="color:#86efac">Contado</span>          <span style="color:#fde68a">Cuotas</span> / <span style="color:#fde68a">Abono + Cuotas</span>
+                              │                          │
+                         <span style="color:#86efac">[ OPT_Pago ]</span>         <span style="color:#fde68a">[ OPT_Cuota ]</span>
+                                                (pago futuro vía Excel empresa)</div>
+
+      <div class="callout callout-blue">
+        <span class="icon">ℹ️</span>
+        <div><strong>Independencia de módulos:</strong> La Orden de Trabajo puede crearse directamente desde el menú principal sin pasar por Atención. El campo <code>AtencionId</code> es siempre opcional en la OT.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ETAPA 1 ═══════════════ -->
+    <div class="callout callout-green" style="margin-bottom:0;">
+      <span class="icon">✅</span>
+      <div><strong>ETAPA 1 — IMPLEMENTADA</strong> — Catálogo FormaPago · Módulo Atención · Cobro Servicio<br>
+      Scripts 021–024 ejecutados. Backend y frontend completos. Establece el núcleo clínico. Prerequisito para Etapas 2 y 3.</div>
+    </div>
+
+    <!-- ── 4. FormaPago ────────────────────────────────────────────── -->
+    <section id="forma-pago">
+      <h2><span class="num">4</span>Catálogo FormaPago</h2>
+      <p>Catálogo compartido entre todos los módulos de cobro. Clave entera (<code>INT IDENTITY</code>) igual que los demás catálogos del sistema.</p>
+      <p><strong>Script:</strong> <code>021_OPT_FormaPago.sql</code></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>FormaPagoId</th><th>Descripcion</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Efectivo</td></tr>
+            <tr><td>2</td><td>Débito</td></tr>
+            <tr><td>3</td><td>Crédito</td></tr>
+            <tr><td>4</td><td>Cheque</td></tr>
+            <tr><td>5</td><td>Transferencia</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 5. Atención ─────────────────────────────────────────────── -->
+    <section id="atencion">
+      <h2><span class="num">5</span>Módulo Atención</h2>
+      <p>Registra una visita clínica. Puede originarse desde una cita de Agenda o ser un ingreso directo (walk-in). Al finalizar, el operador decide si la atención termina como servicio cobrado o si deriva a una Orden de Trabajo.</p>
+      <p><strong>Script:</strong> <code>022_OPT_Atencion.sql</code></p>
+
+      <h3>5.1 Reglas de negocio</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-AT-01</span>La Atención puede crearse sin <code>AgendaId</code> (walk-in).</li>
+        <li><span class="rn">RN-AT-02</span>Si proviene de Agenda, la Agenda pasa automáticamente a estado <code>Atendida</code>.</li>
+        <li><span class="rn">RN-AT-03</span>El campo <code>UsuarioAtencionId</code> es obligatorio: registra quién atendió.</li>
+        <li><span class="rn">RN-AT-04</span>La Anamnesis y la RecetaCristales son opcionales dentro de la Atención.</li>
+        <li><span class="rn">RN-AT-05</span>Estados válidos: <code>Abierta</code> → <code>TerminadaServicio</code> o <code>Abierta</code> → <code>DerivoOT</code>. No hay retroceso.</li>
+        <li><span class="rn">RN-AT-06</span>Una Atención <code>TerminadaServicio</code> debe tener un CobroServicio asociado.</li>
+        <li><span class="rn">RN-AT-07</span>Una Atención <code>DerivoOT</code> puede o no tener una OT creada (la OT se crea en el paso siguiente).</li>
+        <li><span class="rn">RN-AT-08</span>Una Atención <code>DerivoOT</code> puede generar como máximo una OT.</li>
+      </ul>
+
+      <h3>5.2 Tabla <code>OPT_Atencion</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>AtencionId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK — <code>NEWSEQUENTIALID()</code></td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>Multi-tenant</td></tr>
+            <tr><td><code>idSucursal</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>Sucursal activa (header <code>X-Sucursal-Id</code>)</td></tr>
+            <tr><td><code>AgendaId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_Agenda</code>. <code>NULL</code> si walk-in</td></tr>
+            <tr><td><code>ClienteId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_Cliente</code> (TipoCliente='Persona')</td></tr>
+            <tr><td><code>UsuarioAtencionId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_Usuario</code> — quién atendió</td></tr>
+            <tr><td><code>AnamnesisId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_Anamnesis</code>. Se asigna durante la atención</td></tr>
+            <tr><td><code>RecetaCristalesId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_RecetaCristales</code>. Se asigna durante la atención</td></tr>
+            <tr><td><code>FechaHoraAtencion</code></td><td>DATETIME2(0)</td><td class="no">NO</td><td>Fecha y hora de inicio de la atención</td></tr>
+            <tr><td><code>Motivo</code></td><td>NVARCHAR(300)</td><td class="no">NO</td><td>Motivo de la consulta</td></tr>
+            <tr><td><code>Observaciones</code></td><td>NVARCHAR(2000)</td><td class="opt">SÍ</td><td>Notas libres del operador</td></tr>
+            <tr><td><code>Estado</code></td><td>NVARCHAR(20)</td><td class="no">NO</td><td><code>Abierta</code> | <code>TerminadaServicio</code> | <code>DerivoOT</code> — DEFAULT <code>'Abierta'</code></td></tr>
+            <tr><td><code>CreatedAt</code></td><td>DATETIME2</td><td class="no">NO</td><td>DEFAULT GETUTCDATE()</td></tr>
+            <tr><td><code>UpdatedAt</code></td><td>DATETIME2</td><td class="opt">SÍ</td><td></td></tr>
+            <tr><td><code>CreatedBy</code></td><td>NVARCHAR(100)</td><td class="opt">SÍ</td><td></td></tr>
+            <tr><td><code>UpdatedBy</code></td><td>NVARCHAR(100)</td><td class="opt">SÍ</td><td></td></tr>
+            <tr><td><code>IsDeleted</code></td><td>BIT</td><td class="no">NO</td><td>DEFAULT 0 — soft delete</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Índices</h4>
+      <div class="code-block"><span class="cm">-- Consulta principal: atenciones de una sucursal por fecha</span>
+IX_OPT_Atencion_TenantId_idSucursal_FechaHora  (TenantId, idSucursal, FechaHoraAtencion) WHERE IsDeleted = 0
+
+<span class="cm">-- Historial de atenciones por cliente</span>
+IX_OPT_Atencion_ClienteId  (ClienteId) WHERE IsDeleted = 0
+
+<span class="cm">-- Búsqueda por agenda de origen</span>
+IX_OPT_Atencion_AgendaId  (AgendaId) WHERE IsDeleted = 0 AND AgendaId IS NOT NULL</div>
+
+      <h3>5.3 Máquina de estados</h3>
+      <div class="flow">  <span style="color:#86efac">[ Abierta ]</span>
+       │
+       ├──── operador decide ────┬──── <span style="color:#fca5a5">TerminadaServicio</span>
+       │                         │         └─► requiere CobroServicio
+       │                         └──── <span style="color:#c4b5fd">DerivoOT</span>
+       │                                   └─► puede crear OT (opcional)
+       │
+       ✗  No hay retroceso de estado.</div>
+    </section>
+
+    <!-- ── 6. Cobro Servicio ───────────────────────────────────────── -->
+    <section id="cobro-servicio">
+      <h2><span class="num">6</span>Módulo Cobro Servicio</h2>
+      <p>Cuando una Atención concluye sin derivar a OT, se registra el cobro del servicio prestado (consulta, examen de vista, etc.).</p>
+      <p><strong>Script:</strong> <code>023_OPT_CobroServicio.sql</code></p>
+
+      <h3>6.1 Reglas de negocio</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-CS-01</span>Existe exactamente un <code>CobroServicio</code> por Atención en estado <code>TerminadaServicio</code>.</li>
+        <li><span class="rn">RN-CS-02</span>El monto es obligatorio y debe ser mayor a 0.</li>
+        <li><span class="rn">RN-CS-03</span>La forma de pago es obligatoria.</li>
+        <li><span class="rn">RN-CS-04</span>El usuario que cobró se hereda de la Atención (<code>UsuarioAtencionId</code>).</li>
+      </ul>
+
+      <h3>6.2 Tabla <code>OPT_CobroServicio</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>CobroServicioId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK — <code>NEWSEQUENTIALID()</code></td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>idSucursal</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>AtencionId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_Atencion</code> — UNIQUE (1:1)</td></tr>
+            <tr><td><code>FormaPagoId</code></td><td>INT</td><td class="no">NO</td><td>FK → <code>OPT_FormaPago</code></td></tr>
+            <tr><td><code>Monto</code></td><td>DECIMAL(12,2)</td><td class="no">NO</td><td>Monto cobrado por el servicio</td></tr>
+            <tr><td><code>FechaCobro</code></td><td>DATETIME2(0)</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>Observaciones</code></td><td>NVARCHAR(500)</td><td class="opt">SÍ</td><td>N° boleta, nota libre</td></tr>
+            <tr><td>Auditoría estándar</td><td colspan="3">CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ETAPA 2 ═══════════════ -->
+    <div class="callout callout-purple" style="margin-bottom:0;">
+      <span class="icon">🟣</span>
+      <div><strong>ETAPA 2 — Módulo Orden de Trabajo</strong><br>
+      Puede desarrollarse en paralelo con Etapa 1 ya que <code>AtencionId</code> es opcional en la OT.</div>
+    </div>
+
+    <!-- ── 7. Orden de Trabajo ─────────────────────────────────────── -->
+    <section id="ot">
+      <h2><span class="num">7</span>Orden de Trabajo</h2>
+      <p>Registra la venta de productos (marcos, lentes) asociada a un paciente. Puede originarse desde una Atención o crearse directamente. Soporta recetas del sistema o de terceros.</p>
+      <p><strong>Script:</strong> <code>025_OPT_OrdenDeTrabajo.sql</code></p>
+
+      <h3>7.1 Reglas de negocio</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-OT-01</span>La OT puede crearse sin Atención previa (<code>AtencionId</code> es opcional).</li>
+        <li><span class="rn">RN-OT-02</span><code>NumeroOT</code> lo ingresa el usuario manualmente. Es UNIQUE por <code>(TenantId, idSucursal)</code>.</li>
+        <li><span class="rn">RN-OT-03</span><code>ClientePersonaId</code> es obligatorio. <code>ClienteEmpresaId</code> es opcional.</li>
+        <li><span class="rn">RN-OT-04</span>La RecetaCristales puede ser: (a) existente del cliente, (b) ingresada directamente en la OT como tercero (<code>Fuente='Tercero'</code>).</li>
+        <li><span class="rn">RN-OT-05</span>Debe tener al menos una línea de producto para poder confirmarse.</li>
+        <li><span class="rn">RN-OT-06</span>El descuento se aplica al total de la OT (no por línea). Valor mínimo: 0.</li>
+        <li><span class="rn">RN-OT-07</span><code>TipoPago</code>: <code>Contado</code> | <code>Cuotas</code> | <code>AbonoMasCuotas</code>.</li>
+        <li><span class="rn">RN-OT-08</span>Estados: <code>Pendiente</code> → <code>EnProceso</code> → <code>Lista</code> → <code>Entregada</code> | <code>Cancelada</code>.</li>
+        <li><span class="rn">RN-OT-09</span>Solo se puede cancelar una OT en estado <code>Pendiente</code> o <code>EnProceso</code>.</li>
+        <li><span class="rn">RN-OT-10</span>Total = <code>SUM(Cantidad × PrecioUnitario) − Descuento</code>. Calculado en aplicación, no persistido.</li>
+      </ul>
+
+      <h3>7.2 Tabla <code>OPT_OrdenDeTrabajo</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>OTId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK — <code>NEWSEQUENTIALID()</code></td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>Multi-tenant</td></tr>
+            <tr><td><code>idSucursal</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>Sucursal activa (header <code>X-Sucursal-Id</code>)</td></tr>
+            <tr><td><code>NumeroOT</code></td><td>NVARCHAR(50)</td><td class="no">NO</td><td>Ingresado por el usuario. UNIQUE por <code>(TenantId, idSucursal)</code></td></tr>
+            <tr><td><code>AtencionId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_Atencion</code>. <code>NULL</code> si OT directa</td></tr>
+            <tr><td><code>ClientePersonaId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_Cliente</code> (TipoCliente='Persona')</td></tr>
+            <tr><td><code>ClienteEmpresaId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_Cliente</code> (TipoCliente='Empresa'). Opcional</td></tr>
+            <tr><td><code>RecetaCristalesId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_RecetaCristales</code>. Puede ser Fuente='Tercero'</td></tr>
+            <tr><td><code>UsuarioId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_Usuario</code> — quien genera la OT</td></tr>
+            <tr><td><code>FechaEntrega</code></td><td>DATE</td><td class="opt">SÍ</td><td>Fecha estimada de entrega</td></tr>
+            <tr><td><code>Descuento</code></td><td>DECIMAL(12,2)</td><td class="no">NO</td><td>DEFAULT 0. Descuento aplicado al total</td></tr>
+            <tr><td><code>TipoPago</code></td><td>NVARCHAR(20)</td><td class="no">NO</td><td><code>Contado</code> | <code>Cuotas</code> | <code>AbonoMasCuotas</code></td></tr>
+            <tr><td><code>MontoAbono</code></td><td>DECIMAL(12,2)</td><td class="opt">SÍ</td><td>Solo si <code>TipoPago = 'AbonoMasCuotas'</code></td></tr>
+            <tr><td><code>NumeroCuotas</code></td><td>INT</td><td class="opt">SÍ</td><td>Solo si <code>TipoPago ∈ {Cuotas, AbonoMasCuotas}</code>. Mínimo 2</td></tr>
+            <tr><td><code>Estado</code></td><td>NVARCHAR(20)</td><td class="no">NO</td><td><code>Pendiente</code> | <code>EnProceso</code> | <code>Lista</code> | <code>Entregada</code> | <code>Cancelada</code></td></tr>
+            <tr><td><code>Observaciones</code></td><td>NVARCHAR(1000)</td><td class="opt">SÍ</td><td></td></tr>
+            <tr><td>Auditoría estándar</td><td colspan="3">CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7.3 Máquina de estados OT</h3>
+      <div class="flow">  <span style="color:#fde68a">[ Pendiente ]</span> ──► <span style="color:#7dd3fc">[ EnProceso ]</span> ──► <span style="color:#86efac">[ Lista ]</span> ──► <span style="color:#a5f3fc">[ Entregada ]</span>
+       │                   │
+       └──────────────────►└──► <span style="color:#fca5a5">[ Cancelada ]</span>
+
+  Solo se puede cancelar desde Pendiente o EnProceso.</div>
+    </section>
+
+    <!-- ── 8. Líneas OT ────────────────────────────────────────────── -->
+    <section id="ot-lineas">
+      <h2><span class="num">8</span>Líneas de Orden de Trabajo</h2>
+      <p>Cada línea representa un producto (marco, lente, accesorio) incluido en la OT. Incluida en el mismo script <code>025_OPT_OrdenDeTrabajo.sql</code>.</p>
+
+      <h3>8.1 Reglas de negocio</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-LN-01</span>Mínimo una línea para confirmar la OT.</li>
+        <li><span class="rn">RN-LN-02</span><code>VarianteId</code> es opcional (null para ítems manuales sin variante en catálogo).</li>
+        <li><span class="rn">RN-LN-03</span><code>Descripcion</code> se auto-completa al seleccionar variante, pero es editable.</li>
+        <li><span class="rn">RN-LN-04</span><code>Cantidad</code> ≥ 1.</li>
+        <li><span class="rn">RN-LN-05</span>El campo <code>Orden</code> controla el orden de visualización en pantalla.</li>
+      </ul>
+
+      <h3>8.2 Tabla <code>OPT_OTLinea</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>OTLineaId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK — <code>NEWSEQUENTIALID()</code></td></tr>
+            <tr><td><code>OTId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_OrdenDeTrabajo</code></td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>Para query filters EF Core</td></tr>
+            <tr><td><code>VarianteId</code></td><td>UNIQUEIDENTIFIER</td><td class="opt">SÍ</td><td>FK → <code>OPT_ProductoVariante</code>. <code>NULL</code> si ítem manual</td></tr>
+            <tr><td><code>Descripcion</code></td><td>NVARCHAR(300)</td><td class="no">NO</td><td>Auto-populated desde variante, editable manualmente</td></tr>
+            <tr><td><code>Cantidad</code></td><td>INT</td><td class="no">NO</td><td>≥ 1</td></tr>
+            <tr><td><code>PrecioUnitario</code></td><td>DECIMAL(12,2)</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>Orden</code></td><td>INT</td><td class="no">NO</td><td>Orden de visualización en la OT</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>Fórmula total OT</h4>
+        <div style="font-family:var(--mono);font-size:0.9rem;color:var(--indigo);margin-top:8px;">
+          Total = SUM(Linea.Cantidad × Linea.PrecioUnitario) − OT.Descuento
+        </div>
+        <p style="margin-top:8px;font-size:0.82rem;color:var(--gray-500);">El total se calcula en la capa de aplicación. No se persiste como columna en la base de datos.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ETAPA 3 ═══════════════ -->
+    <div class="callout callout-green" style="margin-bottom:0;">
+      <span class="icon">🟢</span>
+      <div><strong>ETAPA 3 — Pago y Cuotas</strong><br>
+      Depende de Etapa 2 (OT debe existir). Cierra el flujo comercial.</div>
+    </div>
+
+    <!-- ── 9. Tipos de Pago ────────────────────────────────────────── -->
+    <section id="pago">
+      <h2><span class="num">9</span>Tipos de Pago de OT</h2>
+      <p><strong>Script:</strong> <code>026_OPT_Pago.sql</code></p>
+
+      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        <div class="pago-card">
+          <h4><span style="font-size:1.2rem;">💵</span> Contado</h4>
+          <p>Pago único por el total neto. Se registra en <code>OPT_Pago</code> al momento de crear la OT.</p>
+          <div class="formula">Monto = Total − Descuento</div>
+          <div style="margin-top:10px;">
+            <span class="badge badge-blue">Efectivo</span>
+            <span class="badge badge-blue">Débito</span>
+            <span class="badge badge-blue">Crédito</span>
+            <span class="badge badge-blue">Cheque</span>
+            <span class="badge badge-blue">Transferencia</span>
+          </div>
+        </div>
+        <div class="pago-card">
+          <h4><span style="font-size:1.2rem;">📅</span> Cuotas</h4>
+          <p>N cuotas iguales a 30 días cada una, cobradas por el Cliente Empresa en liquidación de sueldo.</p>
+          <div class="formula">Cuota = (Total − Descuento) / N</div>
+          <div style="margin-top:10px;font-size:0.78rem;color:var(--gray-500);">Las cuotas se generan en estado <code>Pendiente</code>. El cobro se registra via import Excel (Etapa 4).</div>
+        </div>
+        <div class="pago-card">
+          <h4><span style="font-size:1.2rem;">💳</span> Abono + Cuotas</h4>
+          <p>Pago inicial registrado en <code>OPT_Pago</code>. El saldo se divide en N cuotas.</p>
+          <div class="formula">Cuota = (Total − Descuento − Abono) / N</div>
+          <div style="margin-top:10px;font-size:0.78rem;color:var(--gray-500);">El abono tiene su propia <code>FormaPagoId</code>.</div>
+        </div>
+      </div>
+
+      <h3>9.1 Reglas de negocio — Pago</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-PG-01</span><code>Contado</code>: genera exactamente un registro en <code>OPT_Pago</code> al confirmar la OT.</li>
+        <li><span class="rn">RN-PG-02</span><code>AbonoMasCuotas</code>: genera un <code>OPT_Pago</code> (el abono) + N registros en <code>OPT_Cuota</code>.</li>
+        <li><span class="rn">RN-PG-03</span>El abono debe ser menor al total neto de la OT (Total − Descuento).</li>
+        <li><span class="rn">RN-PG-04</span>La <code>FormaPagoId</code> del abono o pago contado es obligatoria.</li>
+      </ul>
+
+      <h3>9.2 Tabla <code>OPT_Pago</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>PagoId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK</td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>idSucursal</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>OTId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_OrdenDeTrabajo</code></td></tr>
+            <tr><td><code>FormaPagoId</code></td><td>INT</td><td class="no">NO</td><td>FK → <code>OPT_FormaPago</code></td></tr>
+            <tr><td><code>Monto</code></td><td>DECIMAL(12,2)</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>FechaPago</code></td><td>DATETIME2(0)</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>Comprobante</code></td><td>NVARCHAR(100)</td><td class="opt">SÍ</td><td>N° boleta, cheque, transferencia, etc.</td></tr>
+            <tr><td><code>Observaciones</code></td><td>NVARCHAR(500)</td><td class="opt">SÍ</td><td></td></tr>
+            <tr><td>Auditoría estándar</td><td colspan="3">CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 10. Cuotas ──────────────────────────────────────────────── -->
+    <section id="cuotas">
+      <h2><span class="num">10</span>Cuotas</h2>
+      <p><strong>Script:</strong> <code>027_OPT_Cuota.sql</code></p>
+
+      <h3>10.1 Reglas de negocio</h3>
+      <ul class="rules">
+        <li><span class="rn">RN-CU-01</span><code>Cuotas</code>: monto por cuota = (Total − Descuento) / NumeroCuotas.</li>
+        <li><span class="rn">RN-CU-02</span><code>AbonoMasCuotas</code>: monto por cuota = (Total − Descuento − MontoAbono) / NumeroCuotas.</li>
+        <li><span class="rn">RN-CU-03</span>Las cuotas se generan automáticamente al confirmar la OT. Fecha cuota N = FechaOT + (N × 30 días).</li>
+        <li><span class="rn">RN-CU-04</span>El pago de cuotas lo gestiona el <strong>Cliente Empresa</strong> por descuento en liquidación de sueldo.</li>
+        <li><span class="rn">RN-CU-05</span>El Cliente Empresa envía un Excel con los pagos realizados. La óptica carga ese Excel para marcar cuotas como <code>Pagada</code> — <strong>funcionalidad Etapa 4 (futura)</strong>.</li>
+        <li><span class="rn">RN-CU-06</span>En esta versión las cuotas se crean en estado <code>Pendiente</code> y no se registra cobro individual.</li>
+        <li><span class="rn">RN-CU-07</span><code>NumeroCuotas</code> ≥ 2.</li>
+      </ul>
+
+      <div class="callout callout-amber">
+        <span class="icon">⚠️</span>
+        <div><strong>Diseño para Etapa 4:</strong> La tabla <code>OPT_Cuota</code> incluye los campos <code>FechaPago</code>, <code>FormaPagoId</code> y <code>Estado</code> para soportar el import Excel en una etapa futura, aunque no se utilicen en Etapa 3.</div>
+      </div>
+
+      <h3>10.2 Tabla <code>OPT_Cuota</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo SQL</th><th>Nullable</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>CuotaId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>PK</td></tr>
+            <tr><td><code>TenantId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>idSucursal</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>OTId</code></td><td>UNIQUEIDENTIFIER</td><td class="no">NO</td><td>FK → <code>OPT_OrdenDeTrabajo</code></td></tr>
+            <tr><td><code>Numero</code></td><td>INT</td><td class="no">NO</td><td>1 .. NumeroCuotas</td></tr>
+            <tr><td><code>Monto</code></td><td>DECIMAL(12,2)</td><td class="no">NO</td><td></td></tr>
+            <tr><td><code>FechaVencimiento</code></td><td>DATE</td><td class="no">NO</td><td>FechaOT + (Numero × 30 días)</td></tr>
+            <tr><td><code>FechaPago</code></td><td>DATE</td><td class="opt">SÍ</td><td><code>NULL</code> = pendiente. Futuro: llenado por import Excel</td></tr>
+            <tr><td><code>FormaPagoId</code></td><td>INT</td><td class="opt">SÍ</td><td>FK → <code>OPT_FormaPago</code>. Futuro: registrado al pagar</td></tr>
+            <tr><td><code>Comprobante</code></td><td>NVARCHAR(100)</td><td class="opt">SÍ</td><td>Futuro: referencia del pago del Excel</td></tr>
+            <tr><td><code>Estado</code></td><td>NVARCHAR(20)</td><td class="no">NO</td><td><code>Pendiente</code> | <code>Pagada</code> | <code>Vencida</code> — DEFAULT <code>'Pendiente'</code></td></tr>
+            <tr><td>Auditoría estándar</td><td colspan="3">CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 11. Alteraciones ────────────────────────────────────────── -->
+    <section id="alteraciones">
+      <h2><span class="num">11</span>Modificaciones a tablas existentes</h2>
+      <p><strong>Script:</strong> <code>024_OPT_Alteraciones.sql</code></p>
+
+      <div class="callout callout-amber">
+        <span class="icon">⚠️</span>
+        <div>Script idempotente: usa <code>IF COL_LENGTH('tabla','columna') IS NULL</code> para no fallar en re-ejecuciones.</div>
+      </div>
+
+      <h3><code>OPT_RecetaCristales</code> — 2 columnas nuevas</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Columna nueva</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>AtencionId</code></td><td>UNIQUEIDENTIFIER NULL</td><td>—</td><td>FK → <code>OPT_Atencion</code>. <code>NULL</code> si receta de tercero o preexistente</td></tr>
+            <tr><td><code>Fuente</code></td><td>NVARCHAR(20) NOT NULL</td><td><code>'Consulta'</code></td><td><code>'Consulta'</code> — creada en el sistema | <code>'Tercero'</code> — prescripción externa ingresada en OT</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><code>OPT_Anamnesis</code> — 1 columna nueva</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Columna nueva</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><code>AtencionId</code></td><td>UNIQUEIDENTIFIER NULL</td><td>—</td><td>FK → <code>OPT_Atencion</code>. Saber en qué visita se generó la anamnesis</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 12. Scripts SQL ─────────────────────────────────────────── -->
+    <section id="scripts">
+      <h2><span class="num">12</span>Resumen de Scripts SQL</h2>
+
+      <div style="margin-top:10px;">
+        <div class="script-row">
+          <div>
+            <div class="script-name">021_OPT_FormaPago.sql <span class="badge badge-green" style="vertical-align:middle;">✅ ejecutado</span></div>
+            <div class="script-dep">Depende de: —</div>
+          </div>
+          <div class="script-desc">Catálogo de formas de pago (INT PK). Dato inicial: 5 formas de pago.</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">022_OPT_Atencion.sql <span class="badge badge-green" style="vertical-align:middle;">✅ ejecutado</span></div>
+            <div class="script-dep">Depende de: 005 (Cliente), 008 (Usuario), 014 (Agenda)</div>
+          </div>
+          <div class="script-desc">Tabla <code>OPT_Atencion</code> con índices. Núcleo clínico del sistema.</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">023_OPT_CobroServicio.sql <span class="badge badge-green" style="vertical-align:middle;">✅ ejecutado</span></div>
+            <div class="script-dep">Depende de: 021, 022</div>
+          </div>
+          <div class="script-desc">Tabla <code>OPT_CobroServicio</code>. Registra cobro de atenciones sin OT.</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">024_OPT_Alteraciones.sql <span class="badge badge-green" style="vertical-align:middle;">✅ ejecutado</span></div>
+            <div class="script-dep">Depende de: 022 (OPT_Atencion debe existir)</div>
+          </div>
+          <div class="script-desc">ALTER TABLE sobre <code>OPT_RecetaCristales</code> (+AtencionId, +Fuente) y <code>OPT_Anamnesis</code> (+AtencionId).</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">025_OPT_OrdenDeTrabajo.sql</div>
+            <div class="script-dep">Depende de: 021, 022, 017 (ProductoVariante)</div>
+          </div>
+          <div class="script-desc">Tablas <code>OPT_OrdenDeTrabajo</code> y <code>OPT_OTLinea</code>. Incluye FK dual a OPT_Cliente (persona y empresa).</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">026_OPT_Pago.sql</div>
+            <div class="script-dep">Depende de: 021, 025</div>
+          </div>
+          <div class="script-desc">Tabla <code>OPT_Pago</code> para pagos contado y abonos.</div>
+        </div>
+        <div class="script-row">
+          <div>
+            <div class="script-name">027_OPT_Cuota.sql</div>
+            <div class="script-dep">Depende de: 021, 025</div>
+          </div>
+          <div class="script-desc">Tabla <code>OPT_Cuota</code> para planes de pago en cuotas. Preparada para import Excel (Etapa 4).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 13. Backend ─────────────────────────────────────────────── -->
+    <section id="backend">
+      <h2><span class="num">13</span>Backend — Capas por módulo</h2>
+
+      <h3>Etapa 1 <span class="badge badge-green">✅ Implementada</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Capa</th><th>Artefactos</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Domain</strong></td>
+              <td><code>FormaPago</code>, <code>Atencion</code>, <code>CobroServicio</code></td>
+            </tr>
+            <tr>
+              <td><strong>Application</strong></td>
+              <td>
+                Interfaces: <code>IFormaPagoRepository</code>, <code>IAtencionRepository</code>, <code>ICobroServicioRepository</code><br>
+                Handlers: <code>CrearAtencion</code>, <code>GetAtenciones</code>, <code>GetAtencionById</code>, <code>TerminarAtencion</code>, <code>DerivarAOT</code>, <code>RegistrarCobroServicio</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Infrastructure</strong></td>
+              <td>Config EF Core para las 3 entidades; <code>HasQueryFilter</code> para <code>IsDeleted</code> + <code>TenantId</code></td>
+            </tr>
+            <tr>
+              <td><strong>API</strong></td>
+              <td>
+                <code>GET/POST /api/atenciones</code><br>
+                <code>GET /api/atenciones/{id}</code><br>
+                <code>PUT /api/atenciones/{id}/terminar</code><br>
+                <code>PUT /api/atenciones/{id}/derivar-ot</code><br>
+                <code>POST /api/atenciones/{id}/cobro-servicio</code><br>
+                <code>GET /api/forma-pagos</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Etapa 2</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Capa</th><th>Artefactos</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Domain</strong></td>
+              <td><code>OrdenDeTrabajo</code>, <code>OTLinea</code></td>
+            </tr>
+            <tr>
+              <td><strong>Application</strong></td>
+              <td>
+                Interfaz: <code>IOrdenDeTrabajoRepository</code><br>
+                Handlers: <code>CrearOT</code>, <code>GetOTs</code>, <code>GetOTById</code>, <code>ActualizarLineasOT</code>, <code>CambiarEstadoOT</code>, <code>CrearRecetaTerceroEnOT</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Infrastructure</strong></td>
+              <td>Config EF Core (cabecera + líneas, 2 FKs a <code>OPT_Cliente</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>API</strong></td>
+              <td>
+                <code>GET/POST /api/ordenes-trabajo</code><br>
+                <code>GET /api/ordenes-trabajo/{id}</code><br>
+                <code>PUT /api/ordenes-trabajo/{id}/estado</code><br>
+                <code>PUT /api/ordenes-trabajo/{id}/lineas</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Etapa 3</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Capa</th><th>Artefactos</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Domain</strong></td>
+              <td><code>Pago</code>, <code>Cuota</code></td>
+            </tr>
+            <tr>
+              <td><strong>Application</strong></td>
+              <td>
+                Interfaces: <code>IPagoRepository</code>, <code>ICuotaRepository</code><br>
+                Handlers: <code>RegistrarPagoContado</code>, <code>RegistrarAbono</code>, <code>GenerarCuotas</code>, <code>GetCuotasByOT</code>, <code>GetSaldoOT</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Infrastructure</strong></td>
+              <td>Config EF Core para <code>Pago</code> y <code>Cuota</code></td>
+            </tr>
+            <tr>
+              <td><strong>API</strong></td>
+              <td>
+                <code>POST /api/ordenes-trabajo/{id}/pago</code><br>
+                <code>POST /api/ordenes-trabajo/{id}/cuotas/generar</code><br>
+                <code>GET /api/ordenes-trabajo/{id}/cuotas</code><br>
+                <code>GET /api/ordenes-trabajo/{id}/saldo</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 14. Frontend ────────────────────────────────────────────── -->
+    <section id="frontend">
+      <h2><span class="num">14</span>Frontend — Rutas y componentes</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ruta</th><th>Componente</th><th>Etapa</th></tr></thead>
+          <tbody>
+            <tr><td><code>/atenciones</code></td><td><code>AtencionesListComponent</code> — 2 tabs: Sala espera / Historial</td><td><span class="badge badge-green">✅ 1</span></td></tr>
+            <tr><td><code>/atenciones/iniciar?agendaId=</code></td><td><code>AtencionIniciarComponent</code> — wizard 3 pasos: Atención → Anamnesis → Receta</td><td><span class="badge badge-green">✅ 1</span></td></tr>
+            <tr><td><code>/atenciones/:id</code></td><td><code>AtencionDetailComponent</code> — 4 tabs: Información, Anamnesis, Receta Cristales, Cobro (lazy load)</td><td><span class="badge badge-green">✅ 1</span></td></tr>
+            <tr><td><code>/ordenes-trabajo</code></td><td><code>OTListComponent</code></td><td><span class="badge badge-purple">2</span></td></tr>
+            <tr><td><code>/ordenes-trabajo/nueva</code></td><td><code>OTFormComponent</code></td><td><span class="badge badge-purple">2</span></td></tr>
+            <tr><td><code>/ordenes-trabajo/:id</code></td><td><code>OTDetailComponent</code></td><td><span class="badge badge-green">2 + 3</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Flujos de navegación</h3>
+      <div class="flow"><span style="color:#7dd3fc">Agenda (calendario)</span>
+  └─► [Atender] → /atenciones/iniciar?agendaId=xxx  (wizard 3 pasos)
+                        │
+            [Cobrar Servicio]        [Derivar a OT]
+                  │                       │
+  /atenciones/:id → tab Cobro    /ordenes-trabajo/nueva?atencionId=xxx
+
+<span style="color:#a5f3fc">Menú principal (sidebar)</span>
+  ├─► [Atenciones] → /atenciones           (lista sala espera + historial)
+  └─► [Nueva OT]   → /ordenes-trabajo/nueva  (OT directa sin atención)</div>
+
+      <h3>Secciones del formulario OT</h3>
+      <ul class="rules">
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Cabecera</span>Número OT (ingreso manual), fecha, sucursal, usuario responsable, observaciones</li>
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Clientes</span>Buscador autocomplete cliente persona (requerido) + buscador cliente empresa (opcional)</li>
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Receta</span>Selector de receta existente del cliente <strong>o</strong> formulario inline "Receta de tercero" (<code>Fuente='Tercero'</code>)</li>
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Líneas</span>Buscador de variante/producto → tabla editable con descripción, cantidad, precio unitario, subtotal</li>
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Totales</span>Subtotal auto-calculado, campo descuento, total neto</li>
+        <li><span class="rn" style="color:var(--indigo);min-width:120px;">Pago</span>Selector TipoPago → formulario dinámico según tipo (contado / cuotas / abono+cuotas)</li>
+      </ul>
+
+      <h3>Panel de pago dinámico (dentro de OT)</h3>
+      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="card" style="margin:0;">
+          <h4 style="text-transform:none;letter-spacing:0;margin:0 0 8px;">Contado</h4>
+          <p style="font-size:0.82rem;">Selector FormaPago + campo comprobante + botón confirmar</p>
+        </div>
+        <div class="card" style="margin:0;">
+          <h4 style="text-transform:none;letter-spacing:0;margin:0 0 8px;">Cuotas</h4>
+          <p style="font-size:0.82rem;">Input N cuotas → tabla generada con fecha y monto por cuota (readonly)</p>
+        </div>
+        <div class="card" style="margin:0;">
+          <h4 style="text-transform:none;letter-spacing:0;margin:0 0 8px;">Abono + Cuotas</h4>
+          <p style="font-size:0.82rem;">Input monto abono + FormaPago abono + N cuotas → tabla de cuotas generada sobre el saldo</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 15. Fuera de alcance ────────────────────────────────────── -->
+    <section id="fuera-alcance">
+      <h2><span class="num">15</span>Fuera de alcance (este documento)</h2>
+
+      <div class="callout callout-red">
+        <span class="icon">🚫</span>
+        <div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+            <li>📂 <strong>Import Excel de cuotas</strong> — marcado como Etapa 4 futura</li>
+            <li>🧾 <strong>Facturación electrónica / DTE</strong></li>
+            <li>📊 <strong>Reportes de cuentas por cobrar y deuda</strong></li>
+            <li>↩️ <strong>Notas de crédito / devoluciones</strong></li>
+            <li>🔧 <strong>Gestión de garantías de productos</strong></li>
+            <li>📱 <strong>Notificaciones al cliente</strong> (WhatsApp / email)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div style="text-align:center;padding:32px 0 16px;color:var(--gray-400);font-size:0.8rem;border-top:1px solid var(--gray-200);margin-top:20px;">
+      OPT SaaS — Documento de Requerimientos Flujo Clínico-Comercial v1.0 — Mayo 2026
+    </div>
+
+  </main>
+</div><!-- end layout right -->
+</div><!-- end layout -->
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

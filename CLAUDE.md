@@ -40,7 +40,33 @@ ng generate component features/<modulo>/<nombre> --standalone
 
 ### Base de datos
 
-Scripts SQL en `src/basedatos/` numerados `000–020`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `021_`**.
+Scripts SQL en `src/basedatos/` numerados `000–024`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `025_`**.
+
+| Script | Crea |
+|--------|------|
+| `000` | Base de datos `dbOPT` |
+| `001` | `OPT_Tenant` |
+| `002` | `OPT_Region` + `OPT_Comuna` |
+| `003` | `OPT_Sucursal` |
+| `004` | `OPT_Usuario` |
+| `005` | `OPT_Cliente` |
+| `006` | `OPT_Contacto` |
+| `007` | `OPT_Anamnesis` |
+| `008–010` | Índices / datos iniciales / ajustes |
+| `011` | `OPT_RecetaCristales` |
+| `012` | `OPT_UsuarioSucursal` (M:N) |
+| `013` | `OPT_Rol` (catálogo compartido, INT PK) |
+| `014` | `OPT_Agenda` |
+| `015` | `OPT_ProductoCategoria` |
+| `016` | `OPT_Producto` |
+| `017` | `OPT_ProductoVariante` |
+| `018` | `OPT_Stock` + `OPT_MovimientoStock` |
+| `019` | `OPT_PrecioProducto` |
+| `020` | `OPT_DocumentoStock` + `OPT_DocumentoStockLinea` |
+| `021` | `OPT_FormaPago` (catálogo INT PK, 5 filas) |
+| `022` | `OPT_Atencion` |
+| `023` | `OPT_CobroServicio` |
+| `024` | ALTER a `OPT_RecetaCristales` (+`AtencionId`, +`Fuente`) y `OPT_Anamnesis` (+`AtencionId`) |
 
 ---
 
@@ -71,10 +97,27 @@ Organización por features, con lazy loading completo. Sin NgModules.
 
 ```
 core/           # services, guards, interceptors, models, validators
-features/       # auth, clientes, anamnesis, productos, sucursales, usuarios (cada uno en su carpeta)
+features/       # auth, clientes, anamnesis, productos, stock, sucursales, usuarios (cada uno en su carpeta)
 layout/         # main-layout shell (sidebar + router-outlet)
 app.routes.ts   # rutas raíz con lazy loading
 ```
+
+**Rutas registradas (todas bajo `authGuard`, lazy-loaded):**
+
+| Ruta | Componente | Módulo |
+|------|-----------|--------|
+| `/login` | `LoginComponent` | — (pública) |
+| `/clientes` | `ClientesListComponent` | Clientes |
+| `/clientes/:id` | `ClienteDetailComponent` | Clientes |
+| `/clientes/:id/anamnesis` | `AnamnesisListComponent` | Anamnesis |
+| `/sucursales` | `SucursalesListComponent` | Sucursales |
+| `/usuarios` | `UsuariosListComponent` | Usuarios |
+| `/productos` | `ProductosListComponent` | Productos |
+| `/stock` | `StockListComponent` | Stock |
+| `/agenda` | `AgendaCalendarComponent` | Agenda (usa `X-Sucursal-Id`) |
+| `/atenciones` | `AtencionesListComponent` | Atención (2 tabs: Sala espera/Historial) |
+| `/atenciones/iniciar?agendaId=` | `AtencionIniciarComponent` | Wizard 3 pasos (requiere agendaId) |
+| `/atenciones/:id` | `AtencionDetailComponent` | Detalle (4 tabs, lazy load Anamnesis/Receta) |
 
 Las llamadas HTTP siempre van a través de servicios en `core/services/`, nunca directamente desde componentes. El JWT se inyecta automáticamente via `core/interceptors/auth.interceptor.ts`.
 
@@ -194,8 +237,11 @@ return new PagedResult<MiDto>
 return new PagedResult<MiDto>(Items: ..., TotalCount: ...);
 ```
 
-### DateOnly para campos de fecha sin hora (SQL DATE)
-Usar `DateOnly` en C# para columnas `DATE` de SQL Server (sin componente horario). System.Text.Json serializa/deserializa `DateOnly` automáticamente desde .NET 7+ como `"2025-05-24"`.
+### DateOnly vs DateTime para fechas (SQL DATE vs DATETIME2)
+- `DATE` → `DateOnly` en C# / `string` ISO date (`"2025-05-24"`) en TypeScript
+- `DATETIME2` → `DateTime` en C# / `string` ISO local datetime (`"2026-05-26T09:00:00"`) en TypeScript
+
+System.Text.Json serializa ambos automáticamente. **Nunca usar `DateTime` para columnas `DATE`** — pierde la semántica y rompe la serialización.
 
 ### Conflicto namespace/clase en Application (gotcha conocido)
 Cuando el namespace del módulo coincide con el nombre de la entidad (ej. `OPT.Application.RecetaCristales` + clase `RecetaCristales`, o `OPT.Application.Stock` + clase `Stock`), usar alias en los archivos afectados. El error del compilador es: `'X' es espacio de nombres pero se usa como tipo`.
@@ -206,6 +252,15 @@ using StockEntity = OPT.Domain.Entities.Stock;
 ```
 
 Afecta a todos los archivos en `OPT.Application.<Módulo>/` que referencien la clase del mismo nombre, y también a `OPT.Application/Interfaces/I<Módulo>Repository.cs`.
+
+### Transiciones de estado vía PATCH
+Para entidades con máquina de estados (ej. Agenda), exponer un endpoint dedicado en vez de incluir el campo estado en el PUT:
+
+```
+PATCH /api/agenda/{id}/estado  →  body: { "estado": "Confirmada" }
+```
+
+El backend valida la transición permitida; el PUT normal actualiza los demás campos sin tocar el estado.
 
 ### Checklist para nuevo módulo
 **Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`021_...`)
@@ -225,8 +280,10 @@ Afecta a todos los archivos en `OPT.Application.<Módulo>/` que referencien la c
 | RecetaCristales | ✅ | ⏳ Pendiente |
 | Sucursales | ✅ | ✅ (switcher en sidebar vía `SucursalContextService`) |
 | Usuarios | ✅ | ✅ |
-| Roles (catálogo) | ✅ (`013_OPT_Rol.sql` creado, `GET /api/roles` ⏳) | ⏳ Pendiente (combobox en usuario-form) |
-| Agenda | ✅ (`014_OPT_Agenda.sql` + API CRUD + `X-Sucursal-Id` header) | ⏳ Pendiente |
+| Roles (catálogo) | ✅ (`013_OPT_Rol.sql` creado) / `GET /api/roles` ⏳ | ✅ `rol.service.ts` + `rol.model.ts` creados (combobox en `usuario-form` aún hardcodeado — espera endpoint) |
+| Agenda | ✅ (`014_OPT_Agenda.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ Calendario semanal en `/agenda`. Botón "Atender" en citas Confirmadas → navega a `/atenciones/iniciar?agendaId=xxx` |
+| FormaPago (catálogo) | ✅ (`021_OPT_FormaPago.sql` + `GET /api/forma-pagos`) | ✅ `forma-pago.service.ts` con `shareReplay(1)` |
+| Atención + CobroServicio | ✅ (`022–024` scripts; `POST /api/atenciones/iniciar` crea Atención+Anamnesis+RecetaCristales atómicamente) | ✅ Lista `/atenciones` (2 tabs: Sala de espera/Historial), wizard `/atenciones/iniciar` (3 pasos: Atención→Anamnesis→RecetaCristales), detalle `/atenciones/:id` (4 tabs: Información, Anamnesis, Receta Cristales, Cobro con lazy load) |
 | Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ⏳ En progreso (componentes en `features/productos/`) |
 | Stock / Inventario | ✅ (`018_OPT_Stock.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ (3 tabs: Stock actual, Entradas, Historial) |
 | Precios | ✅ (`019_OPT_Precio.sql` — historial de costo, actualizado al confirmar documento de entrada) | ⏳ Sin pantalla dedicada (solo se actualiza via Entradas) |
@@ -282,5 +339,6 @@ El secreto JWT y demás configuración están en `src/backend/OPT.API/appsetting
 |-----------|-----------|
 | `docs/api/frontend-api-contracts.md` | DTOs y firmas de servicios Angular |
 | `docs/api/README.md` | Resumen de todos los endpoints |
+| `docs/requerimientos/flujo-clinico-comercial.html` | Flujo clínico-comercial de referencia (legacy) |
 | `.agents/progress.md` | Historial de sesiones y próximos pasos |
 | `.agents/decisions/` | ADRs (middleware, schema, migración GUID) |

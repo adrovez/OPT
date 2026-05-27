@@ -1,0 +1,19 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { RecetaCristalesDto, UpdateRecetaCristalesRequest } from '../models/receta-cristales.model';
+import { environment } from '../../../environments/environment';
+
+@Injectable({ providedIn: 'root' })
+export class RecetaCristalesService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/RecetaCristales`;
+
+  getById(id: string): Observable<RecetaCristalesDto> {
+    return this.http.get<RecetaCristalesDto>(`${this.apiUrl}/${id}`);
+  }
+
+  update(id: string, request: UpdateRecetaCristalesRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, request);
+  }
+}

@@ -23,8 +23,11 @@ public class Anamnesis
     /// <summary>Fecha en que se registró la anamnesis (UTC).</summary>
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
+    public Guid? AtencionId { get; set; }
+
     // ── Navegación ────────────────────────────────────────────────────────
     public Cliente Cliente { get; set; } = null!;
+    public Atencion? Atencion { get; set; }
 
     // ── Auditoría ─────────────────────────────────────────────────────────
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

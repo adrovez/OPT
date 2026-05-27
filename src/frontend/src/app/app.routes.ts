@@ -67,6 +67,41 @@ export const routes: Routes = [
             (m) => m.StockListComponent,
           ),
       },
+      {
+        path: 'agenda',
+        loadComponent: () =>
+          import('./features/agenda/agenda-calendar/agenda-calendar.component').then(
+            (m) => m.AgendaCalendarComponent,
+          ),
+      },
+      {
+        path: 'atenciones',
+        loadComponent: () =>
+          import('./features/atencion/atenciones-list/atenciones-list.component').then(
+            (m) => m.AtencionesListComponent,
+          ),
+      },
+      {
+        path: 'atenciones/iniciar',
+        loadComponent: () =>
+          import('./features/atencion/atencion-iniciar/atencion-iniciar.component').then(
+            (m) => m.AtencionIniciarComponent,
+          ),
+      },
+      {
+        path: 'atenciones/nueva',
+        loadComponent: () =>
+          import('./features/atencion/atencion-form/atencion-form.component').then(
+            (m) => m.AtencionFormComponent,
+          ),
+      },
+      {
+        path: 'atenciones/:id',
+        loadComponent: () =>
+          import('./features/atencion/atencion-detail/atencion-detail.component').then(
+            (m) => m.AtencionDetailComponent,
+          ),
+      },
     ],
   },
   {
