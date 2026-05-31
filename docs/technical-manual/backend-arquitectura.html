@@ -193,6 +193,17 @@
           <tr><td><code>Sucursal</code></td><td>SucursalId <small>(Guid)</small></td><td>✓</td><td>Sucursal de la óptica. Campo <code>Matriz</code> (bool) para sede principal.</td></tr>
           <tr><td><code>Usuario</code></td><td>UsuarioId <small>(Guid)</small></td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña. Navigation: <code>ICollection&lt;UsuarioSucursal&gt;</code></td></tr>
           <tr><td><code>UsuarioSucursal</code></td><td>PK compuesta <small>(UsuarioId, SucursalId)</small></td><td>—</td><td>Pivote M:N entre Usuario y Sucursal. Campos: AssignedAt, AssignedBy.</td></tr>
+          <tr><td><code>Agenda</code></td><td>AgendaId <small>(Guid)</small></td><td>✓</td><td>Cita de cliente. Scoped a SucursalId. Estados: Pendiente/Confirmada/Atendida/Cancelada/NoShow.</td></tr>
+          <tr><td><code>ProductoCategoria</code></td><td>ProductoCategoriaId <small>(Guid)</small></td><td>✓</td><td>Catálogo de categorías de productos.</td></tr>
+          <tr><td><code>Producto</code></td><td>ProductoId <small>(Guid)</small></td><td>✓</td><td>Catálogo maestro. TipoProducto: Almacenable/Consumible/Servicio. Sin precios ni stock.</td></tr>
+          <tr><td><code>ProductoVariante</code></td><td>ProductoVarianteId <small>(Guid)</small></td><td>✓</td><td>SKU/variante de un producto. CodigoBarras único. FK cascade a Producto.</td></tr>
+          <tr><td><code>Stock</code></td><td>StockId <small>(Guid)</small></td><td>✓</td><td>Stock por VarianteId + SucursalId.</td></tr>
+          <tr><td><code>MovimientoStock</code></td><td>MovimientoStockId <small>(Guid)</small></td><td>✓</td><td>Historial de movimientos. TipoMovimiento: Entrada/Salida/Ajuste. DocumentoId nullable.</td></tr>
+          <tr><td><code>PrecioProducto</code></td><td>PrecioId <small>(Guid)</small></td><td>✓</td><td>Historial de precios. VigenciaHasta NULL = vigente. Sin IsDeleted.</td></tr>
+          <tr><td><code>DocumentoStock</code></td><td>DocumentoId <small>(Guid)</small></td><td>✓</td><td>Documento de entrada (FacturaCompra/BoletaCompra/OtroIngreso). Estado: Confirmado/Anulado.</td></tr>
+          <tr><td><code>DocumentoStockLinea</code></td><td>LineaId <small>(Guid)</small></td><td>—</td><td>Línea de documento. FK cascade a DocumentoStock.</td></tr>
+          <tr><td><code>Atencion</code></td><td>AtencionId <small>(Guid)</small></td><td>✓</td><td>Atención clínica. Vincula AgendaId (nullable). Estados: EnEspera/EnAtencion/Finalizada.</td></tr>
+          <tr><td><code>CobroServicio</code></td><td>CobroId <small>(Guid)</small></td><td>✓</td><td>Cobro asociado a Atención. FK a FormaPago (int).</td></tr>
           <tr><td><code>Region</code></td><td>IdRegion <small>(int)</small></td><td>—</td><td>Catálogo compartido. Solo lectura.</td></tr>
           <tr><td><code>Comuna</code></td><td>IdComuna <small>(int)</small></td><td>—</td><td>Catálogo compartido. FK a Region.</td></tr>
         </table>
@@ -206,7 +217,7 @@
         <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IAgendaRepository, IProductoRepository, IProductoCategoriaRepository, IProductoVarianteRepository, IStockRepository, IDocumentoStockRepository, IAtencionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
           <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator</td></tr>
           <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers → retornan <code>Guid</code></td></tr>
           <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById (Guid) + handlers</td></tr>
@@ -218,14 +229,20 @@
           <tr><td><code>Sucursales/</code></td><td>CRUD Commands + Queries + Validators (Nombre, Direccion, Telefono, Matriz)</td></tr>
           <tr><td><code>Usuarios/</code></td><td>CRUD Commands + ChangePasswordCommand + AssignSucursalCommand + RemoveSucursalCommand + Queries + Validators (roles: Admin|Operador|Lectura)</td></tr>
           <tr><td><code>Regiones/</code></td><td>GetRegionesWithComunasQuery + RegionWithComunasDto</td></tr>
-          <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt;</td></tr>
+          <tr><td><code>Roles/</code></td><td>GetRolesQuery + RolDto</td></tr>
+          <tr><td><code>Agenda/</code></td><td>CRUD Commands + Queries + CambiarEstadoAgendaCommand</td></tr>
+          <tr><td><code>Productos/</code></td><td>CRUD Commands + Queries (Producto, Variante, Categoria)</td></tr>
+          <tr><td><code>Stock/</code></td><td>GetStockQuery, RegistrarMovimientoCommand (Salida/Ajuste directos)</td></tr>
+          <tr><td><code>DocumentosStock/</code></td><td>CrearYConfirmarDocumentoCommand (atómico: Stock+Precio), AnularDocumentoCommand, GetDocumentosQuery</td></tr>
+          <tr><td><code>Atenciones/</code></td><td>IniciarAtencionCommand (atómico: Atención+Anamnesis+Receta), GetAtencionesQuery, GetAtencionByIdQuery, CambiarEstadoAtencionCommand</td></tr>
+          <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt; — propiedades <code>init</code>, usar object initializer</td></tr>
         </table>
 
         <h3>OPT.Infrastructure</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
           <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted) y <code>HasDefaultValueSql("NEWSEQUENTIALID()")</code></td></tr>
-          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository (CRUD + AssignSucursal/RemoveSucursal), RegionRepository</td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository, RegionRepository, AgendaRepository, ProductoRepository, ProductoCategoriaRepository, ProductoVarianteRepository, StockRepository, DocumentoStockRepository (CrearYConfirmarAsync atómico, AnularAsync compensatorio), AtencionRepository</td></tr>
           <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService (Guid.TryParse), BcryptPasswordHasher</td></tr>
           <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
         </table>
@@ -233,7 +250,7 @@
         <h3>OPT.API</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController (Guid), ContactoController (Guid), AnamnesisController (Guid), RecetaCristalesController (Guid), SucursalController (Guid), UsuarioController (Guid), RegionController</td></tr>
+          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController, ContactoController, AnamnesisController, RecetaCristalesController, SucursalController, UsuarioController, RegionController, RolController, AgendaController (X-Sucursal-Id), ProductoController, ProductoCategoriaController, StockController (X-Sucursal-Id), DocumentosStockController (X-Sucursal-Id), AtencionController, FormaPagoController</td></tr>
           <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
           <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
         </table>
@@ -462,8 +479,8 @@ public class NuevoModuloController(IMediator mediator, ICurrentTenantService ten
 }</pre>
 
         <h3>Paso 5 — Script SQL (si hay nuevas tablas)</h3>
-        <pre>-- src/basedatos/018_OPT_NuevoModulo.sql
--- Próximo número secuencial disponible: 018
+        <pre>-- src/basedatos/025_OPT_NuevoModulo.sql
+-- Próximo número secuencial disponible: 025
 CREATE TABLE [dbo].[OPT_NuevoModulo] (
     [NuevoModuloId] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
     [TenantId]      UNIQUEIDENTIFIER NOT NULL,
@@ -472,41 +489,19 @@ CREATE TABLE [dbo].[OPT_NuevoModulo] (
     CONSTRAINT [PK_OPT_NuevoModulo] PRIMARY KEY CLUSTERED ([NuevoModuloId])
 );</pre>
 
-        <div class="alert alert-blue">
-          <strong>Nota Sucursales:</strong> La tabla <code>OPT_Sucursal</code> ya existía en <code>004_OPT_Sucursal.sql</code>. El módulo backend CRUD fue implementado en Sesión 11 sin necesitar nuevo script SQL.
-        </div>
-        <div class="alert alert-blue">
-          <strong>Nota Usuarios (Sesión 12):</strong> La entidad <code>Usuario</code> tenía solo <code>GetByRutAsync</code>. En Sesión 12 se expandió con CRUD completo + relación M:N a Sucursales. El script <code>012_OPT_UsuarioSucursal.sql</code> crea la tabla pivote. Ver <code>OPT.API/Controllers/UsuarioController.cs</code> para referencia de implementación con asignación de sucursales.
-        </div>
         <div class="alert alert-green">
-          <strong>Frontend Usuarios (Sesión 13):</strong> Módulo Angular completo en <code>features/usuarios/</code>: lista con badges de rol (Admin=violeta, Operador=azul, Lectura=gris) y chips de sucursales, modal crear/editar con gestión de sucursales en tiempo real, modal exclusivo de cambio de contraseña. Rutas lazy en <code>app.routes.ts</code>, link en sidebar.
+          <strong>Módulos implementados (sesiones 11–16):</strong> Todos los módulos backend están completos:
+          Sucursales, Usuarios (M:N), Roles (catálogo), Agenda (PATCH /estado, X-Sucursal-Id),
+          FormaPago (catálogo), Categorías+Productos+Variantes, Stock+MovimientoStock (X-Sucursal-Id),
+          DocumentosStock (crear+confirmar atómico, anular compensatorio), PrecioProducto (historial),
+          Atenciones (POST /iniciar crea Atención+Anamnesis+Receta atómicamente), CobroServicio.
+          Scripts SQL completos: <code>000–024</code>. Próximo: <code>025_</code>.
         </div>
         <div class="alert alert-amber">
-          <strong>Mejora Planeada — Módulo Rol:</strong>
-          <ol style="margin: 8px 0 0 16px; line-height: 1.8;">
-            <li>BD: <code>013_OPT_Rol.sql</code> — tabla catálogo <code>OPT_Rol</code> (<code>RolId INT IDENTITY</code>, <code>Nombre NVARCHAR(50)</code>, sin TenantId). Poblar con Admin, Operador, Lectura.</li>
-            <li>Backend: <code>GET /api/roles</code> — endpoint solo lectura, retorna <code>RolDto[]</code>. Sin CRUD (catálogo gestionado en BD).</li>
-            <li>Frontend: <code>rol.service.ts</code> con <code>shareReplay(1)</code> + <code>rol.model.ts</code> → reemplazar opciones hardcodeadas del <code>&lt;select&gt;</code> de Rol en <code>usuario-form.component.ts</code> por datos dinámicos de la API.</li>
-          </ol>
+          <strong>Regla crítica — ICurrentTenantService:</strong> Solo se usa en controllers y middleware. Los handlers de Application <strong>NO</strong> inyectan ICurrentTenantService. El controller extrae TenantId/SucursalId/UsuarioId/CreatedBy y los pasa en el command/query. Inyectarlo en handlers viola Clean Architecture.
         </div>
-        <div class="alert alert-green">
-          <strong>Sesión 15 — Módulo Productos (catálogo puro):</strong> API CRUD completo implementado.<br>
-          <ul style="margin: 8px 0 0 16px; line-height: 1.8;">
-            <li>Scripts: <code>015_OPT_ProductoCategoria.sql</code>, <code>016_OPT_Producto.sql</code>, <code>017_OPT_ProductoVariante.sql</code></li>
-            <li>Domain: <code>Producto</code>, <code>ProductoCategoria</code>, <code>ProductoVariante</code> — sin <code>PrecioVenta</code>, <code>Costo</code>, <code>CantidadDisponible</code>, <code>StockMinimo</code></li>
-            <li>API: <code>GET|POST /api/productos</code>, <code>GET|PUT|DELETE /api/productos/{id}</code>, variantes anidadas en <code>/api/productos/{id}/variantes</code></li>
-            <li>API: <code>GET|POST|PUT|DELETE /api/categorias-producto</code></li>
-            <li>TipoProducto: <code>CHECK ('Almacenable', 'Consumible', 'Servicio')</code> — los Servicios no admiten variantes</li>
-          </ul>
-          <strong>Decisión arquitectural:</strong> Precios y stock son módulos separados por diseño — ver próximas secciones.
-        </div>
-        <div class="alert alert-cyan">
-          <strong>Módulos Futuros Planificados:</strong>
-          <ul style="margin: 8px 0 0 16px; line-height: 1.8;">
-            <li><strong>Precios</strong> (<code>018_OPT_Precio.sql</code>): <code>PrecioId, ProductoId?, VarianteId?, SucursalId?, PrecioVenta, Costo, VigenciaDesde, VigenciaHasta</code>. Soporta precios por sucursal e historial de cambios.</li>
-            <li><strong>Stock/Inventario</strong> (<code>019_OPT_Stock.sql</code>): <code>StockId, VarianteId, SucursalId, CantidadDisponible, StockMinimo</code> + <code>OPT_MovimientoStock</code>. Siempre scoped a <code>X-Sucursal-Id</code>.</li>
-          </ul>
-          Motivo: los precios varían por sucursal; el stock es siempre por sucursal; los servicios no tienen stock. Separar ahora evita un refactor mayor.
+        <div class="alert alert-blue">
+          <strong>Módulo futuro pendiente:</strong> Salida por documentos (<code>025_</code>) — OrdenTrabajo, Devoluciones, OtroEgreso. Por ahora solo Salida directa desde form por fila.
         </div>
       </section>
 
@@ -523,6 +518,10 @@ CREATE TABLE [dbo].[OPT_NuevoModulo] (
           <tr><td>Lanzar Exception genérica desde handler</td><td>Usar la excepción correcta: KeyNotFoundException, InvalidOperationException, etc.</td></tr>
           <tr><td>Loguear PasswordHash o tokens JWT</td><td>Loguear solo IDs, timestamps y mensajes de error</td></tr>
           <tr><td>Saltar capas (API → Infrastructure directo)</td><td>Respetar el flujo: API → Application → Infrastructure</td></tr>
+          <tr><td>Inyectar ICurrentTenantService en handlers de Application</td><td>El controller extrae TenantId/SucursalId/UsuarioId y los pasa en el command</td></tr>
+          <tr><td>Usar <code>new PagedResult&lt;T&gt;(Items: ...)</code></td><td>Usar object initializer: <code>new PagedResult&lt;T&gt; { Items = ..., TotalCount = n }</code></td></tr>
+          <tr><td>Usar <code>NEWID()</code> como DEFAULT en SQL</td><td>Usar <code>NEWSEQUENTIALID()</code> para evitar fragmentación del índice clustered</td></tr>
+          <tr><td>DateTime para columnas DATE</td><td>Usar DateOnly en C# / string ISO date en TypeScript para columnas SQL DATE</td></tr>
         </table>
       </section>
 

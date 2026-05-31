@@ -120,7 +120,7 @@ function formatDate(d: Date): string {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <p class="text-sm">No hay citas confirmadas para hoy</p>
+              <p class="text-sm">No hay citas ingresadas para hoy</p>
             </div>
           } @else {
             <table class="w-full text-sm">
@@ -295,7 +295,7 @@ export class AtencionesListComponent {
     const today = formatDate(new Date());
     this.loading.set(true);
     this.agendaService.getAll({
-      estado: 'Confirmada',
+      estado: 'Ingresado',
       desde: `${today}T00:00:00`,
       hasta: `${today}T23:59:59`,
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

@@ -21,9 +21,9 @@ public class IniciarAtencionCommandHandler(
             var agenda = await agendaRepo.GetByIdAsync(cmd.AgendaId.Value, cmd.TenantId, ct)
                 ?? throw new KeyNotFoundException($"Cita {cmd.AgendaId} no encontrada.");
 
-            if (agenda.Estado != "Confirmada")
+            if (agenda.Estado != "Ingresado" && agenda.Estado != "Confirmada")
                 throw new InvalidOperationException(
-                    "La cita debe estar en estado 'Confirmada' para iniciar la atención.");
+                    "La cita debe estar en estado 'Ingresado' o 'Confirmada' para iniciar la atención.");
 
             agenda.Estado    = "Atendida";
             agenda.UpdatedAt = DateTime.UtcNow;

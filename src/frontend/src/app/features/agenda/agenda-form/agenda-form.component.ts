@@ -16,23 +16,6 @@ const DURACIONES = [
   { value: 120, label: '2 horas' },
 ];
 
-const ESTADOS: EstadoAgenda[] = ['Pendiente', 'Confirmada', 'Atendida', 'Cancelada', 'NoShow'];
-
-const ESTADO_PILL: Record<EstadoAgenda, string> = {
-  Pendiente:  'bg-blue-50 border border-blue-300 text-blue-700 hover:bg-blue-100',
-  Confirmada: 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100',
-  Atendida:   'bg-gray-100 border border-gray-300 text-gray-600 hover:bg-gray-200',
-  Cancelada:  'bg-red-50 border border-red-300 text-red-600 hover:bg-red-100',
-  NoShow:     'bg-amber-50 border border-amber-300 text-amber-700 hover:bg-amber-100',
-};
-
-const ESTADO_PILL_ACTIVE: Record<EstadoAgenda, string> = {
-  Pendiente:  'bg-blue-600 border border-blue-600 text-white ring-2 ring-blue-500 ring-offset-1',
-  Confirmada: 'bg-green-600 border border-green-600 text-white ring-2 ring-green-500 ring-offset-1',
-  Atendida:   'bg-gray-500 border border-gray-500 text-white ring-2 ring-gray-400 ring-offset-1',
-  Cancelada:  'bg-red-500 border border-red-500 text-white ring-2 ring-red-400 ring-offset-1',
-  NoShow:     'bg-amber-500 border border-amber-500 text-white ring-2 ring-amber-400 ring-offset-1',
-};
 
 @Component({
   selector: 'app-agenda-form',
@@ -76,26 +59,6 @@ const ESTADO_PILL_ACTIVE: Record<EstadoAgenda, string> = {
 
         <!-- Body -->
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-
-          <!-- Estado (solo edición) -->
-          @if (isEditing()) {
-            <div>
-              <p class="text-sm font-medium text-gray-700 mb-2">Estado</p>
-              <div class="flex flex-wrap gap-2">
-                @for (est of estados; track est) {
-                  <button
-                    type="button"
-                    (click)="cambiarEstado(est)"
-                    [disabled]="loading()"
-                    class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all disabled:cursor-not-allowed"
-                    [class]="currentEstado() === est ? estadoPillActive(est) : estadoPill(est)"
-                  >
-                    {{ est }}
-                  </button>
-                }
-              </div>
-            </div>
-          }
 
           <!-- Cliente -->
           <div>
@@ -289,8 +252,20 @@ const ESTADO_PILL_ACTIVE: Record<EstadoAgenda, string> = {
               class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200
                      rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
             >
-              Cancelar
+              Cerrar
             </button>
+            @if (isEditing() && currentEstado() !== 'Cancelada' && currentEstado() !== 'Atendida') {
+              <button
+                type="button"
+                (click)="cancelarCita()"
+                [disabled]="loading()"
+                class="px-4 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-200
+                       rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                       focus:outline-none focus:ring-2 focus:ring-red-300"
+              >
+                Cancelar cita
+              </button>
+            }
             <button
               type="button"
               (click)="onSubmit()"
@@ -326,7 +301,6 @@ export class AgendaFormComponent implements OnInit {
   readonly cancelled = output<void>();
 
   readonly duraciones = DURACIONES;
-  readonly estados = ESTADOS;
 
   // Form state
   readonly clienteSearch = signal('');
@@ -340,7 +314,7 @@ export class AgendaFormComponent implements OnInit {
   readonly motivoTouched = signal(false);
   readonly selectedUsuarioId = signal('');
   readonly observaciones = signal('');
-  readonly currentEstado = signal<EstadoAgenda>('Pendiente');
+  readonly currentEstado = signal<EstadoAgenda>('Ingresado');
   readonly usuarios = signal<UsuarioDto[]>([]);
   readonly loading = signal(false);
   readonly formTouched = signal(false);
@@ -391,15 +365,11 @@ export class AgendaFormComponent implements OnInit {
       const [datePart, timePart] = initial.split('T');
       this.fecha.set(datePart);
       this.hora.set(timePart.substring(0, 5));
+    } else {
+      const hoy = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      this.fecha.set(`${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`);
     }
-  }
-
-  estadoPill(estado: EstadoAgenda): string {
-    return ESTADO_PILL[estado];
-  }
-
-  estadoPillActive(estado: EstadoAgenda): string {
-    return ESTADO_PILL_ACTIVE[estado];
   }
 
   onClienteSearchInput(term: string): void {
@@ -412,7 +382,7 @@ export class AgendaFormComponent implements OnInit {
       return;
     }
     this.searchTimeout = setTimeout(() => {
-      this.clienteService.getClientes(1, 8, term).subscribe({
+      this.clienteService.getClientes(1, 8, term, 'Persona').subscribe({
         next: res => {
           this.clienteResults.set(res.items);
           this.showDropdown.set(res.items.length > 0);
@@ -485,6 +455,24 @@ export class AgendaFormComponent implements OnInit {
         error: (err: { error?: { detail?: string } }) => this.handleError(err),
       });
     }
+  }
+
+  cancelarCita(): void {
+    const cita = this.agendaParaEditar();
+    if (!cita) return;
+    Swal.fire({
+      title: '¿Cancelar cita?',
+      text: `La cita de ${cita.clienteNombre} se marcará como Cancelada.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cancelar cita',
+      cancelButtonText: 'Volver',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.cambiarEstado('Cancelada');
+    });
   }
 
   onDelete(): void {

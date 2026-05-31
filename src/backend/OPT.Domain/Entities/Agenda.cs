@@ -11,7 +11,7 @@ public class Agenda
     public DateTime FechaHora { get; set; }
     public short DuracionMinutos { get; set; } = 30;
     public string Motivo { get; set; } = string.Empty;
-    public string Estado { get; set; } = "Pendiente";
+    public string Estado { get; set; } = "Ingresado";
     public string? Observaciones { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

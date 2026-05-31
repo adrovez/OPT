@@ -14,11 +14,12 @@ export class ClienteService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/Clientes`;
 
-  getClientes(page = 1, pageSize = 20, search?: string): Observable<PaginatedResponse<Cliente>> {
+  getClientes(page = 1, pageSize = 20, search?: string, tipoCliente?: string): Observable<PaginatedResponse<Cliente>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
-    if (search?.trim()) params = params.set('search', search.trim());
+    if (search?.trim()) params = params.set('busqueda', search.trim());
+    if (tipoCliente) params = params.set('tipoCliente', tipoCliente);
     return this.http.get<PaginatedResponse<Cliente>>(this.apiUrl, { params });
   }
 

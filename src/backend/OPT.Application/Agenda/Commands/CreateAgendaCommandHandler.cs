@@ -19,7 +19,7 @@ public class CreateAgendaCommandHandler(IAgendaRepository repository)
             DuracionMinutos = request.DuracionMinutos,
             Motivo          = request.Motivo,
             Observaciones   = request.Observaciones,
-            Estado          = "Pendiente",
+            Estado          = "Ingresado",
             CreatedBy       = request.CreatedBy
         };
 

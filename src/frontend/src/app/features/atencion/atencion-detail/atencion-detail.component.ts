@@ -277,7 +277,7 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
 
           <!-- Tab: Receta Cristales -->
           @if (activeTab() === 'receta') {
-            <div class="max-w-2xl mx-auto space-y-4">
+            <div class="max-w-4xl mx-auto space-y-4">
               @if (recetaLoading()) {
                 <div class="flex items-center justify-center py-16">
                   <svg class="w-6 h-6 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -291,130 +291,139 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                 </div>
               } @else if (recetaData()) {
 
-                <!-- Flags -->
+                <!-- Indicaciones -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                   <p class="text-sm font-medium text-gray-700 mb-3">Indicaciones</p>
-                  <div class="flex flex-wrap gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+                           [class.border-blue-400]="recetaEdit().checkLejos"
+                           [class.bg-blue-50]="recetaEdit().checkLejos"
+                           [class.border-gray-200]="!recetaEdit().checkLejos">
                       <input type="checkbox" [checked]="recetaEdit().checkLejos"
-                             (change)="setReceta('checkLejos', $any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
-                      <span class="text-sm text-gray-700">Incluye Lejos</span>
+                             (change)="onCheckLejos($any($event.target).checked)"
+                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                      <div>
+                        <p class="text-sm font-medium text-gray-800">Lejos</p>
+                        <p class="text-xs text-gray-400">Activa la sección de lejos</p>
+                      </div>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
+                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+                           [class.border-blue-400]="recetaEdit().checkCerca"
+                           [class.bg-blue-50]="recetaEdit().checkCerca"
+                           [class.border-gray-200]="!recetaEdit().checkCerca">
                       <input type="checkbox" [checked]="recetaEdit().checkCerca"
-                             (change)="setReceta('checkCerca', $any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
-                      <span class="text-sm text-gray-700">Incluye Cerca</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" [checked]="recetaEdit().checkCristalesLaboratorio"
-                             (change)="setReceta('checkCristalesLaboratorio', $any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
-                      <span class="text-sm text-gray-700">Cristales al laboratorio</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" [checked]="recetaEdit().checkUrgente"
-                             (change)="setReceta('checkUrgente', $any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
-                      <span class="text-sm text-gray-700">Urgente</span>
+                             (change)="onCheckCerca($any($event.target).checked)"
+                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                      <div>
+                        <p class="text-sm font-medium text-gray-800">Cerca</p>
+                        <p class="text-xs text-gray-400">Activa la sección de cerca</p>
+                      </div>
                     </label>
                   </div>
                 </div>
 
-                <!-- Lejos -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                  <p class="text-sm font-semibold text-gray-700 mb-4">Lejos</p>
-                  <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                      <thead><tr>
-                        <th class="w-24 pb-3 pr-3 text-left"></th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/3">OD</th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/3">OI</th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/4">DP</th>
-                      </tr></thead>
-                      <tbody class="divide-y divide-gray-50">
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500 whitespace-nowrap">Esférico</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODEsferico" (input)="setReceta('lejosODEsferico', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOIEsferico" (input)="setReceta('lejosOIEsferico', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosDPEsferico" (input)="setReceta('lejosDPEsferico', $any($event.target).value)"/></td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Cilindro</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODCilindro" (input)="setReceta('lejosODCilindro', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOICilindro" (input)="setReceta('lejosOICilindro', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2 text-center text-gray-300">—</td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Eje</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosODEje" (input)="setReceta('lejosODEje', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosOIEje" (input)="setReceta('lejosOIEje', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2 text-center text-gray-300">—</td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Observación</td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().lejosODObservacion" (input)="setReceta('lejosODObservacion', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().lejosOIObservacion" (input)="setReceta('lejosOIObservacion', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().lejosDPObservacion" (input)="setReceta('lejosDPObservacion', $any($event.target).value)"/></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <!-- Lejos + Cerca: side by side cuando ambos activos -->
+                @if (recetaEdit().checkLejos || recetaEdit().checkCerca) {
+                  <div class="grid gap-4"
+                       [class.grid-cols-2]="recetaEdit().checkLejos && recetaEdit().checkCerca">
 
-                <!-- Cerca -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                  <p class="text-sm font-semibold text-gray-700 mb-4">Cerca</p>
-                  <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                      <thead><tr>
-                        <th class="w-24 pb-3 pr-3 text-left"></th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/3">OD</th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/3">OI</th>
-                        <th class="pb-3 px-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/4">DP</th>
-                      </tr></thead>
-                      <tbody class="divide-y divide-gray-50">
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500 whitespace-nowrap">Esférico</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODEsferico" (input)="setReceta('cercaODEsferico', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOIEsferico" (input)="setReceta('cercaOIEsferico', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaDPEsferico" (input)="setReceta('cercaDPEsferico', $any($event.target).value)"/></td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Cilindro</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODCilindro" (input)="setReceta('cercaODCilindro', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOICilindro" (input)="setReceta('cercaOICilindro', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2 text-center text-gray-300">—</td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Eje</td>
-                          <td class="py-2 px-2"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaODEje" (input)="setReceta('cercaODEje', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaOIEje" (input)="setReceta('cercaOIEje', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2 text-center text-gray-300">—</td>
-                        </tr>
-                        <tr>
-                          <td class="py-2 pr-3 text-xs font-medium text-gray-500">Observación</td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().cercaODObservacion" (input)="setReceta('cercaODObservacion', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().cercaOIObservacion" (input)="setReceta('cercaOIObservacion', $any($event.target).value)"/></td>
-                          <td class="py-2 px-2"><input type="text" [class]="inputCls" [value]="recetaEdit().cercaDPObservacion" (input)="setReceta('cercaDPObservacion', $any($event.target).value)"/></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                    <!-- Lejos -->
+                    @if (recetaEdit().checkLejos) {
+                      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-4">
+                        <p class="text-sm font-semibold text-blue-700 mb-3">Lejos</p>
+                        <table class="w-full">
+                          <thead><tr>
+                            <th class="w-10 pb-2 pr-2 text-left"></th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">OD</th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">OI</th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">DP</th>
+                          </tr></thead>
+                          <tbody class="divide-y divide-gray-50">
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Esf.</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODEsferico" (input)="onLejosChange('lejosODEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOIEsferico" (input)="onLejosChange('lejosOIEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosDPEsferico" (input)="setReceta('lejosDPEsferico', $any($event.target).value)"/></td>
+                            </tr>
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Cil.</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODCilindro" (input)="onLejosChange('lejosODCilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOICilindro" (input)="onLejosChange('lejosOICilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
+                            </tr>
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Eje</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosODEje" (input)="onLejosChange('lejosODEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosOIEje" (input)="onLejosChange('lejosOIEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div class="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">ADD <span class="font-normal text-gray-400">(adición)</span></label>
+                            <input type="text" placeholder="+0.00" [class]="inputCls"
+                                   [value]="recetaEdit().lejosADDEsfera" (input)="onADDChange($any($event.target).value)"/>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Auto-rellena la sección Cerca</p>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Observación</label>
+                            <input type="text" maxlength="500" placeholder="Observaciones de lejos..." [class]="inputCls"
+                                   [value]="recetaEdit().lejosODObservacion" (input)="setReceta('lejosODObservacion', $any($event.target).value)"/>
+                          </div>
+                        </div>
+                      </div>
+                    }
 
-                <!-- ADD -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                  <p class="text-sm font-semibold text-gray-700 mb-4">ADD</p>
-                  <div class="max-w-xs">
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Esfera ADD</label>
-                    <input type="text" placeholder="+/-0.00"
-                           class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 hover:border-gray-300 bg-white
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           [value]="recetaEdit().lejosADDEsfera" (input)="setReceta('lejosADDEsfera', $any($event.target).value)"/>
+                    <!-- Cerca -->
+                    @if (recetaEdit().checkCerca) {
+                      <div class="bg-white rounded-2xl border border-blue-100 shadow-sm p-4">
+                        <div class="flex items-center justify-between mb-3">
+                          <p class="text-sm font-semibold text-blue-700">Cerca</p>
+                          @if (recetaEdit().lejosADDEsfera) {
+                            <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                              Auto-calculada ADD
+                            </span>
+                          }
+                        </div>
+                        <table class="w-full">
+                          <thead><tr>
+                            <th class="w-10 pb-2 pr-2 text-left"></th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">OD</th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">OI</th>
+                            <th class="pb-2 text-center text-xs font-semibold text-gray-500 px-1">DP</th>
+                          </tr></thead>
+                          <tbody class="divide-y divide-gray-50">
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Esf.</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODEsferico" (input)="setReceta('cercaODEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOIEsferico" (input)="setReceta('cercaOIEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaDPEsferico" (input)="setReceta('cercaDPEsferico', $any($event.target).value)"/></td>
+                            </tr>
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Cil.</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODCilindro" (input)="setReceta('cercaODCilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOICilindro" (input)="setReceta('cercaOICilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
+                            </tr>
+                            <tr>
+                              <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Eje</td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaODEje" (input)="setReceta('cercaODEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaOIEje" (input)="setReceta('cercaOIEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                          <label class="block text-xs font-medium text-gray-500 mb-1">Observación</label>
+                          <input type="text" maxlength="500" placeholder="Observaciones de cerca..." [class]="inputCls"
+                                 [value]="recetaEdit().cercaODObservacion" (input)="setReceta('cercaODObservacion', $any($event.target).value)"/>
+                        </div>
+                      </div>
+                    }
+
                   </div>
-                </div>
+                }
 
                 <!-- Guardar receta -->
                 <div class="flex justify-end">
@@ -682,6 +691,68 @@ export class AtencionDetailComponent implements OnInit {
 
   setReceta<K extends keyof RecetaState>(key: K, value: RecetaState[K]): void {
     this.recetaEdit.update(r => ({ ...r, [key]: value }));
+  }
+
+  private applyADD(r: RecetaState): RecetaState {
+    const add = parseFloat(r.lejosADDEsfera.replace(',', '.'));
+    if (!r.lejosADDEsfera.trim() || isNaN(add) || add <= 0) return r;
+    const sum = (s: string) => String(parseFloat(((parseFloat(s.replace(',', '.')) || 0) + add).toFixed(2)));
+    return {
+      ...r,
+      checkCerca: true,
+      cercaODEsferico: sum(r.lejosODEsferico),
+      cercaODCilindro: r.lejosODCilindro,
+      cercaODEje: r.lejosODEje,
+      cercaOIEsferico: sum(r.lejosOIEsferico),
+      cercaOICilindro: r.lejosOICilindro,
+      cercaOIEje: r.lejosOIEje,
+    };
+  }
+
+  onCheckLejos(checked: boolean): void {
+    if (checked) { this.recetaEdit.update(r => ({ ...r, checkLejos: true })); return; }
+    this.recetaEdit.update(r => ({
+      ...r,
+      checkLejos: false,
+      lejosODEsferico: '', lejosODCilindro: '', lejosODEje: '', lejosODObservacion: '',
+      lejosOIEsferico: '', lejosOICilindro: '', lejosOIEje: '', lejosOIObservacion: '',
+      lejosDPEsferico: '', lejosDPObservacion: '', lejosADDEsfera: '',
+      checkCerca: false,
+      cercaODEsferico: '', cercaODCilindro: '', cercaODEje: '', cercaODObservacion: '',
+      cercaOIEsferico: '', cercaOICilindro: '', cercaOIEje: '', cercaOIObservacion: '',
+      cercaDPEsferico: '', cercaDPObservacion: '',
+    }));
+  }
+
+  onCheckCerca(checked: boolean): void {
+    if (checked) { this.recetaEdit.update(r => ({ ...r, checkCerca: true })); return; }
+    this.recetaEdit.update(r => ({
+      ...r,
+      checkCerca: false,
+      cercaODEsferico: '', cercaODCilindro: '', cercaODEje: '', cercaODObservacion: '',
+      cercaOIEsferico: '', cercaOICilindro: '', cercaOIEje: '', cercaOIObservacion: '',
+      cercaDPEsferico: '', cercaDPObservacion: '',
+    }));
+  }
+
+  onADDChange(value: string): void {
+    this.recetaEdit.update(r => {
+      const withAdd = { ...r, lejosADDEsfera: value };
+      const add = parseFloat(value.replace(',', '.'));
+      if (!value.trim() || isNaN(add) || add <= 0) {
+        return {
+          ...withAdd,
+          checkCerca: false,
+          cercaODEsferico: '', cercaODCilindro: '', cercaODEje: '',
+          cercaOIEsferico: '', cercaOICilindro: '', cercaOIEje: '', cercaDPEsferico: '',
+        };
+      }
+      return this.applyADD(withAdd);
+    });
+  }
+
+  onLejosChange(key: 'lejosODEsferico' | 'lejosOIEsferico' | 'lejosODCilindro' | 'lejosOICilindro' | 'lejosODEje' | 'lejosOIEje', value: string): void {
+    this.recetaEdit.update(r => this.applyADD({ ...r, [key]: value }));
   }
 
   tabClass(tab: TabType): string {

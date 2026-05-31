@@ -35,23 +35,37 @@ import Swal from 'sweetalert2';
         </button>
       </div>
 
-      <!-- Barra de búsqueda -->
-      <div class="relative mb-4 max-w-sm">
-        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-             fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <input
-          type="search"
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearchChange()"
-          placeholder="Buscar por nombre o RUT..."
-          class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200
-                 rounded-xl hover:border-gray-300 transition-colors
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          aria-label="Buscar clientes"
-        />
+      <!-- Filtros -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <!-- Búsqueda -->
+        <div class="relative flex-1 max-w-sm">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="search"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+            placeholder="Buscar por nombre o RUT..."
+            class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200
+                   rounded-xl hover:border-gray-300 transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Buscar clientes"
+          />
+        </div>
+        <!-- Filtro tipo -->
+        <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 self-start">
+          @for (opt of tipoOpciones; track opt.value) {
+            <button
+              (click)="cambiarTipo(opt.value)"
+              [class]="tipoFiltro() === opt.value
+                ? 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white transition-colors'
+                : 'px-3 py-1.5 text-xs font-medium rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors'"
+            >{{ opt.label }}</button>
+          }
+        </div>
       </div>
 
       <!-- Tabla -->
@@ -249,6 +263,12 @@ export class ClientesListComponent implements OnInit {
   readonly clienteSeleccionado = signal<Cliente | null>(null);
 
   searchQuery = '';
+  readonly tipoFiltro = signal<'' | 'Persona' | 'Empresa'>('');
+  readonly tipoOpciones = [
+    { value: '' as const, label: 'Todos' },
+    { value: 'Persona' as const, label: 'Persona' },
+    { value: 'Empresa' as const, label: 'Empresa' },
+  ];
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly pageSize = 20;
 
@@ -267,7 +287,7 @@ export class ClientesListComponent implements OnInit {
     this.errorMessage.set('');
 
     this.clienteService
-      .getClientes(this.currentPage(), this.pageSize, this.searchQuery || undefined)
+      .getClientes(this.currentPage(), this.pageSize, this.searchQuery || undefined, this.tipoFiltro() || undefined)
       .subscribe({
         next: (response) => {
           this.clientes.set(response.items);
@@ -280,6 +300,12 @@ export class ClientesListComponent implements OnInit {
           this.errorMessage.set('Error al cargar los clientes. Verifique la conexión.');
         },
       });
+  }
+
+  cambiarTipo(tipo: '' | 'Persona' | 'Empresa'): void {
+    this.tipoFiltro.set(tipo);
+    this.currentPage.set(1);
+    this.cargarClientes();
   }
 
   onSearchChange(): void {

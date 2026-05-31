@@ -117,6 +117,7 @@ app.routes.ts   # rutas raíz con lazy loading
 | `/agenda` | `AgendaCalendarComponent` | Agenda (usa `X-Sucursal-Id`) |
 | `/atenciones` | `AtencionesListComponent` | Atención (2 tabs: Sala espera/Historial) |
 | `/atenciones/iniciar?agendaId=` | `AtencionIniciarComponent` | Wizard 3 pasos (requiere agendaId) |
+| `/atenciones/nueva` | `AtencionFormComponent` | Formulario atención directa |
 | `/atenciones/:id` | `AtencionDetailComponent` | Detalle (4 tabs, lazy load Anamnesis/Receta) |
 
 Las llamadas HTTP siempre van a través de servicios en `core/services/`, nunca directamente desde componentes. El JWT se inyecta automáticamente via `core/interceptors/auth.interceptor.ts`.
@@ -277,14 +278,14 @@ El backend valida la transición permitida; el PUT normal actualiza los demás c
 | Clientes + Contactos | ✅ | ✅ |
 | Regiones/Comunas | ✅ (catálogo) | ✅ (shareReplay cache) |
 | Anamnesis | ✅ | ✅ |
-| RecetaCristales | ✅ | ⏳ Pendiente |
+| RecetaCristales | ✅ | ✅ via wizard `/atenciones/iniciar` (paso 3); editable en `/atenciones/:id` tab Receta |
 | Sucursales | ✅ | ✅ (switcher en sidebar vía `SucursalContextService`) |
 | Usuarios | ✅ | ✅ |
-| Roles (catálogo) | ✅ (`013_OPT_Rol.sql` creado) / `GET /api/roles` ⏳ | ✅ `rol.service.ts` + `rol.model.ts` creados (combobox en `usuario-form` aún hardcodeado — espera endpoint) |
+| Roles (catálogo) | ✅ (`013_OPT_Rol.sql` + `GET /api/roles`) | ✅ `rol.service.ts` + combobox dinámico en `usuario-form` |
 | Agenda | ✅ (`014_OPT_Agenda.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ Calendario semanal en `/agenda`. Botón "Atender" en citas Confirmadas → navega a `/atenciones/iniciar?agendaId=xxx` |
 | FormaPago (catálogo) | ✅ (`021_OPT_FormaPago.sql` + `GET /api/forma-pagos`) | ✅ `forma-pago.service.ts` con `shareReplay(1)` |
 | Atención + CobroServicio | ✅ (`022–024` scripts; `POST /api/atenciones/iniciar` crea Atención+Anamnesis+RecetaCristales atómicamente) | ✅ Lista `/atenciones` (2 tabs: Sala de espera/Historial), wizard `/atenciones/iniciar` (3 pasos: Atención→Anamnesis→RecetaCristales), detalle `/atenciones/:id` (4 tabs: Información, Anamnesis, Receta Cristales, Cobro con lazy load) |
-| Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ⏳ En progreso (componentes en `features/productos/`) |
+| Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ✅ `/productos` con lista + formulario + gestión de categorías |
 | Stock / Inventario | ✅ (`018_OPT_Stock.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ (3 tabs: Stock actual, Entradas, Historial) |
 | Precios | ✅ (`019_OPT_Precio.sql` — historial de costo, actualizado al confirmar documento de entrada) | ⏳ Sin pantalla dedicada (solo se actualiza via Entradas) |
 | Documentos de Entrada | ✅ (`020_OPT_DocumentoStock.sql` — FacturaCompra, BoletaCompra, OtroIngreso + Anular) | ✅ (tab Entradas en `/stock`) |
@@ -302,7 +303,6 @@ El backend valida la transición permitida; el PUT normal actualiza los demás c
 **Estructura de precios:**
 - `OPT_PrecioProducto(VarianteId, SucursalId?, PrecioCosto, PrecioVenta?, VigenciaDesde, VigenciaHasta)` — historial de precios; `VigenciaHasta NULL` = vigente
 - Sin IsDeleted: la expiración se maneja con `VigenciaHasta`
-- Próximo script: `021_...`
 
 ### Regla de negocio: SucursalId en módulos sucursal-scoped
 Los módulos asociados a sucursal (Agenda y futuros) reciben el `SucursalId` via header HTTP `X-Sucursal-Id`. El frontend lo envía desde `SucursalContextService.sucursalActual().sucursalId`. Los datos generales (Clientes, Anamnesis, RecetaCristales) NO requieren este header — son datos del tenant completo.

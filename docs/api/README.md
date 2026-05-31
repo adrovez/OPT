@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-22 (Sesión 15 — Módulo Productos API CRUD: catálogo puro sin precios/stock)
+> **Última actualización:** 2026-05-31 (Sesión 16 — todos los módulos completos: Stock, Precios, DocumentosStock, Atenciones, CobroServicio, Roles, FormaPago)
 
 ## Overview
 
@@ -24,12 +24,17 @@
 | RecetaCristales | `/api/RecetaCristales` | JWT | ✅ Completo — CRUD por clienteId |
 | Sucursales | `/api/sucursales` | JWT | ✅ Completo — CRUD por tenant |
 | Usuarios | `/api/usuarios` | JWT | ✅ Completo — CRUD + password + sucursales M:N |
-| Roles | `/api/roles` | JWT | ⏳ Pendiente — GET solo lectura (catálogo), script `013_OPT_Rol.sql` listo |
-| Agenda | `/api/agenda` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + cambio de estado |
+| Roles | `/api/roles` | JWT | ✅ GET solo lectura (catálogo); script `013_OPT_Rol.sql` |
+| Agenda | `/api/agenda` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + PATCH /estado |
+| FormaPago | `/api/forma-pagos` | JWT | ✅ GET solo lectura (catálogo 5 filas); script `021_OPT_FormaPago.sql` |
 | Categorías Producto | `/api/categorias-producto` | JWT | ✅ Completo — CRUD |
-| Productos | `/api/productos` | JWT | ✅ Completo — CRUD paginado + Variantes anidadas (catálogo puro, sin precios ni stock) |
-| Precios | `/api/precios` | JWT | 🔮 Futuro — módulo independiente (`018_OPT_Precio.sql`) |
-| Stock / Inventario | `/api/stock` | JWT + `X-Sucursal-Id` | 🔮 Futuro — módulo independiente, scoped por sucursal (`019_OPT_Stock.sql`) |
+| Productos | `/api/productos` | JWT | ✅ Completo — CRUD paginado + Variantes anidadas (catálogo puro) |
+| Stock / Inventario | `/api/stock` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + movimientos directos; script `018_OPT_Stock.sql` |
+| Documentos de Entrada | `/api/documentos-stock` | JWT + `X-Sucursal-Id` | ✅ POST crear+confirmar / POST anular; script `020_OPT_DocumentoStock.sql` |
+| Precios | (interno) | — | ✅ Historial de precios actualizado al confirmar documento; script `019_OPT_Precio.sql` — sin pantalla dedicada aún |
+| Atenciones | `/api/atenciones` | JWT | ✅ POST /iniciar (atómico), GET lista/detalle, PATCH /estado; scripts `022–024` |
+| CobroServicio | (interno a Atención) | — | ✅ Asociado a Atención; script `023_OPT_CobroServicio.sql` |
+| Salida (documentos) | — | — | 🔮 Futuro — OrdenTrabajo, Devoluciones, OtroEgreso (`025_`) |
 
 ---
 
@@ -919,6 +924,191 @@ Solo para TipoProducto ≠ `Servicio`.
 **Response 204:** No Content
 
 ### DELETE /api/productos/{id}/variantes/{varianteId}
+**Response 204:** No Content
+
+---
+
+## 12. Roles API
+
+**Auth:** Requiere JWT  
+**Nota:** Catálogo compartido. Solo lectura — sin CRUD.
+
+### GET /api/roles
+
+**Response 200:**
+```json
+[
+  { "rolId": 1, "nombre": "Admin" },
+  { "rolId": 2, "nombre": "Operador" },
+  { "rolId": 3, "nombre": "Lectura" }
+]
+```
+
+---
+
+## 13. Formas de Pago API
+
+**Auth:** Requiere JWT  
+**Nota:** Catálogo compartido. Solo lectura — sin CRUD.
+
+### GET /api/forma-pagos
+
+**Response 200:**
+```json
+[
+  { "formaPagoId": 1, "nombre": "Efectivo" },
+  { "formaPagoId": 2, "nombre": "Tarjeta Débito" },
+  { "formaPagoId": 3, "nombre": "Tarjeta Crédito" },
+  { "formaPagoId": 4, "nombre": "Transferencia" },
+  { "formaPagoId": 5, "nombre": "Cheque" }
+]
+```
+
+---
+
+## 14. Stock API
+
+**Auth:** Requiere JWT  
+**Header adicional:** `X-Sucursal-Id: {guid}` (obligatorio)
+
+### GET /api/stock
+
+Lista el stock actual de la sucursal activa (todas las variantes con cantidad > 0 o registradas).
+
+**Response 200:** `StockDto[]` — incluye `varianteId`, `productoNombre`, `varianteNombre`, `codigoBarras`, `cantidad`, `stockMinimo`, `bajoStock`.
+
+### GET /api/stock/{varianteId}
+
+Obtener stock de una variante específica en la sucursal activa.
+
+### POST /api/stock/movimiento
+
+Registrar movimiento directo (Salida o Ajuste). Las Entradas van por Documentos de Entrada.
+
+**Request:**
+```json
+{
+  "varianteId": "uuid",
+  "tipoMovimiento": "Salida",
+  "cantidad": 2,
+  "observacion": "Venta mostrador"
+}
+```
+**Tipos válidos (directos):** `Salida`, `Ajuste`  
+**Response 200:** MovimientoStockDto
+
+### GET /api/stock/movimientos
+
+Lista el historial de movimientos de la sucursal activa (paginado).
+
+---
+
+## 15. Documentos de Entrada API
+
+**Auth:** Requiere JWT  
+**Header adicional:** `X-Sucursal-Id: {guid}` (obligatorio)
+
+### GET /api/documentos-stock
+
+Lista documentos de la sucursal (paginado). Filtros: `tipo`, `estado`.
+
+**Response 200:** `PagedResult<DocumentoStockDto>`
+
+### GET /api/documentos-stock/{id}
+
+Obtener documento con líneas incluidas.
+
+### POST /api/documentos-stock
+
+Crea y confirma un documento de entrada atómicamente. Genera `MovimientoStock(Entrada)` por línea y actualiza `PrecioProducto`.
+
+**Request:**
+```json
+{
+  "tipoDocumento": "FacturaCompra",
+  "numeroDocumento": "F-001234",
+  "proveedor": "Distribuidora Óptica SpA",
+  "fecha": "2026-05-24",
+  "lineas": [
+    {
+      "varianteId": "uuid",
+      "cantidad": 10,
+      "precioCosto": 15000
+    }
+  ]
+}
+```
+**Tipos válidos:** `FacturaCompra`, `BoletaCompra`, `OtroIngreso`  
+**Response 201:** `{ "id": "uuid" }`
+
+### POST /api/documentos-stock/{id}/anular
+
+Anula un documento confirmado. Genera movimientos compensatorios de Ajuste negativo. Los precios **no** se revierten.
+
+**Response 204:** No Content  
+**Response 409:** Si el documento ya está anulado
+
+---
+
+## 16. Atenciones API
+
+**Auth:** Requiere JWT
+
+### GET /api/atenciones
+
+Lista atenciones del tenant. Filtros: `sucursalId`, `estado`, `desde`, `hasta`.
+
+**Query:** `?estado=EnEspera&sucursalId=uuid`  
+**Response 200:** `PagedResult<AtencionDto>`
+
+**Estados válidos:** `EnEspera` · `EnAtencion` · `Finalizada`
+
+### GET /api/atenciones/{id}
+
+Detalle completo con Anamnesis y RecetaCristales anidadas.
+
+### POST /api/atenciones/iniciar
+
+**Crea atómicamente:** Atención + Anamnesis + RecetaCristales en un solo request.  
+Acepta `agendaId` opcional para vincular con la cita previa.
+
+**Request:**
+```json
+{
+  "agendaId": "uuid-opcional",
+  "sucursalId": "uuid",
+  "clienteId": "uuid",
+  "motivoConsulta": "Control anual",
+  "anamnesis": {
+    "hipertension": false,
+    "diabetes": false,
+    "alergias": true,
+    "usaLentes": true,
+    "observacion": "Alergia estacional"
+  },
+  "receta": {
+    "lejosODEsferico": "-1.50",
+    "lejosODCilindro": "-0.50",
+    "lejosODEje": "90",
+    "checkLejos": true,
+    "checkCerca": false,
+    "checkCristalesLaboratorio": false,
+    "checkUrgente": false
+  }
+}
+```
+
+**Response 201:** `{ "atencionId": "uuid", "anamnesisId": "uuid", "recetaId": "uuid" }`
+
+### POST /api/atenciones/nueva
+
+Crea una atención directa sin cita previa (sin Anamnesis/Receta iniciales).
+
+### PATCH /api/atenciones/{id}/estado
+
+Cambia el estado de la atención.
+
+**Request:** `{ "estado": "EnAtencion" }`  
 **Response 204:** No Content
 
 ---

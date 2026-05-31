@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AgendaDto, EstadoAgenda } from '../../../core/models/agenda.model';
 import { AgendaService } from '../../../core/services/agenda.service';
 import { AgendaFormComponent } from '../agenda-form/agenda-form.component';
+import Swal from 'sweetalert2';
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -14,7 +15,7 @@ const END_HOUR = 20;
 const SLOTS_COUNT = (END_HOUR - START_HOUR) * 2; // 24 slots
 
 const ESTADO_CLASSES: Record<EstadoAgenda, string> = {
-  Pendiente:  'bg-blue-50 border-l-4 border-blue-500 text-blue-900 shadow-sm',
+  Ingresado:  'bg-blue-50 border-l-4 border-blue-500 text-blue-900 shadow-sm',
   Confirmada: 'bg-green-50 border-l-4 border-green-500 text-green-900 shadow-sm',
   Atendida:   'bg-gray-100 border-l-4 border-gray-400 text-gray-600 shadow-sm',
   Cancelada:  'bg-red-50 border-l-4 border-red-300 text-red-600 shadow-sm opacity-60',
@@ -187,21 +188,33 @@ function getMondayOf(date: Date): Date {
                   [style.height.px]="citaHeight(cita)"
                   (click)="onCitaClick($event, cita)"
                 >
-                  <p class="font-semibold truncate leading-tight text-[11px]">{{ cita.clienteNombre }}</p>
+                  <!-- Botón cancelar rápido -->
+                  @if (cita.estado === 'Ingresado' || cita.estado === 'Confirmada') {
+                    <button
+                      type="button"
+                      (click)="cancelarCitaDirecto($event, cita)"
+                      title="Cancelar cita"
+                      class="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center
+                             text-[9px] font-bold bg-red-100 hover:bg-red-200 text-red-500 rounded-full
+                             transition-colors z-10"
+                    >✕</button>
+                  }
+
+                  <p class="font-semibold truncate leading-tight text-[11px] pr-4">{{ cita.clienteNombre }}</p>
                   @if (citaHeight(cita) >= 36) {
                     <p class="truncate text-[10px] opacity-75 mt-0.5">{{ cita.motivo }}</p>
                   }
                   @if (cita.usuarioNombre && citaHeight(cita) >= 54) {
                     <p class="truncate text-[10px] opacity-60 mt-0.5">{{ cita.usuarioNombre }}</p>
                   }
-                  @if (cita.estado === 'Confirmada' && citaHeight(cita) >= 44) {
+                  @if ((cita.estado === 'Ingresado' || cita.estado === 'Confirmada') && citaHeight(cita) >= 44) {
                     <button
                       type="button"
                       (click)="iniciarAtencion($event, cita)"
                       class="mt-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold
-                             bg-green-600 text-white rounded leading-tight hover:bg-green-700 transition-colors"
+                             bg-blue-600 text-white rounded leading-tight hover:bg-blue-700 transition-colors"
                     >
-                      ▶ Iniciar
+                      ▶ Atender
                     </button>
                   }
                 </div>
@@ -382,5 +395,24 @@ export class AgendaCalendarComponent {
   iniciarAtencion(event: MouseEvent, cita: AgendaDto): void {
     event.stopPropagation();
     this.router.navigate(['/atenciones/nueva'], { queryParams: { agendaId: cita.agendaId } });
+  }
+
+  cancelarCitaDirecto(event: MouseEvent, cita: AgendaDto): void {
+    event.stopPropagation();
+    Swal.fire({
+      title: '¿Cancelar cita?',
+      text: `La cita de ${cita.clienteNombre} se marcará como Cancelada.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cancelar',
+      cancelButtonText: 'Volver',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.agendaService.cambiarEstado(cita.agendaId, 'Cancelada').subscribe({
+        next: () => this.loadCitas(),
+      });
+    });
   }
 }

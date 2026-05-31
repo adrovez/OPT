@@ -3,40 +3,26 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-24 (Sesión 16 — Stock frontend completo + Primer movimiento + Documentos de Entrada + Precios)
+> Updated: 2026-05-31 (Sesión 16 — Stock frontend completo + Documentos de Entrada + Precios; sesiones 9–16 integradas)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts 000–020, tablas Tenant/Region/Comuna/Sucursal/Cliente/Contacto/Usuario/Anamnesis/RecetaCristales/Rol/Agenda/ProductoCategoria/Producto/ProductoVariante/Stock/MovimientoStock/PrecioProducto/DocumentoStock/DocumentoStockLinea
-- [x] Backend API: Tenant, Auth, Clientes (+ contactos embebidos), Contactos, Regiones (WithComunas), Anamnesis, RecetaCristales, **Sucursales**
+- [x] Base de datos: scripts `000–024` — todas las tablas implementadas (ver CLAUDE.md para tabla completa)
+- [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos+Variantes, Stock, DocumentosStock, Precios (interno), Atenciones+CobroServicio
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
-- [x] Frontend Angular 21: Login, Clientes (lista + form + detalle), Layout, AuthGuard, HTTP Interceptor JWT, RUT Validator
-- [x] Frontend: RegionService con shareReplay (comunas desde API, no hardcodeado)
-- [x] Frontend: ClienteDetailComponent — página solo lectura `/clientes/:id`
-- [x] Fix EF Core: WithMany(cl => cl.Contactos) — resuelve shadow FK ClienteId1
-- [x] Correcciones SQL: FKs OPT_Contacto, índices OPT_Usuario, idempotencia datos iniciales
-- [x] Documentación técnica HTML: backend-arquitectura, base-datos, backend-api-reference
-- [x] Memoria IA actualizada: AGENTS.md raíz, src/backend/, src/frontend/, .agents/progress.md
-- [x] **Migración PKs INT → UNIQUEIDENTIFIER (GUID)**: 6 tablas SQL + entidades Domain + repositorios + Application + controllers
-- [x] **Modelos Angular actualizados**: `clienteId`, `tenantId`, `contactoId`, `anamnesisId`, `usuarioId` → `string` (UUID)
-- [x] **Manuales técnicos actualizados**: backend-arquitectura.html, frontend-setup.md, API Reference (tipos GUID)
-- [x] **Frontend Anamnesis**: model, service, anamnesis-list (página `/clientes/:id/anamnesis`), anamnesis-form (modal), botón en cliente-detail
-- [x] **Backend RecetaCristales**: entidad Domain, interfaz Application, Commands/Queries/Validators, repositorio Infrastructure, DbContext, DI, Controller CRUD completo (`/api/RecetaCristales`)
-- [x] **Backend Sucursales**: entidad Domain, ISucursalRepository, Commands/Queries/Validators, SucursalRepository, DbContext, DI, Controller CRUD completo (`/api/sucursales`)
-- [x] **Backend Usuarios**: entidad UsuarioSucursal (M:N), IUsuarioRepository expandido, Commands (CRUD + ChangePassword + AssignSucursal + RemoveSucursal), Queries, Validators, UsuarioRepository, DbContext, Controller CRUD completo (`/api/usuarios`) con endpoints de sucursales
-- [x] **Frontend Usuarios**: `usuario.model.ts`, `usuario.service.ts`, `usuarios-list` (tabla con badges de rol + chips de sucursales), `usuario-form` (modal crear/editar + gestión de sucursales en tiempo real), `usuario-password` (modal cambio contraseña), rutas lazy `/usuarios`, link en sidebar
+- [x] Frontend Angular 21 completo: Login, Layout, AuthGuard, Interceptor JWT, RUT Validator
+- [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos, Stock (3 tabs + Documentos de Entrada + Primer movimiento), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs)
+- [x] Migración PKs INT → GUID en todas las entidades de negocio
+- [x] Patrones: shareReplay(1) catálogos, takeUntilDestroyed, Signal Forms, SucursalContextService
+- [x] `ICurrentTenantService` solo en controllers/middleware — handlers reciben contexto vía command
+- [x] Documentación técnica HTML: backend-arquitectura.html, base-datos.html, backend-api-reference.html
+- [x] Manuales técnicos y CLAUDE.md actualizados a sesión 16
 
 ### Módulos Futuros Planificados
-- [ ] **Salida (documentos)** (`021_?`): OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form por fila
-- [ ] **Frontend RecetaCristales**: model, service, lista + form modal, botón en cliente-detail
-- [ ] **Frontend Agenda**: model, service, componente lista/calendario por sucursal (usa X-Sucursal-Id)
-- [ ] **Frontend Productos**: lista con tabs Productos/Categorías, form modal, gestión de variantes
-- [ ] **Roles GET /api/roles**: endpoint de solo lectura + combobox dinámico en usuario-form (reemplazar hardcodeado)
-- [ ] **Precios dedicados**: pantalla de gestión de PrecioVenta (PrecioCosto solo se actualiza via Entradas)
-
-### Mejoras Anotadas — Módulo Rol (próxima sesión)
-- [ ] **BD**: Crear `013_OPT_Rol.sql` — tabla catálogo `OPT_Rol` (`RolId INT IDENTITY PK`, `Nombre NVARCHAR(50)`, sin TenantId — catálogo compartido). Poblar con Admin, Operador, Lectura.
-- [ ] **Backend**: API de solo lectura `GET /api/roles` — retorna `RolDto[]` (`rolId: number`, `nombre: string`). Sin CRUD (catálogo). Controller sin `[Authorize]` o con JWT según decisión.
-- [ ] **Frontend**: `rol.model.ts` + `rol.service.ts` (con `shareReplay(1)`) → cargar roles en `usuario-form` reemplazando las opciones hardcodeadas del `<select>` de Rol.
+- [ ] **Salida (documentos)** (`025_`): OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form
+- [ ] **Pantalla de Precios**: gestión de PrecioVenta por sucursal (PrecioCosto se actualiza vía Entradas)
+- [ ] **Unit tests backend**: xUnit + Moq
+- [ ] **Autorización por rol** en controllers (actualmente solo `[Authorize]` sin roles específicos)
+- [ ] **Dashboard / Home screen** en Angular
 
 ### Completed This Session (Sesión 6)
 - **Backend — nuevas features:**
@@ -62,14 +48,11 @@ Track work sessions and current state for continuity between AI agent sessions.
   - Memoria IA: `project_opt_estado.md`, `project_opt_reglas.md` (lecciones EF Core, replace strategy, shareReplay)
 
 ### Next Steps Sugeridos
-- [ ] **Frontend RecetaCristales**: model, service, lista + form modal (patrón Anamnesis), botón en `cliente-detail`
-- [ ] **Frontend Agenda**: model, service, componente lista/calendario por sucursal (`X-Sucursal-Id`)
-- [ ] **Frontend Productos**: implementar `features/productos/` (modelos y servicios ya creados)
-- [ ] **Roles GET /api/roles**: endpoint solo lectura + combobox dinámico en `usuario-form`
-- [ ] **Salida por documentos**: diseñar e implementar OrdenTrabajo/Devoluciones (021_)
-- [ ] Unit tests backend con xUnit + Moq
-- [ ] Dashboard / Home screen en Angular
-- [ ] Autorización por rol en controllers (actualmente solo `[Authorize]`)
+- [ ] **Salida por documentos** (`025_`): OrdenTrabajo, Devoluciones, OtroEgreso — diseñar esquema y CRUD
+- [ ] **Pantalla de Precios**: formulario PrecioVenta por sucursal
+- [ ] **Unit tests backend**: xUnit + Moq (ningún test existe aún)
+- [ ] **Autorización por rol** en controllers (actualmente solo `[Authorize]`)
+- [ ] **Dashboard / Home screen** en Angular
 
 ---
 

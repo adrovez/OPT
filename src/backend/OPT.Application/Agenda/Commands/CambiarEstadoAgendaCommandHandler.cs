@@ -7,7 +7,7 @@ public class CambiarEstadoAgendaCommandHandler(IAgendaRepository repository)
     : IRequestHandler<CambiarEstadoAgendaCommand>
 {
     private static readonly HashSet<string> EstadosValidos =
-        ["Pendiente", "Confirmada", "Atendida", "Cancelada", "NoShow"];
+        ["Ingresado", "Confirmada", "Atendida", "Cancelada", "NoShow"];
 
     public async Task Handle(CambiarEstadoAgendaCommand request, CancellationToken cancellationToken)
     {

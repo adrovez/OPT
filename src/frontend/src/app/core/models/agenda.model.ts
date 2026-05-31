@@ -1,4 +1,4 @@
-export type EstadoAgenda = 'Pendiente' | 'Confirmada' | 'Atendida' | 'Cancelada' | 'NoShow';
+export type EstadoAgenda = 'Ingresado' | 'Confirmada' | 'Atendida' | 'Cancelada' | 'NoShow';
 
 export interface AgendaDto {
   agendaId: string;
