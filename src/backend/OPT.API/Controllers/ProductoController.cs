@@ -16,31 +16,33 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
     : ControllerBase
 {
     // ── GET /api/productos ───────────────────────────────────────────────
-
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? tipo,
         [FromQuery] Guid? categoriaId,
-        [FromQuery] string? busqueda,
+        [FromQuery] bool soloRaices = false,
+        [FromQuery] Guid? padreId = null,
+        [FromQuery] string? busqueda = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetProductosQuery(
-            TenantId: tenantService.TenantId,
-            TipoProducto: tipo,
+        var result = await mediator.Send(new GetProductosQuery(
+            TenantId:    tenantService.TenantId,
+            Tipo:        tipo,
             CategoriaId: categoriaId,
-            Busqueda: busqueda,
-            Page: page,
-            PageSize: pageSize);
+            SoloRaices:  soloRaices,
+            PadreId:     padreId,
+            Busqueda:    busqueda,
+            Page:        page,
+            PageSize:    pageSize),
+            cancellationToken);
 
-        var result = await mediator.Send(query, cancellationToken);
         return Ok(result);
     }
 
     // ── GET /api/productos/{id} ──────────────────────────────────────────
-
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -52,16 +54,15 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
         return result is null
             ? NotFound(new ProblemDetails
             {
-                Status = 404,
-                Title = "Recurso no encontrado",
-                Detail = $"Producto {id} no encontrado.",
+                Status   = 404,
+                Title    = "Recurso no encontrado",
+                Detail   = $"Producto {id} no encontrado.",
                 Instance = HttpContext.Request.Path
             })
             : Ok(result);
     }
 
     // ── POST /api/productos ──────────────────────────────────────────────
-
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -70,21 +71,22 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
         [FromBody] CreateProductoRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateProductoCommand(
-            TenantId: tenantService.TenantId,
-            CategoriaId: request.CategoriaId,
-            Nombre: request.Nombre,
-            Descripcion: request.Descripcion,
-            TipoProducto: request.TipoProducto,
-            CodigoInterno: request.CodigoInterno,
-            CreatedBy: User.Identity?.Name ?? "system");
+        var id = await mediator.Send(new CreateProductoCommand(
+            TenantId:       tenantService.TenantId,
+            CodigoInterno:  request.CodigoInterno,
+            Nombre:         request.Nombre,
+            Descripcion:    request.Descripcion,
+            Tipo:           request.Tipo,
+            UnidadMedida:   request.UnidadMedida,
+            CategoriaId:    request.CategoriaId,
+            ProductoPadreId: request.ProductoPadreId,
+            CreatedBy:      User.Identity?.Name ?? "system"),
+            cancellationToken);
 
-        var id = await mediator.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
     // ── PUT /api/productos/{id} ──────────────────────────────────────────
-
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -94,23 +96,24 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
         [FromBody] UpdateProductoRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateProductoCommand(
-            ProductoId: id,
-            TenantId: tenantService.TenantId,
-            CategoriaId: request.CategoriaId,
-            Nombre: request.Nombre,
-            Descripcion: request.Descripcion,
-            TipoProducto: request.TipoProducto,
-            CodigoInterno: request.CodigoInterno,
-            Activo: request.Activo,
-            UpdatedBy: User.Identity?.Name ?? "system");
+        await mediator.Send(new UpdateProductoCommand(
+            ProductoId:     id,
+            TenantId:       tenantService.TenantId,
+            CodigoInterno:  request.CodigoInterno,
+            Nombre:         request.Nombre,
+            Descripcion:    request.Descripcion,
+            Tipo:           request.Tipo,
+            UnidadMedida:   request.UnidadMedida,
+            CategoriaId:    request.CategoriaId,
+            ProductoPadreId: request.ProductoPadreId,
+            IsActivo:       request.IsActivo,
+            UpdatedBy:      User.Identity?.Name ?? "system"),
+            cancellationToken);
 
-        await mediator.Send(command, cancellationToken);
         return NoContent();
     }
 
     // ── DELETE /api/productos/{id} ───────────────────────────────────────
-
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -122,77 +125,23 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
         return NoContent();
     }
 
-    // ── GET /api/productos/{id}/variantes ────────────────────────────────
-
-    [HttpGet("{id:guid}/variantes")]
-    [ProducesResponseType(typeof(IReadOnlyList<ProductoVarianteDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetVariantes(Guid id, CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(
-            new GetVariantesByProductoQuery(id, tenantService.TenantId), cancellationToken);
-        return Ok(result);
-    }
-
-    // ── POST /api/productos/{id}/variantes ───────────────────────────────
-
-    [HttpPost("{id:guid}/variantes")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CreateVariante(
-        Guid id,
-        [FromBody] CreateProductoVarianteRequest request,
-        CancellationToken cancellationToken)
-    {
-        var command = new CreateProductoVarianteCommand(
-            ProductoId: id,
-            TenantId: tenantService.TenantId,
-            Nombre: request.Nombre,
-            CodigoBarras: request.CodigoBarras,
-            CreatedBy: User.Identity?.Name ?? "system");
-
-        var varianteId = await mediator.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(GetVariantes), new { id }, new { id = varianteId });
-    }
-
-    // ── PUT /api/productos/{id}/variantes/{varianteId} ───────────────────
-
-    [HttpPut("{id:guid}/variantes/{varianteId:guid}")]
+    // ── PUT /api/productos/{id}/precio ───────────────────────────────────
+    [HttpPut("{id:guid}/precio")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateVariante(
+    public async Task<IActionResult> SetPrecio(
         Guid id,
-        Guid varianteId,
-        [FromBody] UpdateProductoVarianteRequest request,
+        [FromBody] SetPrecioProductoRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateProductoVarianteCommand(
-            VarianteId: varianteId,
-            ProductoId: id,
-            TenantId: tenantService.TenantId,
-            Nombre: request.Nombre,
-            CodigoBarras: request.CodigoBarras,
-            Activo: request.Activo,
-            UpdatedBy: User.Identity?.Name ?? "system");
-
-        await mediator.Send(command, cancellationToken);
-        return NoContent();
-    }
-
-    // ── DELETE /api/productos/{id}/variantes/{varianteId} ────────────────
-
-    [HttpDelete("{id:guid}/variantes/{varianteId:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteVariante(
-        Guid id,
-        Guid varianteId,
-        CancellationToken cancellationToken)
-    {
-        await mediator.Send(
-            new DeleteProductoVarianteCommand(varianteId, tenantService.TenantId, User.Identity?.Name ?? "system"),
+        await mediator.Send(new SetPrecioProductoCommand(
+            ProductoId:  id,
+            TenantId:    tenantService.TenantId,
+            PrecioCosto: request.PrecioCosto,
+            PrecioVenta: request.PrecioVenta,
+            CreatedBy:   User.Identity?.Name ?? "system"),
             cancellationToken);
+
         return NoContent();
     }
 }
@@ -200,25 +149,24 @@ public class ProductoController(IMediator mediator, ICurrentTenantService tenant
 // ── Request DTOs ─────────────────────────────────────────────────────────────
 
 public record CreateProductoRequest(
-    Guid? CategoriaId,
+    string CodigoInterno,
     string Nombre,
     string? Descripcion,
-    string TipoProducto,
-    string? CodigoInterno);
+    string Tipo,
+    string? UnidadMedida,
+    Guid? CategoriaId,
+    Guid? ProductoPadreId);
 
 public record UpdateProductoRequest(
-    Guid? CategoriaId,
+    string CodigoInterno,
     string Nombre,
     string? Descripcion,
-    string TipoProducto,
-    string? CodigoInterno,
-    bool Activo);
+    string Tipo,
+    string? UnidadMedida,
+    Guid? CategoriaId,
+    Guid? ProductoPadreId,
+    bool IsActivo);
 
-public record CreateProductoVarianteRequest(
-    string Nombre,
-    string? CodigoBarras);
-
-public record UpdateProductoVarianteRequest(
-    string Nombre,
-    string? CodigoBarras,
-    bool Activo);
+public record SetPrecioProductoRequest(
+    decimal? PrecioCosto,
+    decimal? PrecioVenta);

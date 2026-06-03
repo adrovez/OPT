@@ -6,8 +6,6 @@ import {
   ProductosPagedResult,
   CreateProductoRequest,
   UpdateProductoRequest,
-  CreateProductoVarianteRequest,
-  UpdateProductoVarianteRequest,
 } from '../models/producto.model';
 import { environment } from '../../../environments/environment';
 
@@ -22,6 +20,8 @@ export class ProductoService {
     tipo?: string;
     categoriaId?: string;
     busqueda?: string;
+    soloRaices?: boolean;
+    padreId?: string;
   } = {}): Observable<ProductosPagedResult> {
     let httpParams = new HttpParams()
       .set('page', (params.page ?? 1).toString())
@@ -29,6 +29,8 @@ export class ProductoService {
     if (params.tipo) httpParams = httpParams.set('tipo', params.tipo);
     if (params.categoriaId) httpParams = httpParams.set('categoriaId', params.categoriaId);
     if (params.busqueda?.trim()) httpParams = httpParams.set('busqueda', params.busqueda.trim());
+    if (params.soloRaices !== undefined) httpParams = httpParams.set('soloRaices', params.soloRaices.toString());
+    if (params.padreId) httpParams = httpParams.set('padreId', params.padreId);
     return this.http.get<ProductosPagedResult>(this.apiUrl, { params: httpParams });
   }
 
@@ -46,21 +48,5 @@ export class ProductoService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  createVariante(productoId: string, request: CreateProductoVarianteRequest): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(`${this.apiUrl}/${productoId}/variantes`, request);
-  }
-
-  updateVariante(
-    productoId: string,
-    varianteId: string,
-    request: UpdateProductoVarianteRequest,
-  ): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${productoId}/variantes/${varianteId}`, request);
-  }
-
-  deleteVariante(productoId: string, varianteId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${productoId}/variantes/${varianteId}`);
   }
 }

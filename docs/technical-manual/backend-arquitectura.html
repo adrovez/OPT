@@ -194,14 +194,14 @@
           <tr><td><code>Usuario</code></td><td>UsuarioId <small>(Guid)</small></td><td>✓</td><td>Usuario del sistema. Login por RUT + contraseña. Navigation: <code>ICollection&lt;UsuarioSucursal&gt;</code></td></tr>
           <tr><td><code>UsuarioSucursal</code></td><td>PK compuesta <small>(UsuarioId, SucursalId)</small></td><td>—</td><td>Pivote M:N entre Usuario y Sucursal. Campos: AssignedAt, AssignedBy.</td></tr>
           <tr><td><code>Agenda</code></td><td>AgendaId <small>(Guid)</small></td><td>✓</td><td>Cita de cliente. Scoped a SucursalId. Estados: Pendiente/Confirmada/Atendida/Cancelada/NoShow.</td></tr>
-          <tr><td><code>ProductoCategoria</code></td><td>ProductoCategoriaId <small>(Guid)</small></td><td>✓</td><td>Catálogo de categorías de productos.</td></tr>
-          <tr><td><code>Producto</code></td><td>ProductoId <small>(Guid)</small></td><td>✓</td><td>Catálogo maestro. TipoProducto: Almacenable/Consumible/Servicio. Sin precios ni stock.</td></tr>
-          <tr><td><code>ProductoVariante</code></td><td>ProductoVarianteId <small>(Guid)</small></td><td>✓</td><td>SKU/variante de un producto. CodigoBarras único. FK cascade a Producto.</td></tr>
-          <tr><td><code>Stock</code></td><td>StockId <small>(Guid)</small></td><td>✓</td><td>Stock por VarianteId + SucursalId.</td></tr>
-          <tr><td><code>MovimientoStock</code></td><td>MovimientoStockId <small>(Guid)</small></td><td>✓</td><td>Historial de movimientos. TipoMovimiento: Entrada/Salida/Ajuste. DocumentoId nullable.</td></tr>
-          <tr><td><code>PrecioProducto</code></td><td>PrecioId <small>(Guid)</small></td><td>✓</td><td>Historial de precios. VigenciaHasta NULL = vigente. Sin IsDeleted.</td></tr>
-          <tr><td><code>DocumentoStock</code></td><td>DocumentoId <small>(Guid)</small></td><td>✓</td><td>Documento de entrada (FacturaCompra/BoletaCompra/OtroIngreso). Estado: Confirmado/Anulado.</td></tr>
-          <tr><td><code>DocumentoStockLinea</code></td><td>LineaId <small>(Guid)</small></td><td>—</td><td>Línea de documento. FK cascade a DocumentoStock.</td></tr>
+          <tr><td><code>Categoria</code></td><td>CategoriaId <small>(Guid)</small></td><td>✓</td><td>Catálogo plano de categorías. Reemplaza ProductoCategoria. Campos: Nombre, Descripcion, IsActivo.</td></tr>
+          <tr><td><code>Producto</code></td><td>ProductoId <small>(Guid)</small></td><td>✓</td><td>Jerarquía self-ref (<code>ProductoPadreId</code> nullable). Tipo: 'Producto'|'Servicio'. CodigoInterno único por tenant (obligatorio). Sin variantes — los hijos son los SKUs.</td></tr>
+          <tr><td><code>Stock</code></td><td>StockId <small>(Guid)</small></td><td>✓</td><td>Stock por ProductoId + SucursalId. CantidadDisponible permite negativo. StockMinimo para alertas.</td></tr>
+          <tr><td><code>MovimientoStock</code></td><td>MovimientoStockId <small>(Guid)</small></td><td>✓</td><td>Registro inmutable. 7 tipos: Entrada, Salida, Ajuste, Merma, DevolucionProveedor, TransferenciaEntrada, TransferenciaSalida. FK opcional a DocumentoEntrada y Transferencia.</td></tr>
+          <tr><td><code>PrecioProducto</code></td><td>PrecioId <small>(Guid)</small></td><td>✓</td><td>Historial de precios global (sin SucursalId). PrecioCosto + PrecioVenta opcionales. VigenciaHasta NULL = vigente. Sin IsDeleted.</td></tr>
+          <tr><td><code>DocumentoEntrada</code></td><td>DocumentoId <small>(Guid)</small></td><td>✓</td><td>Documento de entrada de mercadería (FacturaCompra/BoletaCompra/GuiaDespacho/OtroIngreso). Estado: Borrador → Confirmado|Anulado.</td></tr>
+          <tr><td><code>DocumentoEntradaLinea</code></td><td>LineaId <small>(Guid)</small></td><td>—</td><td>Línea del documento de entrada. ProductoId FK, Cantidad > 0, PrecioCosto nullable. ON DELETE CASCADE.</td></tr>
+          <tr><td><code>Transferencia</code></td><td>TransferenciaId <small>(Guid)</small></td><td>✓</td><td>Transferencia de stock entre sucursales. Estado: Pendiente → Confirmada|Anulada. Stock se mueve al confirmar.</td></tr>
           <tr><td><code>Atencion</code></td><td>AtencionId <small>(Guid)</small></td><td>✓</td><td>Atención clínica. Vincula AgendaId (nullable). Estados: EnEspera/EnAtencion/Finalizada.</td></tr>
           <tr><td><code>CobroServicio</code></td><td>CobroId <small>(Guid)</small></td><td>✓</td><td>Cobro asociado a Atención. FK a FormaPago (int).</td></tr>
           <tr><td><code>Region</code></td><td>IdRegion <small>(int)</small></td><td>—</td><td>Catálogo compartido. Solo lectura.</td></tr>
@@ -217,7 +217,7 @@
         <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IAgendaRepository, IProductoRepository, IProductoCategoriaRepository, IProductoVarianteRepository, IStockRepository, IDocumentoStockRepository, IAtencionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IAgendaRepository, ICategoriaRepository, IProductoRepository, IStockRepository, IDocumentoEntradaRepository, ITransferenciaRepository, IPrecioProductoRepository, IAtencionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
           <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator</td></tr>
           <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers → retornan <code>Guid</code></td></tr>
           <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById (Guid) + handlers</td></tr>
@@ -231,9 +231,12 @@
           <tr><td><code>Regiones/</code></td><td>GetRegionesWithComunasQuery + RegionWithComunasDto</td></tr>
           <tr><td><code>Roles/</code></td><td>GetRolesQuery + RolDto</td></tr>
           <tr><td><code>Agenda/</code></td><td>CRUD Commands + Queries + CambiarEstadoAgendaCommand</td></tr>
-          <tr><td><code>Productos/</code></td><td>CRUD Commands + Queries (Producto, Variante, Categoria)</td></tr>
-          <tr><td><code>Stock/</code></td><td>GetStockQuery, RegistrarMovimientoCommand (Salida/Ajuste directos)</td></tr>
-          <tr><td><code>DocumentosStock/</code></td><td>CrearYConfirmarDocumentoCommand (atómico: Stock+Precio), AnularDocumentoCommand, GetDocumentosQuery</td></tr>
+          <tr><td><code>Categorias/</code></td><td>CRUD Commands + Queries para OPT_Categoria (ruta <code>/api/categorias</code>)</td></tr>
+          <tr><td><code>Productos/</code></td><td>CRUD Commands + Queries; jerarquía self-ref (padre/hijos); SetPrecioProductoCommand</td></tr>
+          <tr><td><code>Stock/</code></td><td>GetStockQuery (paginado), RegistrarMovimientoCommand (Salida/Ajuste/Merma/DevolucionProveedor directos)</td></tr>
+          <tr><td><code>DocumentoEntrada/</code></td><td>CrearDocumentoEntradaCommand (Borrador), ConfirmarDocumentoCommand (atómico: Stock+Precio), CambiarEstadoDocumentoCommand (Anular via PATCH), GetDocumentosEntradaQuery</td></tr>
+          <tr><td><code>Transferencia/</code></td><td>CrearTransferenciaCommand, ConfirmarTransferenciaCommand (genera par TransferenciaSalida+TransferenciaEntrada), GetTransferenciasQuery</td></tr>
+          <tr><td><code>Precios/</code></td><td>GetPreciosVigentesQuery, GetHistorialPrecioQuery, SetPrecioCommand (cierra vigente + crea nuevo)</td></tr>
           <tr><td><code>Atenciones/</code></td><td>IniciarAtencionCommand (atómico: Atención+Anamnesis+Receta), GetAtencionesQuery, GetAtencionByIdQuery, CambiarEstadoAtencionCommand</td></tr>
           <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt; — propiedades <code>init</code>, usar object initializer</td></tr>
         </table>
@@ -242,7 +245,7 @@
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
           <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted) y <code>HasDefaultValueSql("NEWSEQUENTIALID()")</code></td></tr>
-          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository, RegionRepository, AgendaRepository, ProductoRepository, ProductoCategoriaRepository, ProductoVarianteRepository, StockRepository, DocumentoStockRepository (CrearYConfirmarAsync atómico, AnularAsync compensatorio), AtencionRepository</td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository, RegionRepository, AgendaRepository, CategoriaRepository, ProductoRepository, StockRepository, DocumentoEntradaRepository (ConfirmarAsync atómico, AnularAsync compensatorio), TransferenciaRepository, PrecioProductoRepository, AtencionRepository</td></tr>
           <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService (Guid.TryParse), BcryptPasswordHasher</td></tr>
           <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
         </table>
@@ -250,7 +253,7 @@
         <h3>OPT.API</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController, ContactoController, AnamnesisController, RecetaCristalesController, SucursalController, UsuarioController, RegionController, RolController, AgendaController (X-Sucursal-Id), ProductoController, ProductoCategoriaController, StockController (X-Sucursal-Id), DocumentosStockController (X-Sucursal-Id), AtencionController, FormaPagoController</td></tr>
+          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController, ContactoController, AnamnesisController, RecetaCristalesController, SucursalController, UsuarioController, RegionController, RolController, AgendaController (X-Sucursal-Id), CategoriaController (<code>/api/categorias</code>), ProductoController, StockController (X-Sucursal-Id), DocumentoEntradaController (<code>/api/documentos-entrada</code>, X-Sucursal-Id), TransferenciaController (<code>/api/transferencias</code>), PrecioController (<code>/api/precios</code>), AtencionController, FormaPagoController</td></tr>
           <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
           <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
         </table>
@@ -490,18 +493,19 @@ CREATE TABLE [dbo].[OPT_NuevoModulo] (
 );</pre>
 
         <div class="alert alert-green">
-          <strong>Módulos implementados (sesiones 11–16):</strong> Todos los módulos backend están completos:
+          <strong>Módulos implementados (sesiones 11–21):</strong> Todos los módulos backend y frontend están completos:
           Sucursales, Usuarios (M:N), Roles (catálogo), Agenda (PATCH /estado, X-Sucursal-Id),
-          FormaPago (catálogo), Categorías+Productos+Variantes, Stock+MovimientoStock (X-Sucursal-Id),
-          DocumentosStock (crear+confirmar atómico, anular compensatorio), PrecioProducto (historial),
+          FormaPago (catálogo), Categorías+Productos (jerarquía self-ref, CodigoInterno obligatorio),
+          Stock+MovimientoStock (X-Sucursal-Id, 7 tipos), DocumentoEntrada (crear/confirmar atómico, anular compensatorio),
+          Transferencias (entre sucursales), PrecioProducto (historial global, frontend lista+modal edición),
           Atenciones (POST /iniciar crea Atención+Anamnesis+Receta atómicamente), CobroServicio.
-          Scripts SQL completos: <code>000–024</code>. Próximo: <code>025_</code>.
+          Scripts SQL completos: <code>000–027</code>. Próximo: <code>028_</code>.
         </div>
         <div class="alert alert-amber">
           <strong>Regla crítica — ICurrentTenantService:</strong> Solo se usa en controllers y middleware. Los handlers de Application <strong>NO</strong> inyectan ICurrentTenantService. El controller extrae TenantId/SucursalId/UsuarioId/CreatedBy y los pasa en el command/query. Inyectarlo en handlers viola Clean Architecture.
         </div>
         <div class="alert alert-blue">
-          <strong>Módulo futuro pendiente:</strong> Salida por documentos (<code>025_</code>) — OrdenTrabajo, Devoluciones, OtroEgreso. Por ahora solo Salida directa desde form por fila.
+          <strong>Módulos frontend pendientes:</strong> Transferencias (backend implementado, sin pantalla Angular), Salida por documentos (OrdenTrabajo, Devoluciones, OtroEgreso — solo Salida directa disponible), Dashboard/Home screen.
         </div>
       </section>
 

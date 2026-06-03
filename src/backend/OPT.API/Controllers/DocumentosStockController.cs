@@ -2,22 +2,22 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OPT.Application.Common;
-using OPT.Application.DocumentoStock.Commands;
-using OPT.Application.DocumentoStock.DTOs;
-using OPT.Application.DocumentoStock.Queries;
+using OPT.Application.DocumentoEntrada.Commands;
+using OPT.Application.DocumentoEntrada.DTOs;
+using OPT.Application.DocumentoEntrada.Queries;
 using OPT.Application.Interfaces;
 
 namespace OPT.API.Controllers;
 
 /// <summary>
-/// Documentos de entrada de stock (FacturaCompra, BoletaCompra, OtroIngreso).
-/// Al confirmar un documento se actualizan stock y precio de costo.
+/// Documentos de entrada de stock (FacturaCompra, BoletaCompra, GuiaDespacho, OtroIngreso).
+/// Flujo: Crear (Borrador) → PATCH estado (Confirmado) → actualiza stock y precio de costo.
 /// Requiere JWT válido y header X-Sucursal-Id.
 /// </summary>
 [ApiController]
-[Route("api/documentos-stock")]
+[Route("api/documentos-entrada")]
 [Authorize]
-public class DocumentosStockController(
+public class DocumentoEntradaController(
     IMediator mediator,
     ICurrentTenantService tenantService) : ControllerBase
 {
@@ -32,20 +32,15 @@ public class DocumentosStockController(
         Status   = 400,
         Title    = "Header requerido",
         Detail   = "El header 'X-Sucursal-Id' es obligatorio y debe ser un GUID válido.",
-        Instance = HttpContext.Request.Path,
+        Instance = HttpContext.Request.Path
     });
 
-    // ── GET /api/documentos-stock ────────────────────────────────────────────
-
-    /// <summary>Lista documentos de stock de la sucursal activa con filtros opcionales.</summary>
+    // ── GET /api/documentos-entrada ──────────────────────────────────────────
     [HttpGet]
-    [ProducesResponseType(typeof(PagedResult<DocumentoStockDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<DocumentoEntradaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetDocumentos(
-        [FromQuery] string? tipo,
         [FromQuery] string? estado,
-        [FromQuery] DateOnly? desde,
-        [FromQuery] DateOnly? hasta,
         [FromQuery] int page     = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -54,28 +49,23 @@ public class DocumentosStockController(
         if (sucursalId is null) return SucursalRequerida();
 
         return Ok(await mediator.Send(
-            new GetDocumentosQuery(
-                TenantId:  tenantService.TenantId,
+            new GetDocumentosEntradaQuery(
+                TenantId:   tenantService.TenantId,
                 SucursalId: sucursalId.Value,
-                Tipo:      tipo,
-                Estado:    estado,
-                Desde:     desde,
-                Hasta:     hasta,
-                Page:      page,
-                PageSize:  pageSize),
+                Estado:     estado,
+                Page:       page,
+                PageSize:   pageSize),
             cancellationToken));
     }
 
-    // ── GET /api/documentos-stock/{id} ───────────────────────────────────────
-
-    /// <summary>Obtiene un documento con sus líneas.</summary>
+    // ── GET /api/documentos-entrada/{id} ────────────────────────────────────
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(DocumentoStockDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(DocumentoEntradaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetDocumentoByIdQuery(tenantService.TenantId, id),
+            new GetDocumentoEntradaByIdQuery(tenantService.TenantId, id),
             cancellationToken);
 
         return result is null
@@ -84,56 +74,62 @@ public class DocumentosStockController(
                 Status   = 404,
                 Title    = "Recurso no encontrado",
                 Detail   = $"No se encontró el documento {id}.",
-                Instance = HttpContext.Request.Path,
+                Instance = HttpContext.Request.Path
             })
             : Ok(result);
     }
 
-    // ── POST /api/documentos-stock ───────────────────────────────────────────
-
-    /// <summary>
-    /// Crea y confirma un documento de entrada. Actualiza stock y precio de costo.
-    /// </summary>
+    // ── POST /api/documentos-entrada ─────────────────────────────────────────
+    /// <summary>Crea el documento en estado Borrador.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Crear(
-        [FromBody] CrearDocumentoRequest request,
+        [FromBody] CrearDocumentoEntradaRequest request,
         CancellationToken cancellationToken)
     {
         var sucursalId = ParseSucursalHeader();
         if (sucursalId is null) return SucursalRequerida();
 
-        var documentoId = await mediator.Send(new CrearYConfirmarDocumentoCommand(
+        var documentoId = await mediator.Send(new CrearDocumentoEntradaCommand(
             TenantId:        tenantService.TenantId,
             SucursalId:      sucursalId.Value,
-            UsuarioId:       tenantService.UsuarioId,
-            CreatedBy:       tenantService.RutUsuario,
             TipoDocumento:   request.TipoDocumento,
             NumeroDocumento: request.NumeroDocumento,
-            Fecha:           request.Fecha,
+            FechaDocumento:  request.FechaDocumento,
             ProveedorNombre: request.ProveedorNombre,
-            Observacion:     request.Observacion,
+            ProveedorRut:    request.ProveedorRut,
+            Observaciones:   request.Observaciones,
             Lineas:          request.Lineas
-                .Select(l => new DocumentoLineaInput(l.VarianteId, l.Cantidad, l.PrecioCosto))
-                .ToList()),
+                .Select(l => new DocumentoEntradaLineaInput(
+                    l.ProductoId, l.Cantidad, l.PrecioCosto, l.Observaciones))
+                .ToList(),
+            CreatedBy: tenantService.RutUsuario),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = documentoId }, new { documentoId });
     }
 
-    // ── POST /api/documentos-stock/{id}/anular ───────────────────────────────
-
-    /// <summary>Anula un documento confirmado. Genera movimientos de compensación.</summary>
-    [HttpPost("{id:guid}/anular")]
+    // ── PATCH /api/documentos-entrada/{id}/estado ────────────────────────────
+    /// <summary>
+    /// Transición de estado.
+    /// Confirmar: genera MovimientosStock(Entrada) + actualiza PrecioProducto.
+    /// Anular: genera movimientos compensatorios (solo si Confirmado).
+    /// </summary>
+    [HttpPatch("{id:guid}/estado")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Anular(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CambiarEstado(
+        Guid id,
+        [FromBody] CambiarEstadoDocumentoRequest request,
+        CancellationToken cancellationToken)
     {
-        await mediator.Send(new AnularDocumentoCommand(
+        await mediator.Send(new CambiarEstadoDocumentoEntradaCommand(
             TenantId:    tenantService.TenantId,
             DocumentoId: id,
+            Estado:      request.Estado,
             UsuarioId:   tenantService.UsuarioId,
             UpdatedBy:   tenantService.RutUsuario),
             cancellationToken);
@@ -142,17 +138,21 @@ public class DocumentosStockController(
     }
 }
 
-// ── Request records ───────────────────────────────────────────────────────────
+// ── Request DTOs ─────────────────────────────────────────────────────────────
 
-public record CrearDocumentoRequest(
+public record CrearDocumentoEntradaRequest(
     string TipoDocumento,
-    string NumeroDocumento,
-    DateOnly Fecha,
+    string? NumeroDocumento,
+    DateOnly FechaDocumento,
     string? ProveedorNombre,
-    string? Observacion,
-    IReadOnlyList<CrearDocumentoLineaRequest> Lineas);
+    string? ProveedorRut,
+    string? Observaciones,
+    IReadOnlyList<CrearDocumentoEntradaLineaRequest> Lineas);
 
-public record CrearDocumentoLineaRequest(
-    Guid VarianteId,
+public record CrearDocumentoEntradaLineaRequest(
+    Guid ProductoId,
     int Cantidad,
-    decimal? PrecioCosto);
+    decimal? PrecioCosto,
+    string? Observaciones);
+
+public record CambiarEstadoDocumentoRequest(string Estado);

@@ -37,20 +37,20 @@ public static class DependencyInjection
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(
+                    ValidateIssuer            = true,
+                    ValidateAudience          = true,
+                    ValidateLifetime          = true,
+                    ValidateIssuerSigningKey  = true,
+                    ValidIssuer               = jwtSettings.Issuer,
+                    ValidAudience             = jwtSettings.Audience,
+                    IssuerSigningKey          = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(jwtSettings.Secret))
                 };
             });
 
         services.AddAuthorization();
 
-        // ── Repositorios ───────────────────────────────────────────────────
+        // ── Repositorios (módulos no-inventario) ───────────────────────────
         services.AddScoped<IClienteRepository, ClienteRepository>();
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<IRegionRepository, RegionRepository>();
@@ -64,11 +64,14 @@ public static class DependencyInjection
         services.AddScoped<IFormaPagoRepository, FormaPagoRepository>();
         services.AddScoped<IAtencionRepository, AtencionRepository>();
         services.AddScoped<ICobroServicioRepository, CobroServicioRepository>();
-        services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
+
+        // ── Repositorios inventario (esquema 027) ──────────────────────────
+        services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
-        services.AddScoped<IProductoVarianteRepository, ProductoVarianteRepository>();
+        services.AddScoped<IPrecioProductoRepository, PrecioProductoRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
-        services.AddScoped<IDocumentoStockRepository, DocumentoStockRepository>();
+        services.AddScoped<IDocumentoEntradaRepository, DocumentoEntradaRepository>();
+        services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

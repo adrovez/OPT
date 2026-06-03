@@ -5,9 +5,9 @@ namespace OPT.Application.Stock.DTOs;
 
 public record StockDto(
     Guid StockId,
-    Guid VarianteId,
-    string VarianteNombre,
+    Guid ProductoId,
     string ProductoNombre,
+    string CodigoInterno,
     Guid SucursalId,
     int CantidadDisponible,
     int StockMinimo,
@@ -15,8 +15,7 @@ public record StockDto(
 
 public record MovimientoStockDto(
     Guid MovimientoId,
-    Guid VarianteId,
-    string VarianteNombre,
+    Guid ProductoId,
     string ProductoNombre,
     string TipoMovimiento,
     int Cantidad,
@@ -31,9 +30,9 @@ internal static class StockMappingExtensions
 {
     internal static StockDto ToDto(this StockEntity s) => new(
         StockId:            s.StockId,
-        VarianteId:         s.VarianteId,
-        VarianteNombre:     s.Variante?.Nombre ?? string.Empty,
-        ProductoNombre:     s.Variante?.Producto?.Nombre ?? string.Empty,
+        ProductoId:         s.ProductoId,
+        ProductoNombre:     s.Producto?.Nombre ?? string.Empty,
+        CodigoInterno:      s.Producto?.CodigoInterno ?? string.Empty,
         SucursalId:         s.SucursalId,
         CantidadDisponible: s.CantidadDisponible,
         StockMinimo:        s.StockMinimo,
@@ -41,9 +40,8 @@ internal static class StockMappingExtensions
 
     internal static MovimientoStockDto ToDto(this MovimientoStock m) => new(
         MovimientoId:    m.MovimientoId,
-        VarianteId:      m.VarianteId,
-        VarianteNombre:  m.Variante?.Nombre ?? string.Empty,
-        ProductoNombre:  m.Variante?.Producto?.Nombre ?? string.Empty,
+        ProductoId:      m.ProductoId,
+        ProductoNombre:  m.Producto?.Nombre ?? string.Empty,
         TipoMovimiento:  m.TipoMovimiento,
         Cantidad:        m.Cantidad,
         CantidadAntes:   m.CantidadAntes,

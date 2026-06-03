@@ -13,6 +13,10 @@ export class RecetaCristalesService {
     return this.http.get<RecetaCristalesDto>(`${this.apiUrl}/${id}`);
   }
 
+  getByCliente(clienteId: string): Observable<RecetaCristalesDto[]> {
+    return this.http.get<RecetaCristalesDto[]>(`${this.apiUrl}?clienteId=${clienteId}`);
+  }
+
   update(id: string, request: UpdateRecetaCristalesRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, request);
   }

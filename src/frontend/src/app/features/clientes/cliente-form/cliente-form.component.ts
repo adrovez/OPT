@@ -655,6 +655,16 @@ export class ClienteFormComponent implements OnInit {
 
   private handleError(err: { status?: number; error?: { message?: string } }): void {
     this.loading.set(false);
+    if (err.status === 409) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cliente existente',
+        text: 'Ya existe un cliente registrado con ese RUT.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Cerrar',
+      });
+      return;
+    }
     const msg =
       err.error?.message ??
       (err.status === 400

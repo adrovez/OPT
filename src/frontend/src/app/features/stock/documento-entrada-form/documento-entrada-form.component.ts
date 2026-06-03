@@ -11,7 +11,7 @@ import Swal from 'sweetalert2';
 
 interface LineaState {
   id: string;
-  varianteId: string;
+  productoId: string;
   cantidad: number;
   precioCosto: number | null;
 }
@@ -224,24 +224,26 @@ interface LineaState {
                     @for (linea of lineas(); track linea.id) {
                       <tr class="hover:bg-gray-50/50 transition-colors">
 
-                        <!-- Variante selector -->
+                        <!-- Producto selector -->
                         <td class="px-4 py-2.5">
                           <select
-                            [value]="linea.varianteId"
-                            (change)="updateLineaVariante(linea.id, $any($event.target).value)"
+                            [value]="linea.productoId"
+                            (change)="updateLineaProducto(linea.id, $any($event.target).value)"
                             class="w-full px-2.5 py-2 text-sm rounded-lg border bg-white transition-colors
                                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            [class.border-red-300]="!linea.varianteId"
-                            [class.border-gray-200]="!!linea.varianteId"
+                            [class.border-red-300]="!linea.productoId"
+                            [class.border-gray-200]="!!linea.productoId"
                           >
                             <option value="">— Seleccionar —</option>
                             @for (p of productosActivos(); track p.productoId) {
-                              @if (variantesDisponibles(linea.id, p).length > 0) {
+                              @if (p.hijos.length > 0 && hijosDisponibles(linea.id, p).length > 0) {
                                 <optgroup [label]="p.nombre">
-                                  @for (v of variantesDisponibles(linea.id, p); track v.varianteId) {
-                                    <option [value]="v.varianteId">{{ v.nombre }}</option>
+                                  @for (h of hijosDisponibles(linea.id, p); track h.productoId) {
+                                    <option [value]="h.productoId">{{ h.nombre }}</option>
                                   }
                                 </optgroup>
+                              } @else if (p.hijos.length === 0 && esSeleccionableDirectamente(linea.id, p)) {
+                                <option [value]="p.productoId">{{ p.nombre }}{{ p.codigoInterno ? ' (' + p.codigoInterno + ')' : '' }}</option>
                               }
                             }
                           </select>
@@ -368,16 +370,16 @@ export class DocumentoEntradaFormComponent {
   readonly productos = signal<ProductoDto[]>([]);
 
   readonly productosActivos = computed(() =>
-    this.productos().filter(p => p.activo && p.variantes.some(v => v.activo))
+    this.productos().filter(p => p.isActivo && !p.productoPadreId)
   );
 
-  readonly usedVarianteIds = computed(() =>
-    new Set(this.lineas().map(l => l.varianteId).filter(id => id))
+  readonly usedProductoIds = computed(() =>
+    new Set(this.lineas().map(l => l.productoId).filter(id => id))
   );
 
   readonly lineasValidas = computed(() =>
     this.lineas().length > 0 &&
-    this.lineas().every(l => !!l.varianteId && l.cantidad > 0)
+    this.lineas().every(l => !!l.productoId && l.cantidad > 0)
   );
 
   readonly formValid = computed(() =>
@@ -397,18 +399,25 @@ export class DocumentoEntradaFormComponent {
     });
   }
 
-  variantesDisponibles(lineaId: string, producto: ProductoDto) {
+  hijosDisponibles(lineaId: string, producto: ProductoDto) {
     const currentLinea = this.lineas().find(l => l.id === lineaId);
-    const usedIds = this.usedVarianteIds();
-    return producto.variantes.filter(
-      v => v.activo && (v.varianteId === currentLinea?.varianteId || !usedIds.has(v.varianteId))
+    const usedIds = this.usedProductoIds();
+    return producto.hijos.filter(
+      h => h.isActivo && (h.productoId === currentLinea?.productoId || !usedIds.has(h.productoId))
     );
+  }
+
+  esSeleccionableDirectamente(lineaId: string, producto: ProductoDto): boolean {
+    if (producto.hijos.length > 0) return false;
+    const currentLinea = this.lineas().find(l => l.id === lineaId);
+    const usedIds = this.usedProductoIds();
+    return producto.productoId === currentLinea?.productoId || !usedIds.has(producto.productoId);
   }
 
   agregarLinea(): void {
     this.lineas.update(ls => [
       ...ls,
-      { id: crypto.randomUUID(), varianteId: '', cantidad: 1, precioCosto: null },
+      { id: crypto.randomUUID(), productoId: '', cantidad: 1, precioCosto: null },
     ]);
   }
 
@@ -416,8 +425,8 @@ export class DocumentoEntradaFormComponent {
     this.lineas.update(ls => ls.filter(l => l.id !== id));
   }
 
-  updateLineaVariante(id: string, varianteId: string): void {
-    this.lineas.update(ls => ls.map(l => l.id === id ? { ...l, varianteId } : l));
+  updateLineaProducto(id: string, productoId: string): void {
+    this.lineas.update(ls => ls.map(l => l.id === id ? { ...l, productoId } : l));
   }
 
   updateLineaCantidad(id: string, cantidad: number): void {
@@ -436,12 +445,12 @@ export class DocumentoEntradaFormComponent {
     this.loading.set(true);
     this.documentoService.crear({
       tipoDocumento:   this.tipoDocumento(),
-      numeroDocumento: this.numeroDocumento().trim(),
-      fecha:           this.fecha(),
+      numeroDocumento: this.numeroDocumento().trim() || undefined,
+      fechaDocumento:  this.fecha(),
       proveedorNombre: this.proveedorNombre().trim() || undefined,
-      observacion:     this.observacion().trim() || undefined,
+      observaciones:   this.observacion().trim() || undefined,
       lineas: this.lineas().map(l => ({
-        varianteId:  l.varianteId,
+        productoId:  l.productoId,
         cantidad:    l.cantidad,
         precioCosto: l.precioCosto ?? undefined,
       })),

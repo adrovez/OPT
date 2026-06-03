@@ -5,7 +5,6 @@ import { AnamnesisService } from '../../../core/services/anamnesis.service';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { AnamnesisDto } from '../../../core/models/anamnesis.model';
 import { AnamnesisFormComponent } from '../anamnesis-form/anamnesis-form.component';
-import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-anamnesis-list',
@@ -161,32 +160,20 @@ import Swal from 'sweetalert2';
 
                       <!-- Acciones -->
                       <td class="px-5 py-3.5 text-right">
-                        <div class="flex items-center justify-end gap-1">
-                          <button
-                            (click)="abrirFormulario(r)"
-                            class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            [attr.aria-label]="'Editar anamnesis del ' + (r.fechaRegistro | date:'dd/MM/yyyy')"
-                          >
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                                   m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                          </button>
-                          <button
-                            (click)="eliminar(r)"
-                            class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors
-                                   focus:outline-none focus:ring-2 focus:ring-red-500"
-                            [attr.aria-label]="'Eliminar anamnesis del ' + (r.fechaRegistro | date:'dd/MM/yyyy')"
-                          >
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7
-                                   m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                          </button>
-                        </div>
+                        <button
+                          (click)="verAnamnesis(r)"
+                          class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors
+                                 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          [attr.aria-label]="'Ver anamnesis del ' + (r.fechaRegistro | date:'dd/MM/yyyy')"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7
+                                 -1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                          </svg>
+                        </button>
                       </td>
 
                     </tr>
@@ -205,6 +192,7 @@ import Swal from 'sweetalert2';
       <app-anamnesis-form
         [anamnesis]="seleccionada()"
         [clienteId]="clienteId()"
+        [viewOnly]="viewOnlyMode()"
         (saved)="onFormSaved()"
         (cancelled)="cerrarFormulario()"
       />
@@ -224,6 +212,7 @@ export class AnamnesisListComponent implements OnInit {
   readonly showForm = signal(false);
   readonly seleccionada = signal<AnamnesisDto | null>(null);
   readonly clienteId = signal('');
+  readonly viewOnlyMode = signal(false);
 
   private static readonly UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -265,57 +254,26 @@ export class AnamnesisListComponent implements OnInit {
 
   abrirFormulario(r: AnamnesisDto | null): void {
     this.seleccionada.set(r);
+    this.viewOnlyMode.set(false);
+    this.showForm.set(true);
+  }
+
+  verAnamnesis(r: AnamnesisDto): void {
+    this.seleccionada.set(r);
+    this.viewOnlyMode.set(true);
     this.showForm.set(true);
   }
 
   cerrarFormulario(): void {
     this.showForm.set(false);
     this.seleccionada.set(null);
+    this.viewOnlyMode.set(false);
   }
 
   onFormSaved(): void {
     this.cerrarFormulario();
     this.anamnesisService.getByCliente(this.clienteId()).subscribe({
       next: (lista) => this.registros.set(lista),
-    });
-  }
-
-  eliminar(r: AnamnesisDto): void {
-    Swal.fire({
-      icon: 'warning',
-      title: '¿Eliminar anamnesis?',
-      html: `¿Está seguro que desea eliminar este registro?<br>
-             <span class="text-sm text-gray-500">Esta acción no se puede deshacer.</span>`,
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      reverseButtons: true,
-    }).then((result) => {
-      if (!result.isConfirmed) return;
-
-      this.anamnesisService.delete(r.anamnesisId).subscribe({
-        next: () => {
-          this.registros.update((list) => list.filter((a) => a.anamnesisId !== r.anamnesisId));
-          Swal.fire({
-            icon: 'success',
-            title: 'Registro eliminado',
-            confirmButtonColor: '#2563eb',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false,
-          });
-        },
-        error: () =>
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al eliminar',
-            text: 'No se pudo eliminar el registro. Intente nuevamente.',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Cerrar',
-          }),
-      });
     });
   }
 

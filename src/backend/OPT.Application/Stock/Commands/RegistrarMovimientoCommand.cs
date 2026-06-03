@@ -5,7 +5,7 @@ namespace OPT.Application.Stock.Commands;
 public record RegistrarMovimientoCommand(
     Guid TenantId,
     Guid SucursalId,
-    Guid VarianteId,
+    Guid ProductoId,
     Guid UsuarioId,
     string TipoMovimiento,
     int Cantidad,

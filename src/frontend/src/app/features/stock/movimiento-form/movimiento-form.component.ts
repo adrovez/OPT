@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
       (click)="onBackdropClick($event)"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
+        class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col"
         (click)="$event.stopPropagation()"
       >
         <!-- Header -->
@@ -24,7 +24,7 @@ import Swal from 'sweetalert2';
           <div>
             <h2 class="text-lg font-semibold text-gray-900">Registrar movimiento</h2>
             <p class="text-xs text-gray-400 mt-0.5 truncate max-w-[18rem]">
-              {{ stock()?.productoNombre }} — {{ stock()?.varianteNombre }}
+              {{ stock()?.productoNombre }}
             </p>
           </div>
           <button
@@ -41,7 +41,7 @@ import Swal from 'sweetalert2';
         </div>
 
         <!-- Stock actual (resumen) -->
-        <div class="mx-6 mt-5 flex items-center gap-4 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+        <div class="mx-6 mt-5 flex items-center gap-4 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 shrink-0">
           <div class="text-center">
             <p class="text-xs text-gray-400">Stock actual</p>
             <p class="text-xl font-bold" [class.text-red-600]="stock()?.bajoMinimo" [class.text-gray-900]="!stock()?.bajoMinimo">
@@ -69,7 +69,7 @@ import Swal from 'sweetalert2';
         </div>
 
         <!-- Body -->
-        <div class="px-6 py-5 space-y-4">
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
           <!-- Tipo de movimiento -->
           <div>
@@ -234,14 +234,14 @@ export class MovimientoFormComponent {
     this.cantidadTouched.set(true);
     if (!this.formValid()) return;
 
-    const varianteId = this.stock()?.varianteId;
-    if (!varianteId) return;
+    const productoId = this.stock()?.productoId;
+    if (!productoId) return;
 
     this.loading.set(true);
 
     this.stockService
       .registrarMovimiento({
-        varianteId,
+        productoId,
         tipoMovimiento: this.tipoMovimiento(),
         cantidad: this.cantidad(),
         referencia: this.referencia().trim() || undefined,

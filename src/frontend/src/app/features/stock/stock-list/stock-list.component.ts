@@ -162,7 +162,7 @@ import Swal from 'sweetalert2';
                         <!-- Producto / Variante -->
                         <td class="px-5 py-3.5">
                           <p class="text-sm font-medium text-gray-900">{{ s.productoNombre }}</p>
-                          <p class="text-xs text-gray-400 mt-0.5">{{ s.varianteNombre }}</p>
+                          <p class="text-xs text-gray-400 mt-0.5">{{ s.codigoInterno }}</p>
                         </td>
 
                         <!-- Cantidad -->
@@ -215,7 +215,7 @@ import Swal from 'sweetalert2';
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700
                                    bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors
                                    focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            [attr.aria-label]="'Registrar movimiento para ' + s.varianteNombre"
+                            [attr.aria-label]="'Registrar movimiento para ' + s.productoNombre"
                           >
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -324,7 +324,7 @@ import Swal from 'sweetalert2';
                         <!-- Fecha -->
                         <td class="px-5 py-3.5">
                           <span class="text-xs font-mono text-gray-700">
-                            {{ doc.fecha | date:'dd/MM/yyyy' }}
+                            {{ doc.fechaDocumento | date:'dd/MM/yyyy' }}
                           </span>
                         </td>
 
@@ -494,7 +494,7 @@ import Swal from 'sweetalert2';
                       </th>
                       <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider
                                  hidden md:table-cell">
-                        Variante
+                        Producto
                       </th>
                       <th class="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         Movimiento
@@ -535,10 +535,9 @@ import Swal from 'sweetalert2';
                           </span>
                         </td>
 
-                        <!-- Variante -->
+                        <!-- Producto -->
                         <td class="px-5 py-3.5 hidden md:table-cell">
                           <p class="text-sm font-medium text-gray-900">{{ m.productoNombre }}</p>
-                          <p class="text-xs text-gray-400 mt-0.5">{{ m.varianteNombre }}</p>
                         </td>
 
                         <!-- Movimiento (delta) -->
@@ -598,7 +597,7 @@ import Swal from 'sweetalert2';
     <!-- Modal primer movimiento (variante sin stock) -->
     @if (showNuevoMovimiento()) {
       <app-primer-movimiento-form
-        [existingVarianteIds]="existingVarianteIds()"
+        [existingProductoIds]="existingProductoIds()"
         (saved)="onNuevoMovimientoSaved()"
         (cancelled)="showNuevoMovimiento.set(false)"
       />
@@ -648,7 +647,7 @@ export class StockListComponent {
   readonly showMovimientoForm = signal(false);
   readonly stockSeleccionado = signal<StockDto | null>(null);
   readonly showNuevoMovimiento = signal(false);
-  readonly existingVarianteIds = computed(() => this.stocks().map(s => s.varianteId));
+  readonly existingProductoIds = computed(() => this.stocks().map(s => s.productoId));
 
   constructor() {
     // Recargar cuando cambie la sucursal activa
@@ -814,7 +813,9 @@ export class StockListComponent {
   deltaDisplay(m: MovimientoStockDto): string {
     switch (m.tipoMovimiento) {
       case 'Entrada': return `+${m.cantidad}`;
-      case 'Salida':  return `-${m.cantidad}`;
+      case 'Salida':
+      case 'Merma':
+      case 'DevolucionProveedor': return `-${m.cantidad}`;
       case 'Ajuste':  return m.cantidad > 0 ? `+${m.cantidad}` : `${m.cantidad}`;
       default:        return `${m.cantidad}`;
     }
@@ -823,7 +824,9 @@ export class StockListComponent {
   deltaClass(m: MovimientoStockDto): string {
     switch (m.tipoMovimiento) {
       case 'Entrada': return 'text-green-600';
-      case 'Salida':  return 'text-red-600';
+      case 'Salida':
+      case 'Merma':
+      case 'DevolucionProveedor': return 'text-red-600';
       case 'Ajuste':  return m.cantidad >= 0 ? 'text-blue-600' : 'text-orange-600';
       default:        return 'text-gray-700';
     }
@@ -834,6 +837,8 @@ export class StockListComponent {
       case 'Entrada': return 'bg-green-50 text-green-700 ring-green-200';
       case 'Salida':  return 'bg-red-50 text-red-700 ring-red-200';
       case 'Ajuste':  return 'bg-blue-50 text-blue-700 ring-blue-200';
+      case 'Merma':   return 'bg-orange-50 text-orange-700 ring-orange-200';
+      case 'DevolucionProveedor': return 'bg-purple-50 text-purple-700 ring-purple-200';
       default:        return 'bg-gray-50 text-gray-500 ring-gray-200';
     }
   }

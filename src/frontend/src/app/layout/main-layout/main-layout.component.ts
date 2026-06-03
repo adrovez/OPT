@@ -14,10 +14,11 @@ type OpenSection = GroupKey | 'sucursal';
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div class="flex flex-col h-screen overflow-hidden" style="background: #F3F6FA">
 
       <!-- Topbar -->
-      <header class="bg-white border-b border-gray-100 flex items-center px-5 h-14 shrink-0 z-30">
+      <header class="flex items-center px-5 h-14 shrink-0 z-30 border-b border-white/10"
+              style="background: #0D1B3D">
 
         <!-- Logo -->
         <div class="flex items-center gap-2.5 mr-8 shrink-0">
@@ -30,7 +31,7 @@ type OpenSection = GroupKey | 'sucursal';
                    -1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
             </svg>
           </div>
-          <span class="text-sm font-bold text-gray-900">OPT</span>
+          <span class="text-sm font-bold text-white">OPT</span>
         </div>
 
         <!-- Navegación principal -->
@@ -39,10 +40,10 @@ type OpenSection = GroupKey | 'sucursal';
           <!-- Clientes (directo) -->
           <a
             routerLink="/clientes"
-            routerLinkActive="bg-blue-50 text-blue-700 font-semibold"
+            routerLinkActive="bg-blue-600 text-white font-semibold"
             [routerLinkActiveOptions]="{ exact: false }"
             class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-                   text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                   text-white/70 hover:bg-white/10 hover:text-white transition-colors"
           >
             <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -167,6 +168,20 @@ type OpenSection = GroupKey | 'sucursal';
                   </svg>
                   Stock
                 </a>
+                <a
+                  routerLink="/precios"
+                  routerLinkActive="bg-blue-50 text-blue-700 font-semibold"
+                  [routerLinkActiveOptions]="{ exact: false }"
+                  (click)="close()"
+                  class="flex items-center gap-2.5 px-4 py-2 text-sm font-medium
+                         text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                >
+                  <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Precios
+                </a>
               </div>
             }
           </div>
@@ -248,20 +263,21 @@ type OpenSection = GroupKey | 'sucursal';
               <button
                 (click)="toggle('sucursal')"
                 [disabled]="!tieneMuchas()"
-                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm transition-colors"
-                [class.hover:bg-gray-50]="tieneMuchas()"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/20
+                       text-sm transition-colors"
+                [class.hover:bg-white/10]="tieneMuchas()"
                 [class.cursor-default]="!tieneMuchas()"
                 aria-label="Cambiar sucursal"
               >
-                <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5
                        M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
-                <span class="text-gray-700 font-medium max-w-32 truncate">{{ sucursalActual()!.nombre }}</span>
+                <span class="text-white/80 font-medium max-w-32 truncate">{{ sucursalActual()!.nombre }}</span>
                 @if (tieneMuchas()) {
                   <svg
-                    class="w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform"
+                    class="w-3.5 h-3.5 text-white/40 shrink-0 transition-transform"
                     [class.rotate-180]="openSection() === 'sucursal'"
                     fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"
                   >
@@ -299,18 +315,17 @@ type OpenSection = GroupKey | 'sucursal';
           }
 
           <!-- Divisor -->
-          <div class="w-px h-6 bg-gray-200"></div>
+          <div class="w-px h-6 bg-white/20"></div>
 
           <!-- Usuario -->
           <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center
-                        text-blue-700 text-xs font-bold shrink-0"
-                 aria-hidden="true">
+            <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center
+                        text-white text-xs font-bold shrink-0" aria-hidden="true">
               {{ userInitial() }}
             </div>
             <div class="flex flex-col leading-tight">
-              <span class="text-sm font-medium text-gray-800">{{ userName() }}</span>
-              <span class="text-xs text-gray-400 capitalize">{{ userRol() }}</span>
+              <span class="text-sm font-medium text-white">{{ userName() }}</span>
+              <span class="text-xs text-white/50 capitalize">{{ userRol() }}</span>
             </div>
           </div>
 
@@ -318,7 +333,7 @@ type OpenSection = GroupKey | 'sucursal';
           <button
             (click)="logout()"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-                   text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                   text-white/50 hover:bg-red-500/20 hover:text-red-300 transition-colors"
             title="Cerrar sesión"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -341,17 +356,17 @@ type OpenSection = GroupKey | 'sucursal';
   `,
 })
 export class MainLayoutComponent implements OnInit {
-  private readonly authService    = inject(AuthService);
+  private readonly authService     = inject(AuthService);
   private readonly sucursalContext = inject(SucursalContextService);
-  private readonly router         = inject(Router);
-  private readonly destroyRef     = inject(DestroyRef);
+  private readonly router          = inject(Router);
+  private readonly destroyRef      = inject(DestroyRef);
 
   readonly sucursalActual = this.sucursalContext.sucursalActual;
   readonly sucursales     = this.sucursalContext.sucursales;
   readonly tieneMuchas    = this.sucursalContext.tieneMuchas;
 
-  readonly currentUrl   = signal(this.router.url);
-  readonly openSection  = signal<OpenSection | null>(null);
+  readonly currentUrl  = signal(this.router.url);
+  readonly openSection = signal<OpenSection | null>(null);
 
   readonly activeGroup = computed<GroupKey | null>(() => {
     const url = this.currentUrl();
@@ -382,9 +397,9 @@ export class MainLayoutComponent implements OnInit {
   navGroupClass(group: GroupKey): string {
     const isActive = this.activeGroup() === group;
     const isOpen   = this.openSection() === group;
-    if (isActive) return 'text-blue-700 bg-blue-50 font-semibold';
-    if (isOpen)   return 'text-gray-900 bg-gray-50';
-    return 'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
+    if (isActive) return 'bg-blue-600 text-white font-semibold';
+    if (isOpen)   return 'text-white bg-white/10';
+    return 'text-white/70 hover:bg-white/10 hover:text-white';
   }
 
   userInitial(): string {

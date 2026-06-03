@@ -1,8 +1,8 @@
 export interface StockDto {
   stockId: string;
-  varianteId: string;
-  varianteNombre: string;
+  productoId: string;
   productoNombre: string;
+  codigoInterno: string;
   sucursalId: string;
   cantidadDisponible: number;
   stockMinimo: number;
@@ -11,8 +11,7 @@ export interface StockDto {
 
 export interface MovimientoStockDto {
   movimientoId: string;
-  varianteId: string;
-  varianteNombre: string;
+  productoId: string;
   productoNombre: string;
   tipoMovimiento: string;
   cantidad: number;
@@ -25,12 +24,12 @@ export interface MovimientoStockDto {
 }
 
 export interface RegistrarMovimientoRequest {
-  varianteId: string;
+  productoId: string;
   tipoMovimiento: string;
   cantidad: number;
   referencia?: string;
   observacion?: string;
 }
 
-export const TIPOS_MOVIMIENTO = ['Entrada', 'Salida', 'Ajuste'] as const;
+export const TIPOS_MOVIMIENTO = ['Entrada', 'Salida', 'Ajuste', 'Merma', 'DevolucionProveedor'] as const;
 export type TipoMovimiento = (typeof TIPOS_MOVIMIENTO)[number];

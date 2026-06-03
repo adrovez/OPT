@@ -14,7 +14,8 @@ public record GetHistorialMovimientosQuery(
 public class GetHistorialMovimientosQueryHandler(IStockRepository repository)
     : IRequestHandler<GetHistorialMovimientosQuery, IReadOnlyList<MovimientoStockDto>>
 {
-    public async Task<IReadOnlyList<MovimientoStockDto>> Handle(GetHistorialMovimientosQuery query, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<MovimientoStockDto>> Handle(
+        GetHistorialMovimientosQuery query, CancellationToken cancellationToken)
     {
         var items = await repository.GetHistorialAsync(
             query.TenantId, query.SucursalId,

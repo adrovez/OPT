@@ -1,20 +1,9 @@
-export interface ProductoCategoriaDto {
+export interface CategoriaDto {
   categoriaId: string;
   tenantId: string;
   nombre: string;
-  createdAt: string;
-  updatedAt?: string;
-  createdBy?: string;
-  updatedBy?: string;
-}
-
-export interface ProductoVarianteDto {
-  varianteId: string;
-  productoId: string;
-  tenantId: string;
-  nombre: string;
-  codigoBarras?: string;
-  activo: boolean;
+  descripcion?: string;
+  isActivo: boolean;
   createdAt: string;
   updatedAt?: string;
   createdBy?: string;
@@ -24,14 +13,18 @@ export interface ProductoVarianteDto {
 export interface ProductoDto {
   productoId: string;
   tenantId: string;
+  productoPadreId?: string;
   categoriaId?: string;
   categoriaNombre?: string;
+  codigoInterno: string;
   nombre: string;
   descripcion?: string;
-  tipoProducto: string;
-  codigoInterno?: string;
-  activo: boolean;
-  variantes: ProductoVarianteDto[];
+  tipo: string;            // 'Producto' | 'Servicio'
+  unidadMedida?: string;
+  isActivo: boolean;
+  precioCosto?: number;
+  precioVenta?: number;
+  hijos: ProductoDto[];
   createdAt: string;
   updatedAt?: string;
   createdBy?: string;
@@ -49,40 +42,25 @@ export interface ProductosPagedResult {
 }
 
 export interface CreateProductoRequest {
-  categoriaId?: string;
+  codigoInterno: string;
   nombre: string;
   descripcion?: string;
-  tipoProducto: string;
-  codigoInterno?: string;
+  tipo: string;
+  unidadMedida?: string;
+  categoriaId?: string;
+  productoPadreId?: string;
 }
 
 export interface UpdateProductoRequest {
-  categoriaId?: string;
+  codigoInterno: string;
   nombre: string;
   descripcion?: string;
-  tipoProducto: string;
-  codigoInterno?: string;
-  activo: boolean;
+  tipo: string;
+  unidadMedida?: string;
+  categoriaId?: string;
+  productoPadreId?: string;
+  isActivo: boolean;
 }
 
-export interface CreateProductoVarianteRequest {
-  nombre: string;
-  codigoBarras?: string;
-}
-
-export interface UpdateProductoVarianteRequest {
-  nombre: string;
-  codigoBarras?: string;
-  activo: boolean;
-}
-
-export interface CreateProductoCategoriaRequest {
-  nombre: string;
-}
-
-export interface UpdateProductoCategoriaRequest {
-  nombre: string;
-}
-
-export const TIPOS_PRODUCTO = ['Almacenable', 'Consumible', 'Servicio'] as const;
+export const TIPOS_PRODUCTO = ['Producto', 'Servicio'] as const;
 export type TipoProducto = (typeof TIPOS_PRODUCTO)[number];

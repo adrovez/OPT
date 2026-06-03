@@ -1,83 +1,112 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OPT.Application.Categorias.Commands;
+using OPT.Application.Categorias.DTOs;
+using OPT.Application.Categorias.Queries;
 using OPT.Application.Interfaces;
-using OPT.Application.Productos.Commands;
-using OPT.Application.Productos.DTOs;
-using OPT.Application.Productos.Queries;
 
 namespace OPT.API.Controllers;
 
+/// <summary>
+/// Gestión de categorías de productos.
+/// Ruta mantenida como /api/categorias para el nuevo esquema 027.
+/// </summary>
 [ApiController]
-[Route("api/categorias-producto")]
+[Route("api/categorias")]
 [Authorize]
-public class ProductoCategoriaController(IMediator mediator, ICurrentTenantService tenantService)
+public class CategoriaController(IMediator mediator, ICurrentTenantService tenantService)
     : ControllerBase
 {
-    // ── GET /api/categorias-producto ─────────────────────────────────────
-
+    // ── GET /api/categorias ──────────────────────────────────────────────
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<ProductoCategoriaDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(IReadOnlyList<CategoriaDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] bool soloActivas = true,
+        CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new GetCategoriasQuery(tenantService.TenantId), cancellationToken);
+        var result = await mediator.Send(
+            new GetCategoriasQuery(tenantService.TenantId, soloActivas),
+            cancellationToken);
         return Ok(result);
     }
 
-    // ── POST /api/categorias-producto ────────────────────────────────────
+    // ── GET /api/categorias/{id} ─────────────────────────────────────────
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetCategoriaByIdQuery(id, tenantService.TenantId), cancellationToken);
 
+        return result is null
+            ? NotFound(new ProblemDetails
+            {
+                Status   = 404,
+                Title    = "Recurso no encontrado",
+                Detail   = $"Categoría {id} no encontrada.",
+                Instance = HttpContext.Request.Path
+            })
+            : Ok(result);
+    }
+
+    // ── POST /api/categorias ─────────────────────────────────────────────
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
-        [FromBody] CreateProductoCategoriaRequest request,
+        [FromBody] CreateCategoriaRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateProductoCategoriaCommand(
-            TenantId: tenantService.TenantId,
-            Nombre: request.Nombre,
-            CreatedBy: User.Identity?.Name ?? "system");
+        var id = await mediator.Send(new CreateCategoriaCommand(
+            TenantId:    tenantService.TenantId,
+            Nombre:      request.Nombre,
+            Descripcion: request.Descripcion,
+            CreatedBy:   User.Identity?.Name ?? "system"),
+            cancellationToken);
 
-        var id = await mediator.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(GetAll), new { }, new { id });
+        return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
-    // ── PUT /api/categorias-producto/{id} ────────────────────────────────
-
+    // ── PUT /api/categorias/{id} ─────────────────────────────────────────
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
         Guid id,
-        [FromBody] UpdateProductoCategoriaRequest request,
+        [FromBody] UpdateCategoriaRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateProductoCategoriaCommand(
+        await mediator.Send(new UpdateCategoriaCommand(
             CategoriaId: id,
-            TenantId: tenantService.TenantId,
-            Nombre: request.Nombre,
-            UpdatedBy: User.Identity?.Name ?? "system");
+            TenantId:    tenantService.TenantId,
+            Nombre:      request.Nombre,
+            Descripcion: request.Descripcion,
+            IsActivo:    request.IsActivo,
+            UpdatedBy:   User.Identity?.Name ?? "system"),
+            cancellationToken);
 
-        await mediator.Send(command, cancellationToken);
         return NoContent();
     }
 
-    // ── DELETE /api/categorias-producto/{id} ─────────────────────────────
-
+    // ── DELETE /api/categorias/{id} ──────────────────────────────────────
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var command = new DeleteProductoCategoriaCommand(
+        await mediator.Send(new DeleteCategoriaCommand(
             CategoriaId: id,
-            TenantId: tenantService.TenantId,
-            DeletedBy: User.Identity?.Name ?? "system");
+            TenantId:    tenantService.TenantId,
+            DeletedBy:   User.Identity?.Name ?? "system"),
+            cancellationToken);
 
-        await mediator.Send(command, cancellationToken);
         return NoContent();
     }
 }
 
-public record CreateProductoCategoriaRequest(string Nombre);
-public record UpdateProductoCategoriaRequest(string Nombre);
+// ── Request DTOs ─────────────────────────────────────────────────────────────
+
+public record CreateCategoriaRequest(string Nombre, string? Descripcion);
+public record UpdateCategoriaRequest(string Nombre, string? Descripcion, bool IsActivo);

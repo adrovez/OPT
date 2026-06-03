@@ -13,7 +13,7 @@ import { environment } from '../../../environments/environment';
 export class DocumentoStockService {
   private readonly http = inject(HttpClient);
   private readonly sucursalContext = inject(SucursalContextService);
-  private readonly apiUrl = `${environment.apiUrl}/documentos-stock`;
+  private readonly apiUrl = `${environment.apiUrl}/documentos-entrada`;
 
   private headers(): HttpHeaders {
     const sucursalId = this.sucursalContext.sucursalActual()?.sucursalId ?? '';
@@ -21,20 +21,14 @@ export class DocumentoStockService {
   }
 
   getDocumentos(params: {
-    tipo?: string;
     estado?: string;
-    desde?: string;
-    hasta?: string;
     page?: number;
     pageSize?: number;
   } = {}): Observable<DocumentosPagedResult> {
     let httpParams = new HttpParams()
       .set('page', (params.page ?? 1).toString())
       .set('pageSize', (params.pageSize ?? 100).toString());
-    if (params.tipo)   httpParams = httpParams.set('tipo', params.tipo);
     if (params.estado) httpParams = httpParams.set('estado', params.estado);
-    if (params.desde)  httpParams = httpParams.set('desde', params.desde);
-    if (params.hasta)  httpParams = httpParams.set('hasta', params.hasta);
     return this.http.get<DocumentosPagedResult>(this.apiUrl, {
       headers: this.headers(),
       params: httpParams,
@@ -54,8 +48,10 @@ export class DocumentoStockService {
   }
 
   anular(id: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/anular`, null, {
-      headers: this.headers(),
-    });
+    return this.http.patch<void>(
+      `${this.apiUrl}/${id}/estado`,
+      { estado: 'Anulado' },
+      { headers: this.headers() },
+    );
   }
 }

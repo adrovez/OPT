@@ -1,37 +1,41 @@
 export interface DocumentoStockDto {
   documentoId: string;
   tipoDocumento: TipoDocumentoEntrada;
-  numeroDocumento: string;
-  fecha: string;          // "2025-05-24"
+  numeroDocumento?: string;
+  fechaDocumento: string;      // "2025-05-24"
   proveedorNombre?: string;
+  proveedorRut?: string;
   estado: EstadoDocumento;
-  observacion?: string;
+  observaciones?: string;
   createdAt: string;
   lineas: DocumentoStockLineaDto[];
 }
 
 export interface DocumentoStockLineaDto {
   lineaId: string;
-  varianteId: string;
-  varianteNombre: string;
+  productoId: string;
   productoNombre: string;
+  codigoInterno: string;
   cantidad: number;
   precioCosto?: number;
+  observaciones?: string;
 }
 
 export interface CrearDocumentoRequest {
   tipoDocumento: TipoDocumentoEntrada;
-  numeroDocumento: string;
-  fecha: string;
+  numeroDocumento?: string;
+  fechaDocumento: string;
   proveedorNombre?: string;
-  observacion?: string;
+  proveedorRut?: string;
+  observaciones?: string;
   lineas: CrearDocumentoLineaRequest[];
 }
 
 export interface CrearDocumentoLineaRequest {
-  varianteId: string;
+  productoId: string;
   cantidad: number;
   precioCosto?: number;
+  observaciones?: string;
 }
 
 export interface DocumentosPagedResult {

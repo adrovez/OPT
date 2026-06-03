@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OPT.Application.Common;
 using OPT.Application.Interfaces;
 using OPT.Application.Stock.Commands;
 using OPT.Application.Stock.DTOs;
@@ -9,8 +10,9 @@ using OPT.Application.Stock.Queries;
 namespace OPT.API.Controllers;
 
 /// <summary>
-/// Gestión de stock por variante y sucursal.
+/// Gestión de stock por producto y sucursal.
 /// Todos los endpoints requieren JWT válido y el header X-Sucursal-Id.
+/// Las entradas de stock se registran exclusivamente via /api/documentos-entrada.
 /// </summary>
 [ApiController]
 [Route("api/stock")]
@@ -32,35 +34,34 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
     });
 
     // ── GET /api/stock ───────────────────────────────────────────────────────
-
-    /// <summary>Lista el stock de todas las variantes en la sucursal activa.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<StockDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<StockDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetStock(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetStock(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
     {
         var sucursalId = ParseSucursalHeader();
         if (sucursalId is null) return SucursalRequerida();
 
         return Ok(await mediator.Send(
-            new GetStockBySucursalQuery(tenantService.TenantId, sucursalId.Value),
+            new GetStockBySucursalQuery(tenantService.TenantId, sucursalId.Value, page, pageSize),
             cancellationToken));
     }
 
-    // ── GET /api/stock/{varianteId} ──────────────────────────────────────────
-
-    /// <summary>Obtiene el stock de una variante específica en la sucursal activa.</summary>
-    [HttpGet("{varianteId:guid}")]
+    // ── GET /api/stock/{productoId} ──────────────────────────────────────────
+    [HttpGet("{productoId:guid}")]
     [ProducesResponseType(typeof(StockDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetByVariante(Guid varianteId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByProducto(Guid productoId, CancellationToken cancellationToken)
     {
         var sucursalId = ParseSucursalHeader();
         if (sucursalId is null) return SucursalRequerida();
 
         var result = await mediator.Send(
-            new GetStockByVarianteQuery(tenantService.TenantId, sucursalId.Value, varianteId),
+            new GetStockByProductoQuery(tenantService.TenantId, sucursalId.Value, productoId),
             cancellationToken);
 
         return result is null
@@ -68,20 +69,18 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
             {
                 Status   = 404,
                 Title    = "Recurso no encontrado",
-                Detail   = $"No hay registro de stock para la variante {varianteId} en esta sucursal.",
+                Detail   = $"No hay registro de stock para el producto {productoId} en esta sucursal.",
                 Instance = HttpContext.Request.Path
             })
             : Ok(result);
     }
 
-    // ── POST /api/stock/movimientos ──────────────────────────────────────────
-
+    // ── POST /api/stock/movimiento ───────────────────────────────────────────
     /// <summary>
-    /// Registra un movimiento de stock (Entrada, Salida o Ajuste).
-    /// Si la variante no tiene stock previo en esta sucursal, se crea automáticamente.
-    /// Ajuste acepta Cantidad positiva (suma) o negativa (resta).
+    /// Registra un movimiento directo: Salida, Ajuste, Merma o DevolucionProveedor.
+    /// Las entradas se registran exclusivamente via DocumentoEntrada.
     /// </summary>
-    [HttpPost("movimientos")]
+    [HttpPost("movimiento")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegistrarMovimiento(
@@ -94,7 +93,7 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
         var movimientoId = await mediator.Send(new RegistrarMovimientoCommand(
             TenantId:       tenantService.TenantId,
             SucursalId:     sucursalId.Value,
-            VarianteId:     request.VarianteId,
+            ProductoId:     request.ProductoId,
             UsuarioId:      tenantService.UsuarioId,
             TipoMovimiento: request.TipoMovimiento,
             Cantidad:       request.Cantidad,
@@ -103,15 +102,13 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
             CreatedBy:      tenantService.RutUsuario),
             cancellationToken);
 
-        return CreatedAtAction(nameof(GetByVariante), new { varianteId = request.VarianteId }, new { movimientoId });
+        return CreatedAtAction(
+            nameof(GetByProducto),
+            new { productoId = request.ProductoId },
+            new { movimientoId });
     }
 
     // ── GET /api/stock/movimientos ───────────────────────────────────────────
-
-    /// <summary>
-    /// Historial de movimientos de la sucursal activa.
-    /// Filtros opcionales: desde, hasta (DateTime), tipo ('Entrada'|'Salida'|'Ajuste').
-    /// </summary>
     [HttpGet("movimientos")]
     [ProducesResponseType(typeof(IReadOnlyList<MovimientoStockDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -130,10 +127,10 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
     }
 }
 
-// ── Request record (solo para este controller) ───────────────────────────────
+// ── Request record ────────────────────────────────────────────────────────────
 
 public record RegistrarMovimientoRequest(
-    Guid VarianteId,
+    Guid ProductoId,
     string TipoMovimiento,
     int Cantidad,
     string? Referencia,

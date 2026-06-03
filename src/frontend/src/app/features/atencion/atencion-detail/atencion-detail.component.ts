@@ -212,35 +212,53 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                 </div>
               } @else if (anamnesisData()) {
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
-                  <p class="text-sm font-medium text-gray-700">Antecedentes del paciente</p>
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-700">Antecedentes del paciente</p>
+                    @if (esTerminada()) {
+                      <span class="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0-6v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Solo lectura
+                      </span>
+                    }
+                  </div>
 
                   <div class="grid grid-cols-2 gap-3">
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-300]="anaHipertension()" [class.bg-blue-50]="anaHipertension()"
                            [class.border-gray-200]="!anaHipertension()">
                       <input type="checkbox" [checked]="anaHipertension()" (change)="anaHipertension.set($any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Hipertensión</span>
                     </label>
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-300]="anaDiabetes()" [class.bg-blue-50]="anaDiabetes()"
                            [class.border-gray-200]="!anaDiabetes()">
                       <input type="checkbox" [checked]="anaDiabetes()" (change)="anaDiabetes.set($any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Diabetes</span>
                     </label>
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-300]="anaAlergias()" [class.bg-blue-50]="anaAlergias()"
                            [class.border-gray-200]="!anaAlergias()">
                       <input type="checkbox" [checked]="anaAlergias()" (change)="anaAlergias.set($any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Alergias</span>
                     </label>
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-300]="anaUsaLentes()" [class.bg-blue-50]="anaUsaLentes()"
                            [class.border-gray-200]="!anaUsaLentes()">
                       <input type="checkbox" [checked]="anaUsaLentes()" (change)="anaUsaLentes.set($any($event.target).checked)"
-                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Usa lentes</span>
                     </label>
                   </div>
@@ -251,25 +269,29 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                     </label>
                     <textarea id="det-ana-obs" rows="3" maxlength="2000"
                               [value]="anaObservacion()" (input)="anaObservacion.set($any($event.target).value)"
-                              class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200 hover:border-gray-300
+                              [disabled]="esTerminada()"
+                              class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200
                                      bg-white transition-colors resize-none focus:outline-none focus:ring-2
-                                     focus:ring-blue-500 focus:border-transparent"></textarea>
+                                     focus:ring-blue-500 focus:border-transparent
+                                     disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-default"></textarea>
                   </div>
 
-                  <div class="flex justify-end pt-1">
-                    <button type="button" (click)="guardarAnamnesis()" [disabled]="anamnesisSaving()"
-                      class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
-                             bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
-                             rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                      @if (anamnesisSaving()) {
-                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                      }
-                      Guardar cambios
-                    </button>
-                  </div>
+                  @if (!esTerminada()) {
+                    <div class="flex justify-end pt-1">
+                      <button type="button" (click)="guardarAnamnesis()" [disabled]="anamnesisSaving()"
+                        class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
+                               bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
+                               rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        @if (anamnesisSaving()) {
+                          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          </svg>
+                        }
+                        Guardar cambios
+                      </button>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -293,27 +315,41 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
 
                 <!-- Indicaciones -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                  <p class="text-sm font-medium text-gray-700 mb-3">Indicaciones</p>
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-medium text-gray-700">Indicaciones</p>
+                    @if (esTerminada()) {
+                      <span class="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0-6v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Solo lectura
+                      </span>
+                    }
+                  </div>
                   <div class="grid grid-cols-2 gap-3">
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-all"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-400]="recetaEdit().checkLejos"
                            [class.bg-blue-50]="recetaEdit().checkLejos"
                            [class.border-gray-200]="!recetaEdit().checkLejos">
                       <input type="checkbox" [checked]="recetaEdit().checkLejos"
                              (change)="onCheckLejos($any($event.target).checked)"
-                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <div>
                         <p class="text-sm font-medium text-gray-800">Lejos</p>
                         <p class="text-xs text-gray-400">Activa la sección de lejos</p>
                       </div>
                     </label>
-                    <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+                    <label class="flex items-center gap-3 p-3 rounded-lg border transition-all"
+                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
                            [class.border-blue-400]="recetaEdit().checkCerca"
                            [class.bg-blue-50]="recetaEdit().checkCerca"
                            [class.border-gray-200]="!recetaEdit().checkCerca">
                       <input type="checkbox" [checked]="recetaEdit().checkCerca"
                              (change)="onCheckCerca($any($event.target).checked)"
-                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                             [disabled]="esTerminada()"
+                             class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <div>
                         <p class="text-sm font-medium text-gray-800">Cerca</p>
                         <p class="text-xs text-gray-400">Activa la sección de cerca</p>
@@ -341,20 +377,20 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                           <tbody class="divide-y divide-gray-50">
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Esf.</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODEsferico" (input)="onLejosChange('lejosODEsferico', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOIEsferico" (input)="onLejosChange('lejosOIEsferico', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosDPEsferico" (input)="setReceta('lejosDPEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosODEsferico" (input)="onLejosChange('lejosODEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosOIEsferico" (input)="onLejosChange('lejosOIEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosDPEsferico" (input)="setReceta('lejosDPEsferico', $any($event.target).value)"/></td>
                             </tr>
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Cil.</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosODCilindro" (input)="onLejosChange('lejosODCilindro', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().lejosOICilindro" (input)="onLejosChange('lejosOICilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosODCilindro" (input)="onLejosChange('lejosODCilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosOICilindro" (input)="onLejosChange('lejosOICilindro', $any($event.target).value)"/></td>
                               <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
                             </tr>
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Eje</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosODEje" (input)="onLejosChange('lejosODEje', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().lejosOIEje" (input)="onLejosChange('lejosOIEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosODEje" (input)="onLejosChange('lejosODEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().lejosOIEje" (input)="onLejosChange('lejosOIEje', $any($event.target).value)"/></td>
                               <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
                             </tr>
                           </tbody>
@@ -362,13 +398,13 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                         <div class="mt-3 pt-3 border-t border-gray-100 space-y-2">
                           <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">ADD <span class="font-normal text-gray-400">(adición)</span></label>
-                            <input type="text" placeholder="+0.00" [class]="inputCls"
+                            <input type="text" placeholder="+0.00" [class]="inputCls" [disabled]="esTerminada()"
                                    [value]="recetaEdit().lejosADDEsfera" (input)="onADDChange($any($event.target).value)"/>
                             <p class="text-[10px] text-gray-400 mt-0.5">Auto-rellena la sección Cerca</p>
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">Observación</label>
-                            <input type="text" maxlength="500" placeholder="Observaciones de lejos..." [class]="inputCls"
+                            <input type="text" maxlength="500" placeholder="Observaciones de lejos..." [class]="inputCls" [disabled]="esTerminada()"
                                    [value]="recetaEdit().lejosODObservacion" (input)="setReceta('lejosODObservacion', $any($event.target).value)"/>
                           </div>
                         </div>
@@ -396,27 +432,27 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                           <tbody class="divide-y divide-gray-50">
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Esf.</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODEsferico" (input)="setReceta('cercaODEsferico', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOIEsferico" (input)="setReceta('cercaOIEsferico', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaDPEsferico" (input)="setReceta('cercaDPEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaODEsferico" (input)="setReceta('cercaODEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaOIEsferico" (input)="setReceta('cercaOIEsferico', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaDPEsferico" (input)="setReceta('cercaDPEsferico', $any($event.target).value)"/></td>
                             </tr>
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Cil.</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaODCilindro" (input)="setReceta('cercaODCilindro', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [value]="recetaEdit().cercaOICilindro" (input)="setReceta('cercaOICilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaODCilindro" (input)="setReceta('cercaODCilindro', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="+/-0.00" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaOICilindro" (input)="setReceta('cercaOICilindro', $any($event.target).value)"/></td>
                               <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
                             </tr>
                             <tr>
                               <td class="py-1.5 pr-2 text-xs font-medium text-gray-500">Eje</td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaODEje" (input)="setReceta('cercaODEje', $any($event.target).value)"/></td>
-                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [value]="recetaEdit().cercaOIEje" (input)="setReceta('cercaOIEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaODEje" (input)="setReceta('cercaODEje', $any($event.target).value)"/></td>
+                              <td class="py-1.5 px-1"><input type="text" placeholder="0°" [class]="inputCls" [disabled]="esTerminada()" [value]="recetaEdit().cercaOIEje" (input)="setReceta('cercaOIEje', $any($event.target).value)"/></td>
                               <td class="py-1.5 px-1 text-center text-gray-300 text-xs">—</td>
                             </tr>
                           </tbody>
                         </table>
                         <div class="mt-3 pt-3 border-t border-gray-100">
                           <label class="block text-xs font-medium text-gray-500 mb-1">Observación</label>
-                          <input type="text" maxlength="500" placeholder="Observaciones de cerca..." [class]="inputCls"
+                          <input type="text" maxlength="500" placeholder="Observaciones de cerca..." [class]="inputCls" [disabled]="esTerminada()"
                                  [value]="recetaEdit().cercaODObservacion" (input)="setReceta('cercaODObservacion', $any($event.target).value)"/>
                         </div>
                       </div>
@@ -426,20 +462,22 @@ const INP = 'w-full px-2 py-1.5 text-xs rounded border border-gray-200 hover:bor
                 }
 
                 <!-- Guardar receta -->
-                <div class="flex justify-end">
-                  <button type="button" (click)="guardarReceta()" [disabled]="recetaSaving()"
-                    class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
-                           bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
-                           rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    @if (recetaSaving()) {
-                      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                    }
-                    Guardar cambios
-                  </button>
-                </div>
+                @if (!esTerminada()) {
+                  <div class="flex justify-end">
+                    <button type="button" (click)="guardarReceta()" [disabled]="recetaSaving()"
+                      class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
+                             bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
+                             rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                      @if (recetaSaving()) {
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      }
+                      Guardar cambios
+                    </button>
+                  </div>
+                }
 
               }
             </div>
@@ -594,6 +632,7 @@ export class AtencionDetailComponent implements OnInit {
   readonly cobroFormValid = computed(() =>
     !!this.formaPagoId() && !!this.monto() && parseFloat(this.monto()) > 0
   );
+  readonly esTerminada = computed(() => this.atencion()?.estado !== 'Abierta');
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;

@@ -119,7 +119,7 @@
       <p>OPT SaaS · SQL Server 2022 · Azure SQL Compatible · Multi-Tenant</p>
       <div class="chips">
         <span class="chip chip-cyan">Base de datos: dbOPT</span>
-        <span class="chip chip-cyan">25 tablas</span>
+        <span class="chip chip-cyan">23 tablas</span>
         <span class="chip chip-cyan">Soft-delete en todas</span>
         <span class="chip chip-cyan">Multi-tenant</span>
       </div>
@@ -156,14 +156,15 @@
         <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de sucursales a usuarios (PK compuesta: UsuarioId + SucursalId)</td></tr>
         <tr><td>Catálogo</td><td>OPT_Rol</td><td>No</td><td>Catálogo de roles del sistema (Admin, Operador, Lectura, etc.) — INT IDENTITY PK</td></tr>
         <tr><td>Negocio</td><td>OPT_Agenda</td><td>Sí</td><td>Citas de clientes — asociadas a la Sucursal activa del usuario. API CRUD (<code>/api/agenda</code>)</td></tr>
-        <tr><td>Catálogo</td><td>OPT_ProductoCategoria</td><td>Sí</td><td>Categorías de productos (ej: Monturas, Lentes de Contacto). API CRUD (<code>/api/categorias-producto</code>)</td></tr>
-        <tr><td>Negocio</td><td>OPT_Producto</td><td>Sí</td><td>Catálogo maestro de productos/servicios. TipoProducto: Almacenable/Consumible/Servicio. Sin precios ni stock. API CRUD (<code>/api/productos</code>)</td></tr>
-        <tr><td>Negocio</td><td>OPT_ProductoVariante</td><td>Sí</td><td>SKUs/variantes de un producto (ej: "Negra Talla M"). CodigoBarras único. Sin precios ni stock. FK cascade a OPT_Producto</td></tr>
         <tr><td>Catálogo</td><td>OPT_FormaPago</td><td>No</td><td>Catálogo de formas de pago (5 filas: Efectivo, Tarjeta Débito, Crédito, Transferencia, Cheque); script <code>021_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_PrecioProducto</td><td>Sí</td><td>Historial de precios por variante/sucursal. <code>VigenciaHasta NULL</code> = precio vigente. Actualizado al confirmar DocumentoStock; script <code>019_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_Stock</td><td>Sí</td><td>Stock por variante y sucursal + <code>OPT_MovimientoStock</code>. Scoped via <code>X-Sucursal-Id</code>; script <code>018_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_DocumentoStock</td><td>Sí</td><td>Documentos de entrada (FacturaCompra, BoletaCompra, OtroIngreso). Confirmar genera movimientos + precio; Anular compensa; script <code>020_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_DocumentoStockLinea</td><td>—</td><td>Líneas de documento (VarianteId, Cantidad, PrecioCosto). ON DELETE CASCADE desde OPT_DocumentoStock</td></tr>
+        <tr><td>Catálogo</td><td>OPT_Categoria</td><td>Sí</td><td>Catálogo plano de categorías de productos/servicios. Reemplaza OPT_ProductoCategoria; agrega Descripcion + IsActivo.</td></tr>
+        <tr><td>Negocio</td><td>OPT_Producto</td><td>Sí</td><td>Jerarquía self-ref (<code>ProductoPadreId</code> nullable). <code>Tipo</code>: 'Producto' | 'Servicio'. Nodos hoja = SKUs con stock. CodigoInterno único por tenant. Sin variantes — los hijos son los SKUs.</td></tr>
+        <tr><td>Negocio</td><td>OPT_PrecioProducto</td><td>Sí</td><td>Historial de precios <strong>global</strong> por producto (sin SucursalId). PrecioCosto + PrecioVenta opcionales. VigenciaHasta NULL = vigente. Script <code>027_</code></td></tr>
+        <tr><td>Negocio</td><td>OPT_Stock</td><td>Sí</td><td>Stock por ProductoId + SucursalId. CantidadDisponible permite negativo. StockMinimo para alertas. UNIQUE(TenantId, ProductoId, SucursalId). Script <code>027_</code></td></tr>
+        <tr><td>Negocio</td><td>OPT_DocumentoEntrada</td><td>Sí</td><td>Documentos de entrada de mercadería (FacturaCompra, BoletaCompra, GuiaDespacho, OtroIngreso). Estado: Borrador → Confirmado | Anulado. ProveedorNombre + ProveedorRut libres. Script <code>027_</code></td></tr>
+        <tr><td>Negocio</td><td>OPT_DocumentoEntradaLinea</td><td>—</td><td>Líneas del documento de entrada. ProductoId FK, Cantidad > 0, PrecioCosto nullable. ON DELETE CASCADE. Script <code>027_</code></td></tr>
+        <tr><td>Negocio</td><td>OPT_Transferencia</td><td>Sí</td><td><strong>Nueva.</strong> Transferencias de stock entre sucursales. Estado: Pendiente → Confirmada | Anulada. El stock se mueve al Confirmar. Script <code>027_</code></td></tr>
+        <tr><td>Negocio</td><td>OPT_MovimientoStock</td><td>Sí</td><td>Registro inmutable. 7 tipos: Entrada, Salida, Ajuste, Merma, DevolucionProveedor, TransferenciaEntrada, TransferenciaSalida. FK opcional a DocumentoEntrada y Transferencia. Script <code>027_</code></td></tr>
         <tr><td>Negocio</td><td>OPT_Atencion</td><td>Sí</td><td>Atención clínica del cliente. Estados: EnEspera/EnAtencion/Finalizada. Vincula AgendaId opcional; script <code>022_</code></td></tr>
         <tr><td>Negocio</td><td>OPT_CobroServicio</td><td>Sí</td><td>Cobro asociado a una Atención (FormaPagoId, Monto, etc.); script <code>023_</code></td></tr>
       </table>
@@ -188,23 +189,21 @@
         <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">013</span> OPT_Rol.sql</td><td>Catálogo de roles — <code>RolId INT IDENTITY PK</code>, sin TenantId, datos semilla: Admin/Operador/Lectura/etc.</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">014</span> OPT_Agenda.sql</td><td>Citas de clientes — FK a Sucursal, Cliente y Usuario. Estado con CHECK constraint. 3 índices filtrados.</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">015</span> OPT_ProductoCategoria.sql</td><td>Categorías de productos del tenant. Nombre único por tenant (soft delete filtrado).</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">016</span> OPT_Producto.sql</td><td>Catálogo maestro. TipoProducto CHECK (Almacenable/Consumible/Servicio). CodigoInterno único por tenant. FK Restrict a OPT_ProductoCategoria. <strong>Sin precios ni stock.</strong></td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">017</span> OPT_ProductoVariante.sql</td><td>SKUs del producto. CodigoBarras único por tenant. FK Cascade a OPT_Producto. <strong>Sin precios ni stock.</strong></td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">018</span> OPT_Stock.sql</td><td>OPT_Stock (VarianteId, SucursalId, Cantidad, StockMinimo) + OPT_MovimientoStock (TipoMovimiento CHECK, DocumentoId NULLABLE FK)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">019</span> OPT_Precio.sql</td><td>OPT_PrecioProducto — historial de precios (VigenciaDesde/VigenciaHasta). VigenciaHasta NULL = precio vigente. Sin IsDeleted.</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">020</span> OPT_DocumentoStock.sql</td><td>OPT_DocumentoStock (cabecera, TipoDocumento/Estado CHECK, IsDeleted) + OPT_DocumentoStockLinea (CASCADE) + ALTER OPT_MovimientoStock ADD DocumentoId FK</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">015–020</span> (reemplazados por 027)</td><td>ProductoCategoria, Producto, ProductoVariante, Stock, Precio, DocumentoStock — <em>eliminados y rediseñados en script 027</em></td><td style="color:#dc2626;font-style:italic">Reemplazados</td></tr>
         <tr><td><span class="script-num">021</span> OPT_FormaPago.sql</td><td>Catálogo OPT_FormaPago INT PK — 5 formas de pago semilla</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">022</span> OPT_Atencion.sql</td><td>Atención clínica — FK a Cliente, Sucursal, Usuario, AgendaId (nullable). Estado CHECK.</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">023</span> OPT_CobroServicio.sql</td><td>Cobro asociado a Atención — FK a Atención y FormaPago</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">024</span> ALTER_RecetaAnamnesis.sql</td><td>ALTER TABLE OPT_RecetaCristales ADD AtencionId, Fuente; ALTER TABLE OPT_Anamnesis ADD AtencionId</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">025</span> OPT_Agenda_Estado.sql</td><td>ALTER OPT_Agenda — reemplaza estado <code>Pendiente</code> → <code>Ingresado</code> (DEFAULT + CHECK + datos)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">026</span> migracion_legacy.sql</td><td>Migración de datos legacy desde DatosParaMigrar.xlsx (idempotente; requiere 000–025)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">027</span> inventario_redesign.sql</td><td>Rediseño completo inventario: DROP 8 tablas antiguas + CREATE OPT_Categoria, OPT_Producto (jerarquía), OPT_PrecioProducto, OPT_Stock, OPT_DocumentoEntrada, OPT_DocumentoEntradaLinea, OPT_Transferencia, OPT_MovimientoStock</td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> <code>025_...</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
+        <strong>Próximo script:</strong> <code>028_</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados.
       </div>
-      <div class="alert alert-cyan">
-        <strong>Módulo futuro planificado:</strong> <code>025_OPT_SalidaDocumento.sql</code> — <strong>Documentos de Salida</strong>: OrdenTrabajo, Devoluciones, OtroEgreso. Por ahora solo Salida directa desde form.
+      <div class="alert alert-green">
+        <strong>Inventario completo (Sesiones 18–20):</strong> Etapa 1 (BD script 027) ✅ · Etapa 2 (Backend .NET: Domain, repositorios, handlers CQRS, controllers) ✅ · Etapa 3 (Frontend Angular: modelos, servicios, componentes) ✅. Módulo Precios frontend también completo (Sesión 21).
       </div>
 
       <!-- DIAGRAMA -->
@@ -423,8 +422,8 @@
 
       <!-- NUEVO SCRIPT -->
       <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
-      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>025_</code></strong>.</p>
-      <pre>-- Nombrar: 025_descripcion.sql
+      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>028_</code></strong>.</p>
+      <pre>-- Nombrar: 028_descripcion.sql
 -- Siempre: USE [dbOPT]; GO
 
 -- Para tablas nuevas: verificar existencia

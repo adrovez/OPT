@@ -5,7 +5,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DecimalPipe } from '@angular/common';
 import { ProductoService } from '../../../core/services/producto.service';
 import { ProductoCategoriaService } from '../../../core/services/producto-categoria.service';
-import { ProductoDto, ProductoCategoriaDto, TIPOS_PRODUCTO } from '../../../core/models/producto.model';
+import { ProductoDto, CategoriaDto, TIPOS_PRODUCTO } from '../../../core/models/producto.model';
 import { ProductoFormComponent } from '../producto-form/producto-form.component';
 import { CategoriaFormComponent } from '../categoria-form/categoria-form.component';
 import Swal from 'sweetalert2';
@@ -196,27 +196,27 @@ import Swal from 'sweetalert2';
 
                         <!-- Tipo / Categoría -->
                         <td class="px-5 py-3.5 hidden md:table-cell">
-                          <span [class]="tipoBadgeClass(p.tipoProducto)"
+                          <span [class]="tipoBadgeClass(p.tipo)"
                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset">
-                            {{ p.tipoProducto }}
+                            {{ p.tipo }}
                           </span>
                           @if (p.categoriaNombre) {
                             <p class="text-xs text-gray-400 mt-1">{{ p.categoriaNombre }}</p>
                           }
                         </td>
 
-                        <!-- Variantes -->
+                        <!-- Sub-productos -->
                         <td class="px-5 py-3.5 hidden xl:table-cell text-center">
-                          @if (p.variantes.length === 0) {
+                          @if (p.hijos.length === 0) {
                             <span class="text-xs text-gray-400">—</span>
                           } @else {
-                            <span class="text-sm text-gray-700">{{ p.variantes.length }}</span>
+                            <span class="text-sm text-gray-700">{{ p.hijos.length }}</span>
                             }
                         </td>
 
                         <!-- Estado -->
                         <td class="px-5 py-3.5 text-center">
-                          @if (p.activo) {
+                          @if (p.isActivo) {
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                                          bg-green-50 text-green-700 ring-1 ring-inset ring-green-200">
                               Activo
@@ -437,13 +437,13 @@ export class ProductosListComponent implements OnInit {
   readonly errorMessage = signal('');
 
   // ── Estado categorías ────────────────────────────────────────────────────────
-  readonly categorias = signal<ProductoCategoriaDto[]>([]);
+  readonly categorias = signal<CategoriaDto[]>([]);
 
   // ── Modales ──────────────────────────────────────────────────────────────────
   readonly showProductoForm = signal(false);
   readonly productoSeleccionado = signal<ProductoDto | null>(null);
   readonly showCategoriaForm = signal(false);
-  readonly categoriaSeleccionada = signal<ProductoCategoriaDto | null>(null);
+  readonly categoriaSeleccionada = signal<CategoriaDto | null>(null);
 
   private readonly searchSubject = new Subject<string>();
 
@@ -581,7 +581,7 @@ export class ProductosListComponent implements OnInit {
 
   // ── CRUD Categoría ───────────────────────────────────────────────────────────
 
-  abrirCategoriaForm(c: ProductoCategoriaDto | null): void {
+  abrirCategoriaForm(c: CategoriaDto | null): void {
     this.categoriaSeleccionada.set(c);
     this.showCategoriaForm.set(true);
   }
@@ -596,7 +596,7 @@ export class ProductosListComponent implements OnInit {
     this.cargarCategorias();
   }
 
-  eliminarCategoria(c: ProductoCategoriaDto): void {
+  eliminarCategoria(c: CategoriaDto): void {
     Swal.fire({
       icon: 'warning',
       title: '¿Eliminar categoría?',
@@ -639,10 +639,8 @@ export class ProductosListComponent implements OnInit {
 
   tipoBadgeClass(tipo: string): string {
     switch (tipo) {
-      case 'Almacenable':
+      case 'Producto':
         return 'bg-blue-50 text-blue-700 ring-blue-200';
-      case 'Consumible':
-        return 'bg-green-50 text-green-700 ring-green-200';
       case 'Servicio':
         return 'bg-purple-50 text-purple-700 ring-purple-200';
       default:

@@ -40,6 +40,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'clientes/:id/recetas',
+        loadComponent: () =>
+          import('./features/clientes/recetas-cliente-list/recetas-cliente-list.component').then(
+            (m) => m.RecetasClienteListComponent,
+          ),
+      },
+      {
         path: 'sucursales',
         loadComponent: () =>
           import('./features/sucursales/sucursales-list/sucursales-list.component').then(
@@ -65,6 +72,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/stock/stock-list/stock-list.component').then(
             (m) => m.StockListComponent,
+          ),
+      },
+      {
+        path: 'precios',
+        loadComponent: () =>
+          import('./features/precios/precios-list/precios-list.component').then(
+            (m) => m.PreciosListComponent,
           ),
       },
       {

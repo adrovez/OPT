@@ -1,5 +1,5 @@
 import { Component, inject, input, output, signal, computed, effect } from '@angular/core';
-import { ProductoCategoriaDto } from '../../../core/models/producto.model';
+import { CategoriaDto } from '../../../core/models/producto.model';
 import { ProductoCategoriaService } from '../../../core/services/producto-categoria.service';
 import Swal from 'sweetalert2';
 
@@ -99,7 +99,7 @@ import Swal from 'sweetalert2';
 export class CategoriaFormComponent {
   private readonly categoriaService = inject(ProductoCategoriaService);
 
-  readonly categoria = input<ProductoCategoriaDto | null>(null);
+  readonly categoria = input<CategoriaDto | null>(null);
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
@@ -136,7 +136,7 @@ export class CategoriaFormComponent {
     const request = { nombre: this.nombre().trim() };
 
     if (existing) {
-      this.categoriaService.update(existing.categoriaId, request).subscribe({
+      this.categoriaService.update(existing.categoriaId, { ...request, isActivo: existing.isActivo ?? true }).subscribe({
         next: () => this.onSuccess('actualizada'),
         error: (err) => this.handleError(err),
       });

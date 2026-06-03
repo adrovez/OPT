@@ -4,14 +4,19 @@ using OPT.Application.Stock.DTOs;
 
 namespace OPT.Application.Stock.Queries;
 
-public record GetStockByVarianteQuery(Guid TenantId, Guid SucursalId, Guid VarianteId) : IRequest<StockDto?>;
+public record GetStockByProductoQuery(
+    Guid TenantId,
+    Guid SucursalId,
+    Guid ProductoId) : IRequest<StockDto?>;
 
-public class GetStockByVarianteQueryHandler(IStockRepository repository)
-    : IRequestHandler<GetStockByVarianteQuery, StockDto?>
+public class GetStockByProductoQueryHandler(IStockRepository repository)
+    : IRequestHandler<GetStockByProductoQuery, StockDto?>
 {
-    public async Task<StockDto?> Handle(GetStockByVarianteQuery query, CancellationToken cancellationToken)
+    public async Task<StockDto?> Handle(
+        GetStockByProductoQuery query, CancellationToken cancellationToken)
     {
-        var stock = await repository.GetStockByVarianteAsync(query.TenantId, query.SucursalId, query.VarianteId, cancellationToken);
+        var stock = await repository.GetStockByProductoAsync(
+            query.TenantId, query.SucursalId, query.ProductoId, cancellationToken);
         return stock?.ToDto();
     }
 }

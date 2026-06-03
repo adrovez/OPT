@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "anthropic.claude-code",
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+    "angular.ng-template",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "editorconfig.editorconfig",
+    "ms-mssql.mssql"
+  ]
+}

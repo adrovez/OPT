@@ -10,27 +10,25 @@ public class CreateProductoCommandHandler(IProductoRepository repository)
     public async Task<Guid> Handle(
         CreateProductoCommand request, CancellationToken cancellationToken)
     {
-        if (request.CodigoInterno is not null)
-        {
-            var existe = await repository.ExisteCodigoInternoAsync(
-                request.CodigoInterno, request.TenantId, cancellationToken: cancellationToken);
-            if (existe)
-                throw new InvalidOperationException(
-                    $"Ya existe un producto con el código interno '{request.CodigoInterno}'.");
-        }
+        var existe = await repository.ExisteCodigoInternoAsync(
+            request.CodigoInterno, request.TenantId, cancellationToken: cancellationToken);
+        if (existe)
+            throw new InvalidOperationException(
+                $"Ya existe un producto con el código interno '{request.CodigoInterno}'.");
 
         var producto = new ProductoEntity
         {
-            ProductoId = Guid.NewGuid(),
-            TenantId = request.TenantId,
-            CategoriaId = request.CategoriaId,
-            Nombre = request.Nombre.Trim(),
-            Descripcion = request.Descripcion?.Trim(),
-            TipoProducto = request.TipoProducto,
-            CodigoInterno = request.CodigoInterno?.Trim(),
-            Activo = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = request.CreatedBy
+            TenantId       = request.TenantId,
+            CodigoInterno  = request.CodigoInterno.Trim(),
+            Nombre         = request.Nombre.Trim(),
+            Descripcion    = request.Descripcion?.Trim(),
+            Tipo           = request.Tipo,
+            UnidadMedida   = request.UnidadMedida?.Trim(),
+            CategoriaId    = request.CategoriaId,
+            ProductoPadreId = request.ProductoPadreId,
+            IsActivo       = true,
+            CreatedAt      = DateTime.UtcNow,
+            CreatedBy      = request.CreatedBy
         };
 
         var created = await repository.AddAsync(producto, cancellationToken);

@@ -8,26 +8,39 @@ namespace OPT.Infrastructure.Persistence.Repositories;
 public class ProductoRepository(OPTDbContext context) : IProductoRepository
 {
     public async Task<PagedResult<Producto>> GetPagedAsync(
-        Guid tenantId, string? tipoProducto, Guid? categoriaId, string? busqueda,
-        int page, int pageSize, CancellationToken cancellationToken = default)
+        Guid tenantId,
+        string? tipo,
+        Guid? categoriaId,
+        bool soloRaices,
+        Guid? padreId,
+        string? busqueda,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
     {
         var query = context.Productos
             .Include(p => p.Categoria)
-            .Include(p => p.Variantes)
+            .Include(p => p.Hijos)
             .Where(p => p.TenantId == tenantId);
 
-        if (!string.IsNullOrWhiteSpace(tipoProducto))
-            query = query.Where(p => p.TipoProducto == tipoProducto);
+        if (!string.IsNullOrWhiteSpace(tipo))
+            query = query.Where(p => p.Tipo == tipo);
 
         if (categoriaId.HasValue)
             query = query.Where(p => p.CategoriaId == categoriaId.Value);
+
+        if (soloRaices)
+            query = query.Where(p => p.ProductoPadreId == null);
+
+        if (padreId.HasValue)
+            query = query.Where(p => p.ProductoPadreId == padreId.Value);
 
         if (!string.IsNullOrWhiteSpace(busqueda))
         {
             var term = busqueda.Trim().ToLower();
             query = query.Where(p =>
                 p.Nombre.ToLower().Contains(term) ||
-                (p.CodigoInterno != null && p.CodigoInterno.ToLower().Contains(term)));
+                p.CodigoInterno.ToLower().Contains(term));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -40,10 +53,10 @@ public class ProductoRepository(OPTDbContext context) : IProductoRepository
 
         return new PagedResult<Producto>
         {
-            Items = items,
+            Items      = items,
             TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
+            Page       = page,
+            PageSize   = pageSize
         };
     }
 
@@ -51,7 +64,7 @@ public class ProductoRepository(OPTDbContext context) : IProductoRepository
         Guid productoId, Guid tenantId, CancellationToken cancellationToken = default)
         => await context.Productos
             .Include(p => p.Categoria)
-            .Include(p => p.Variantes.OrderBy(v => v.Nombre))
+            .Include(p => p.Hijos.OrderBy(h => h.Nombre))
             .FirstOrDefaultAsync(
                 p => p.ProductoId == productoId && p.TenantId == tenantId,
                 cancellationToken);

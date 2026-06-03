@@ -6,8 +6,10 @@ namespace OPT.Application.Productos.Queries;
 
 public record GetProductosQuery(
     Guid TenantId,
-    string? TipoProducto,
+    string? Tipo,
     Guid? CategoriaId,
+    bool SoloRaices,
+    Guid? PadreId,
     string? Busqueda,
     int Page,
     int PageSize) : IRequest<PagedResult<ProductoDto>>;

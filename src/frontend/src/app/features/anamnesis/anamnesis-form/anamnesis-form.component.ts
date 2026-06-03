@@ -25,7 +25,8 @@ import Swal from 'sweetalert2';
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2 class="text-lg font-semibold text-gray-900">
-            {{ anamnesis() ? 'Editar anamnesis' : 'Nueva anamnesis' }}
+            @if (viewOnly()) { Ver anamnesis }
+            @else { {{ anamnesis() ? 'Editar anamnesis' : 'Nueva anamnesis' }} }
           </h2>
           <button
             type="button"
@@ -139,26 +140,28 @@ import Swal from 'sweetalert2';
                    rounded-lg hover:bg-gray-50 transition-colors
                    focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
-            Cancelar
+            {{ viewOnly() ? 'Cerrar' : 'Cancelar' }}
           </button>
-          <button
-            type="submit"
-            form="anamnesis-form"
-            [disabled]="loading()"
-            class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
-                   bg-blue-600 hover:bg-blue-700 active:bg-blue-800
-                   disabled:bg-blue-400 disabled:cursor-not-allowed
-                   rounded-lg transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            @if (loading()) {
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-            }
-            {{ anamnesis() ? 'Guardar cambios' : 'Registrar anamnesis' }}
-          </button>
+          @if (!viewOnly()) {
+            <button
+              type="submit"
+              form="anamnesis-form"
+              [disabled]="loading()"
+              class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
+                     bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+                     disabled:bg-blue-400 disabled:cursor-not-allowed
+                     rounded-lg transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              @if (loading()) {
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              }
+              {{ anamnesis() ? 'Guardar cambios' : 'Registrar anamnesis' }}
+            </button>
+          }
         </div>
       </div>
     </div>
@@ -170,6 +173,7 @@ export class AnamnesisFormComponent implements OnInit {
 
   readonly anamnesis = input<AnamnesisDto | null>(null);
   readonly clienteId = input.required<string>();
+  readonly viewOnly = input<boolean>(false);
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
@@ -193,6 +197,7 @@ export class AnamnesisFormComponent implements OnInit {
       usaLentes:    a.usaLentes,
       observacion:  a.observacion ?? '',
     });
+    if (this.viewOnly()) this.form.disable();
   }
 
   onSubmit(): void {

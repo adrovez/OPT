@@ -3,23 +3,27 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-05-31 (Sesión 16 — Stock frontend completo + Documentos de Entrada + Precios; sesiones 9–16 integradas)
+> Updated: 2026-06-10 (Sesión 21 — Módulo Precios frontend + fixes Productos + fix modal Stock)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts `000–024` — todas las tablas implementadas (ver CLAUDE.md para tabla completa)
-- [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos+Variantes, Stock, DocumentosStock, Precios (interno), Atenciones+CobroServicio
+- [x] Base de datos: scripts `000–027` ejecutados — rediseño completo de inventario en script 027 (ver CLAUDE.md para tabla completa)
+- [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos (jerarquía self-ref), Stock, DocumentosEntrada, Precios (interno), Transferencias, Atenciones+CobroServicio
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21 completo: Login, Layout, AuthGuard, Interceptor JWT, RUT Validator
-- [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos, Stock (3 tabs + Documentos de Entrada + Primer movimiento), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs)
+- [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos (jerarquía padre/hijos + categorías), Stock (3 tabs + Documentos de Entrada + Primer movimiento + movimiento directo), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs con solo lectura en estado terminado)
+- [x] Módulo Inventario/Stock frontend completamente sincronizado con nuevo esquema (ProductoId, no VarianteId; jerarquía padre/hijos; DocumentoEntrada en lugar de DocumentoStock; PATCH estado para anular)
 - [x] Migración PKs INT → GUID en todas las entidades de negocio
 - [x] Patrones: shareReplay(1) catálogos, takeUntilDestroyed, Signal Forms, SucursalContextService
 - [x] `ICurrentTenantService` solo en controllers/middleware — handlers reciben contexto vía command
 - [x] Documentación técnica HTML: backend-arquitectura.html, base-datos.html, backend-api-reference.html
 - [x] Manuales técnicos y CLAUDE.md actualizados a sesión 16
+- [x] Script 027: rediseño completo BD inventario (8 tablas DROP + 8 tablas CREATE con jerarquía self-ref, transferencias y 7 tipos de movimiento)
+- [x] Fix frontend: tabs Anamnesis y Receta en `/atenciones/:id` son solo lectura cuando `estado ∈ {TerminadaServicio, DerivoOT}`
+- [x] Módulo Precios frontend: lista todos los productos con precios, filtros, stats, modal editar precio + historial
 
 ### Módulos Futuros Planificados
-- [ ] **Salida (documentos)** (`025_`): OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form
-- [ ] **Pantalla de Precios**: gestión de PrecioVenta por sucursal (PrecioCosto se actualiza vía Entradas)
+- [ ] **Transferencias (frontend)**: pantalla para gestionar transferencias entre sucursales (backend ya implementado)
+- [ ] **Salida (documentos)**: OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form
 - [ ] **Unit tests backend**: xUnit + Moq
 - [ ] **Autorización por rol** en controllers (actualmente solo `[Authorize]` sin roles específicos)
 - [ ] **Dashboard / Home screen** en Angular
@@ -57,6 +61,134 @@ Track work sessions and current state for continuity between AI agent sessions.
 ---
 
 ## Session History
+
+### 2026-06-10 - Sesión 21: Módulo Precios frontend + fixes Productos y Stock
+
+- **Trabajo**: Correcciones en formulario de Producto + fix del modal de movimiento de stock + nuevo módulo frontend de Precios.
+
+- **Fixes Producto:**
+  - Bug: categoría guardada no se mostraba en edición → fix `[selected]="c.categoriaId === categoriaId()"` en cada `<option>` (Angular sin FormsModule necesita `[selected]` explícito)
+  - `codigoInterno` ahora obligatorio tanto en producto padre como en sub-producto (era opcional)
+  - Sub-producto hereda `categoriaId` del padre: se muestra read-only y se envía en `CreateProductoRequest`
+
+- **Fix Stock modal:** `max-h-[90vh]` + `flex-1 overflow-y-auto` en body → botones footer siempre visibles en pantallas pequeñas
+
+- **Módulo Precios (frontend nuevo):**
+  - `core/models/precio.model.ts` — `PrecioProductoDto`, `PreciosPagedResult`, `SetPrecioRequest`
+  - `core/services/precio.service.ts` — `getVigentes()`, `getHistorial()`, `setPrecio()`
+  - `features/precios/precios-list/precios-list.component.ts` — carga todos los productos (con y sin precio) via forkJoin + todos los precios; stats 3 cards; filtros búsqueda/categoría/solo-sin-precio; tabla paginada; modal edición con historial
+  - `app.routes.ts` + nav: ruta `/precios` + link en dropdown Inventario
+
+- **Gotcha resuelto:** `${{` en TypeScript template literals (en `template: \`...\``) es interpretado por TypeScript como inicio de interpolación `${`. Solución: `\${{` — el backslash escapa el `$` y TypeScript ya no lo interpreta como expresión de template literal.
+
+- **Estado módulo Precios post-sesión:** BD ✅ | Backend ✅ | Frontend ✅
+
+- **Próximo script**: `028_`
+
+---
+
+### 2026-06-03 - Sesión 20: Frontend Inventario Etapa 3 — sincronización con nuevo backend
+
+- **Trabajo**: Alineación completa del frontend Angular con el backend refactorizado en sesión 19. El módulo Inventario/Stock queda funcional de extremo a extremo con el nuevo esquema de BD (script 027).
+
+- **Contexto del refactor backend (sesión 19, ya ejecutado)**:
+  - `ProductoVariante` eliminada; `Producto` ahora tiene auto-referencia `ProductoPadreId` + `Hijos[]`
+  - `ProductoCategoria` renombrada a `Categoria`, ruta `/api/categorias`
+  - `DocumentoStock` renombrado a `DocumentoEntrada`, ruta `/api/documentos-entrada`
+  - `Stock` y `MovimientoStock` usan `ProductoId` en lugar de `VarianteId`
+  - `POST /api/stock/movimiento` (singular, era `/movimientos`)
+  - Anulación vía `PATCH /api/documentos-entrada/{id}/estado` con body `{ estado: 'Anulado' }`
+  - Tipos de movimiento extendidos a 7: Entrada, Salida, Ajuste, Merma, DevolucionProveedor, TransferenciaEntrada, TransferenciaSalida
+
+- **Archivos frontend modificados (14 archivos)**:
+
+  **Modelos (`core/models/`)**:
+  - `producto.model.ts` — Reescrito: `CategoriaDto`, nuevo `ProductoDto` con `hijos[]`, `isActivo`, `tipo`; eliminados `ProductoVarianteDto` y tipos legacy
+  - `stock.model.ts` — `StockDto` y `MovimientoStockDto` usan `productoId`/`codigoInterno` (no `varianteId`); `TIPOS_MOVIMIENTO` extendido con `Merma` y `DevolucionProveedor`
+  - `documento-stock.model.ts` — Lineas usan `productoId`; campos renombrados (`fechaDocumento`, `observaciones`)
+
+  **Servicios (`core/services/`)**:
+  - `stock.service.ts` — `getStock()` maneja `PagedResult`; URL corregida a `/movimiento` (singular)
+  - `documento-stock.service.ts` — URL base cambiada a `/documentos-entrada`; `anular()` usa `PATCH /estado`
+  - `producto.service.ts` — eliminados métodos de variantes; añadidos parámetros `soloRaices` y `padreId` en `getAll()`
+  - `producto-categoria.service.ts` — URL cambiada a `/categorias`; tipo de respuesta `CategoriaDto`
+
+  **Componentes Stock (`features/stock/`)**:
+  - `stock-list.component.ts` — columna `varianteNombre` reemplazada por `codigoInterno`; `existingProductoIds` para filtrar duplicados
+  - `movimiento-form.component.ts` — campo cambiado de `varianteId` a `productoId`
+  - `primer-movimiento-form.component.ts` — Reescrito: selección de producto con optgroup agrupado por padre/hijos
+  - `documento-entrada-form.component.ts` — Líneas usan `productoId`; agrupación visual padre/hijos con optgroup
+
+  **Componentes Productos (`features/productos/`)**:
+  - `productos-list.component.ts` — Usa `CategoriaDto`; muestra `p.tipo`, `p.isActivo`, `p.hijos.length`
+  - `producto-form.component.ts` — Gestión de sub-productos (hijos) en lugar de variantes; campos `tipo` e `isActivo`
+  - `categoria-form.component.ts` — Tipo de respuesta `CategoriaDto`
+
+- **Build**: `npm run build` exitoso — 0 errores TypeScript, 0 advertencias
+
+- **Estado módulo Inventario/Stock post-sesión**:
+  - Tab "Stock actual": inventario por producto/código con estados (OK / Bajo mínimo / Sin stock)
+  - Tab "Entradas": documentos FacturaCompra, BoletaCompra, OtroIngreso + anulación vía PATCH
+  - Tab "Historial": movimientos filtrados por tipo y fecha
+  - Modal "Nuevo movimiento": Salida / Ajuste / Merma / DevolucionProveedor para productos con stock existente
+  - Modal "Primer movimiento": selección de producto sin stock con agrupación padre/hijo, wizard 2 pasos
+  - Modal "Nueva entrada": documento multi-línea con agrupación padre/hijo en selector
+  - BD ✅ | Backend ✅ | Frontend ✅
+
+- **Próximo script**: `028_`
+
+- **Proximos pasos sugeridos**:
+  - Pantalla de Precios (PrecioVenta global)
+  - Frontend de Transferencias entre sucursales (backend ya existe)
+  - Dashboard / Home screen
+
+---
+
+### 2026-06-02 - Sesión 19: Backend Inventario Etapa 2 — alineación con esquema 027
+- **Trabajo**: Reemplazo completo de la capa backend C# para alinearla con el nuevo esquema de BD del script 027 (rediseño inventario).
+- **Domain/Entities — eliminadas**: `ProductoCategoria.cs`, `ProductoVariante.cs`, `DocumentoStock.cs`, `DocumentoStockLinea.cs`
+- **Domain/Entities — reescritas**: `Producto.cs` (self-ref, campo `Tipo`), `Stock.cs` (`ProductoId` reemplaza `VarianteId`), `PrecioProducto.cs` (`ProductoId` sin `SucursalId`), `MovimientoStock.cs` (7 tipos + `CantidadAntes`/`CantidadDespues` + FKs a `DocumentoEntrada` y `Transferencia`)
+- **Domain/Entities — creadas**: `Categoria.cs`, `DocumentoEntrada.cs`, `DocumentoEntradaLinea.cs`, `Transferencia.cs`, `TransferenciaLinea.cs`
+- **Application/Interfaces**: eliminadas `IProductoCategoriaRepository`, `IProductoVarianteRepository`, `IDocumentoStockRepository`; creadas `ICategoriaRepository`, `IDocumentoEntradaRepository`, `ITransferenciaRepository`, `IPrecioProductoRepository`; reescritas `IProductoRepository`, `IStockRepository`
+- **Application/Categorias**: módulo nuevo completo (Commands, Queries, DTOs, Validators)
+- **Application/Productos**: reescrito sin variantes; campos `Tipo`, `UnidadMedida`, `ProductoPadreId`; comando `SetPrecioProducto`
+- **Application/Stock**: reescrito con `ProductoId`, paginación, 7 tipos de movimiento; eliminado `GetStockByVarianteQuery`
+- **Application/DocumentoEntrada**: módulo nuevo (reemplaza `DocumentoStock`); flujo Borrador→Confirmar→Anular via PATCH estado con generación atómica de movimientos y precios
+- **Application/Transferencia**: módulo nuevo completo con flujo Pendiente→Confirmada (movimientos TransferenciaSalida + TransferenciaEntrada)
+- **Infrastructure/OPTDbContext**: nuevos DbSets y configuraciones EF Core para las 8 nuevas tablas; eliminados DbSets obsoletos; self-ref configurado con `HasOne(p => p.ProductoPadre).WithMany(p => p.Hijos)`
+- **Infrastructure/Repositories**: creados `CategoriaRepository`, `PrecioProductoRepository`, `DocumentoEntradaRepository`, `TransferenciaRepository`; reescritos `ProductoRepository`, `StockRepository`; eliminados repos obsoletos
+- **Infrastructure/DependencyInjection**: 6 registros nuevos, 3 obsoletos eliminados
+- **API/Controllers**: `ProductoCategoriaController.cs` → clase `CategoriaController` (`/api/categorias`); `DocumentosStockController.cs` → clase `DocumentoEntradaController` (`/api/documentos-entrada`); `ProductoController` reescrito; `StockController` reescrito; `TransferenciaController` nuevo (`/api/transferencias`)
+- **Build**: `dotnet build` exitoso — 0 errores, 0 advertencias
+- **Estado módulo inventario**: BD ✅ | Backend ✅ | Frontend ⏳ (etapa 3 — aún usa API vieja con VarianteId)
+- **Próximo script**: `028_`
+
+### 2026-06-02 - Sesión 18: Rediseño BD Inventario + Atención solo lectura al terminar
+- **Work**: Rediseño completo del módulo de inventario a nivel de base de datos (etapa 1 de 3). Bloqueo de edición en atención terminada.
+- **BD — script 027** (ejecutado exitosamente):
+  - DROP 8 tablas: OPT_ProductoCategoria, OPT_Producto, OPT_ProductoVariante, OPT_Stock, OPT_MovimientoStock, OPT_PrecioProducto, OPT_DocumentoStock, OPT_DocumentoStockLinea
+  - CREATE 8 tablas: OPT_Categoria, OPT_Producto (jerarquía self-ref), OPT_PrecioProducto (global), OPT_Stock, OPT_DocumentoEntrada, OPT_DocumentoEntradaLinea, OPT_Transferencia (nueva), OPT_MovimientoStock (7 tipos)
+- **Decisiones de diseño inventario**:
+  - Jerarquía de producto: self-ref `ProductoPadreId` nullable — elimina tabla OPT_ProductoVariante
+  - Sin OPT_ProductoAtributo (descartada)
+  - Precio global (sin SucursalId en OPT_PrecioProducto)
+  - Stock negativo permitido (sin CHECK en CantidadDisponible)
+  - OPT_Transferencia: estado Pendiente → Confirmada (stock se mueve al Confirmar)
+  - 7 tipos de movimiento: Entrada, Salida, Ajuste, Merma, DevolucionProveedor, TransferenciaEntrada, TransferenciaSalida
+  - DevolucionProveedor: sin documento, solo Referencia/Observacion
+- **Fix frontend**: tabs Anamnesis y Receta en `/atenciones/:id` son solo lectura cuando `estado ∈ {TerminadaServicio, DerivoOT}`. Computed `esTerminada`, inputs `[disabled]`, botones Guardar ocultos, badge "Solo lectura".
+- **Estado módulo inventario**: BD ✅ | Backend ⏳ (etapa 2) | Frontend ⏳ (etapa 3 — actual usa API vieja con VarianteId)
+- **Próximo script**: `028_`
+
+### 2026-06-02 - Sesión 17: Harness de agentes IA (`.claude/` ejecutable)
+- **Trabajo**: Implementación del harness ejecutable para trabajar con Claude + VS Code. Documentado en `.claude/HARNESS.md`.
+- **Subagentes** (`.claude/agents/`): `backend-developer`, `frontend-developer`, `migration-analyst` (solo lectura), `documentation-writer`. Cada uno con tools restringidas y checklist propio.
+- **Hooks** (`.claude/hooks/`, PowerShell): `block-old.ps1` (bloqueo duro de `old/`), `sql-guard.ps1` (bloquea `NEWID()` DEFAULT; advierte DELETE físico/secretos), `tenant-guard.ps1` (advierte `ICurrentTenantService` en handlers), `post-edit-validate.ps1` (opt-in, no cableado).
+- **Reglas path-scoped** (`.claude/rules/`): `backend.md`, `frontend.md`, `basedatos.md`.
+- **VS Code** (`.vscode/`): `extensions.json`, `settings.json` (excluye `old/` y `dist/`, `old/` readonly), `tasks.json` (build/test/lint/serve).
+- **settings.json**: reorganizado a permisos por patrón + `deny old/**` y `appsettings*.json` + wiring de hooks. Backup en `settings.json.bak`.
+- **Decisiones**: `block-old` y `NEWID()` en bloqueo duro; tenant/secretos en advertencia; `post-edit-validate` opt-in para evitar ruido. Entorno asumido Windows/PowerShell.
+- **Próximos pasos**: probar los hooks en una sesión real; opcional CI `.github/workflows/build-test.yml` cuando existan proyectos de test.
 
 ### 2026-05-24 - Sesión 16: Stock frontend completo + Primer movimiento + Documentos de Entrada + Precios
 

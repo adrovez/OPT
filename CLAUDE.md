@@ -40,7 +40,11 @@ ng generate component features/<modulo>/<nombre> --standalone
 
 ### Base de datos
 
-Scripts SQL en `src/basedatos/` numerados `000–024`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `025_`**.
+Scripts SQL en `src/basedatos/` numerados `000–026`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `027_`**.
+
+```bash
+sqlcmd -S localhost -d dbOPT -E -i src/basedatos/<script>.sql
+```
 
 | Script | Crea |
 |--------|------|
@@ -67,6 +71,8 @@ Scripts SQL en `src/basedatos/` numerados `000–024`. Ejecutar en orden sobre S
 | `022` | `OPT_Atencion` |
 | `023` | `OPT_CobroServicio` |
 | `024` | ALTER a `OPT_RecetaCristales` (+`AtencionId`, +`Fuente`) y `OPT_Anamnesis` (+`AtencionId`) |
+| `025` | ALTER `OPT_Agenda` — reemplaza estado `Pendiente` → `Ingresado` (DEFAULT + CHECK + datos) |
+| `026` | Migración de datos legacy desde `DatosParaMigrar.xlsx` (idempotente; requiere 000–025) |
 
 ---
 
@@ -333,6 +339,24 @@ El secreto JWT y demás configuración están en `src/backend/OPT.API/appsetting
 
 ---
 
+## Design System
+
+Definido en `.agents/branding.md`. Resumen para trabajo en frontend:
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| Azul oscuro | `#0D1B3D` | Sidebar, headers |
+| Azul medio | `#2563EB` | Botones principales |
+| Celeste | `#06B6D4` | Elementos informativos |
+| Verde | `#10B981` | Estados positivos, confirmación |
+| Gris claro | `#F3F6FA` | Fondos de página |
+
+**Tipografía:** Poppins (Bold H1, SemiBold H2, Regular body, Medium labels)
+
+**Estilo UI:** cards, espaciado amplio, iconos outline. Sidebar fondo azul oscuro con iconos + texto.
+
+---
+
 ## Documentación de referencia
 
 | Documento | Contenido |
@@ -342,3 +366,4 @@ El secreto JWT y demás configuración están en `src/backend/OPT.API/appsetting
 | `docs/requerimientos/flujo-clinico-comercial.html` | Flujo clínico-comercial de referencia (legacy) |
 | `.agents/progress.md` | Historial de sesiones y próximos pasos |
 | `.agents/decisions/` | ADRs (middleware, schema, migración GUID) |
+| `.agents/branding.md` | Paleta de colores, tipografía y guías UX completas |

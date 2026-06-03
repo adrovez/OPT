@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "backend: build",
+      "type": "shell",
+      "command": "dotnet build",
+      "options": { "cwd": "${workspaceFolder}/src/backend" },
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "backend: test",
+      "type": "shell",
+      "command": "dotnet test",
+      "options": { "cwd": "${workspaceFolder}/src/backend" },
+      "group": "test",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "backend: run (API)",
+      "type": "shell",
+      "command": "dotnet run --project OPT.API",
+      "options": { "cwd": "${workspaceFolder}/src/backend" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "frontend: serve",
+      "type": "shell",
+      "command": "ng serve",
+      "options": { "cwd": "${workspaceFolder}/src/frontend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "options": { "cwd": "${workspaceFolder}/src/frontend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: build",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/src/frontend" },
+      "problemMatcher": []
+    }
+  ]
+}

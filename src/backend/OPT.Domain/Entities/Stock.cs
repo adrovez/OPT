@@ -4,7 +4,7 @@ public class Stock
 {
     public Guid StockId { get; set; }
     public Guid TenantId { get; set; }
-    public Guid VarianteId { get; set; }
+    public Guid ProductoId { get; set; }
     public Guid SucursalId { get; set; }
     public int CantidadDisponible { get; set; }
     public int StockMinimo { get; set; }
@@ -15,6 +15,6 @@ public class Stock
     public string? UpdatedBy { get; set; }
     public bool IsDeleted { get; set; } = false;
 
-    public ProductoVariante Variante { get; set; } = null!;
+    public Producto Producto { get; set; } = null!;
     public Sucursal Sucursal { get; set; } = null!;
 }

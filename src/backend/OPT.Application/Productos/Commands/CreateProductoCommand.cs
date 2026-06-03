@@ -4,9 +4,11 @@ namespace OPT.Application.Productos.Commands;
 
 public record CreateProductoCommand(
     Guid TenantId,
-    Guid? CategoriaId,
+    string CodigoInterno,
     string Nombre,
     string? Descripcion,
-    string TipoProducto,
-    string? CodigoInterno,
+    string Tipo,
+    string? UnidadMedida,
+    Guid? CategoriaId,
+    Guid? ProductoPadreId,
     string CreatedBy) : IRequest<Guid>;

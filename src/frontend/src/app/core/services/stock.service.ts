@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { StockDto, MovimientoStockDto, RegistrarMovimientoRequest } from '../models/stock.model';
 import { SucursalContextService } from './sucursal-context.service';
 import { environment } from '../../../environments/environment';
@@ -17,12 +18,15 @@ export class StockService {
   }
 
   getStock(): Observable<StockDto[]> {
-    return this.http.get<StockDto[]>(this.apiUrl, { headers: this.headers() });
+    return this.http.get<{ items: StockDto[] }>(this.apiUrl, {
+      headers: this.headers(),
+      params: new HttpParams().set('pageSize', '1000'),
+    }).pipe(map(r => r.items));
   }
 
   registrarMovimiento(request: RegistrarMovimientoRequest): Observable<{ movimientoId: string }> {
     return this.http.post<{ movimientoId: string }>(
-      `${this.apiUrl}/movimientos`,
+      `${this.apiUrl}/movimiento`,
       request,
       { headers: this.headers() },
     );

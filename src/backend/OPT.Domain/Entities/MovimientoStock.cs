@@ -4,26 +4,35 @@ public class MovimientoStock
 {
     public Guid MovimientoId { get; set; }
     public Guid TenantId { get; set; }
-    public Guid VarianteId { get; set; }
+    public Guid ProductoId { get; set; }
     public Guid SucursalId { get; set; }
     public Guid UsuarioId { get; set; }
 
-    public string TipoMovimiento { get; set; } = string.Empty; // Entrada | Salida | Ajuste
-    public int Cantidad { get; set; }       // Entrada/Salida: > 0 | Ajuste: ± firmado
+    /// <summary>'Entrada'|'Salida'|'Ajuste'|'Merma'|'DevolucionProveedor'|'TransferenciaEntrada'|'TransferenciaSalida'</summary>
+    public string TipoMovimiento { get; set; } = string.Empty;
+
+    public int Cantidad { get; set; }
     public int CantidadAntes { get; set; }
     public int CantidadDespues { get; set; }
 
-    public string? Referencia { get; set; }  // nro. orden, factura, remisión, etc.
+    /// <summary>FK nullable a OPT_DocumentoEntrada.</summary>
+    public Guid? DocumentoId { get; set; }
+
+    /// <summary>FK nullable a OPT_Transferencia.</summary>
+    public Guid? TransferenciaId { get; set; }
+
+    public string? Referencia { get; set; }
     public string? Observacion { get; set; }
 
     public DateTime FechaMovimiento { get; set; } = DateTime.UtcNow;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? CreatedBy { get; set; }
 
-    public Guid? DocumentoId { get; set; }
+    // Sin IsDeleted, sin UpdatedAt/UpdatedBy — los movimientos son inmutables
 
-    public ProductoVariante Variante { get; set; } = null!;
+    public Producto Producto { get; set; } = null!;
     public Sucursal Sucursal { get; set; } = null!;
     public Usuario Usuario { get; set; } = null!;
-    public DocumentoStock? Documento { get; set; }
+    public DocumentoEntrada? Documento { get; set; }
+    public Transferencia? Transferencia { get; set; }
 }

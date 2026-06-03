@@ -5,10 +5,12 @@ namespace OPT.Application.Productos.Commands;
 public record UpdateProductoCommand(
     Guid ProductoId,
     Guid TenantId,
-    Guid? CategoriaId,
+    string CodigoInterno,
     string Nombre,
     string? Descripcion,
-    string TipoProducto,
-    string? CodigoInterno,
-    bool Activo,
+    string Tipo,
+    string? UnidadMedida,
+    Guid? CategoriaId,
+    Guid? ProductoPadreId,
+    bool IsActivo,
     string UpdatedBy) : IRequest;

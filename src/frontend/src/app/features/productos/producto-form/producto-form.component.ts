@@ -2,12 +2,9 @@ import { Component, inject, input, output, signal, computed, effect, DestroyRef 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ProductoDto,
-  ProductoCategoriaDto,
-  ProductoVarianteDto,
+  CategoriaDto,
   CreateProductoRequest,
   UpdateProductoRequest,
-  CreateProductoVarianteRequest,
-  UpdateProductoVarianteRequest,
   TIPOS_PRODUCTO,
 } from '../../../core/models/producto.model';
 import { ProductoService } from '../../../core/services/producto.service';
@@ -100,8 +97,8 @@ import Swal from 'sweetalert2';
               </label>
               <select
                 id="prod-tipo"
-                [value]="tipoProducto()"
-                (change)="tipoProducto.set($any($event.target).value)"
+                [value]="tipo()"
+                (change)="tipo.set($any($event.target).value)"
                 class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200
                        hover:border-gray-300 bg-white transition-colors
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -123,9 +120,9 @@ import Swal from 'sweetalert2';
                        hover:border-gray-300 bg-white transition-colors
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Sin categoría</option>
+                <option value="" [selected]="!categoriaId()">Sin categoría</option>
                 @for (c of categorias(); track c.categoriaId) {
-                  <option [value]="c.categoriaId">{{ c.nombre }}</option>
+                  <option [value]="c.categoriaId" [selected]="c.categoriaId === categoriaId()">{{ c.nombre }}</option>
                 }
               </select>
             </div>
@@ -134,7 +131,7 @@ import Swal from 'sweetalert2';
           <!-- Código interno -->
           <div>
             <label for="prod-codigo" class="block text-sm font-medium text-gray-700 mb-1.5">
-              Código interno <span class="text-gray-400 font-normal">(opcional)</span>
+              Código interno <span class="text-red-500">*</span>
             </label>
             <input
               id="prod-codigo"
@@ -143,10 +140,16 @@ import Swal from 'sweetalert2';
               placeholder="Ej: ARM-001"
               [value]="codigoInterno()"
               (input)="codigoInterno.set($any($event.target).value)"
-              class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200
-                     hover:border-gray-300 bg-white transition-colors
+              (blur)="codigoInternoTouched.set(true)"
+              class="w-full px-3.5 py-2.5 text-sm rounded-lg border transition-colors bg-white
+                     hover:border-gray-300
                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [class.border-red-300]="!!codigoInternoError()"
+              [class.border-gray-200]="!codigoInternoError()"
             />
+            @if (codigoInternoError()) {
+              <p class="mt-1 text-xs text-red-600">{{ codigoInternoError() }}</p>
+            }
           </div>
 
           <!-- Activo (solo en edición) -->
@@ -159,22 +162,22 @@ import Swal from 'sweetalert2';
               </span>
               <input
                 type="checkbox"
-                [checked]="activo()"
-                (change)="activo.set($any($event.target).checked)"
+                [checked]="isActivo()"
+                (change)="isActivo.set($any($event.target).checked)"
                 class="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
               />
             </label>
           }
 
-          <!-- Variantes (solo en edición) -->
+          <!-- Sub-productos (solo en edición) -->
           @if (producto()) {
             <div class="pt-2 border-t border-gray-100">
               <div class="flex items-center justify-between mb-3">
-                <p class="text-sm font-semibold text-gray-700">Variantes</p>
-                @if (!showVarianteForm()) {
+                <p class="text-sm font-semibold text-gray-700">Sub-productos</p>
+                @if (!showHijoForm()) {
                   <button
                     type="button"
-                    (click)="abrirVarianteForm(null)"
+                    (click)="abrirHijoForm(null)"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700
                            bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -182,35 +185,38 @@ import Swal from 'sweetalert2';
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Agregar variante
+                    Agregar sub-producto
                   </button>
                 }
               </div>
 
-              <!-- Lista variantes -->
-              @if (variantes().length === 0 && !showVarianteForm()) {
-                <p class="text-xs text-gray-400 text-center py-3">Sin variantes registradas.</p>
+              <!-- Lista hijos -->
+              @if (hijos().length === 0 && !showHijoForm()) {
+                <p class="text-xs text-gray-400 text-center py-3">Sin sub-productos registrados.</p>
               }
-              @if (variantes().length > 0) {
+              @if (hijos().length > 0) {
                 <div class="space-y-1.5 mb-3">
-                  @for (v of variantes(); track v.varianteId) {
+                  @for (h of hijos(); track h.productoId) {
                     <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 border border-gray-100">
                       <div class="flex items-center gap-2 min-w-0">
-                        <span class="text-sm text-gray-800 font-medium truncate">{{ v.nombre }}</span>
-                        @if (!v.activo) {
+                        <span class="text-sm text-gray-800 font-medium truncate">{{ h.nombre }}</span>
+                        @if (h.codigoInterno) {
+                          <span class="text-xs font-mono text-gray-400">{{ h.codigoInterno }}</span>
+                        }
+                        @if (!h.isActivo) {
                           <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold
                                        bg-gray-100 text-gray-500 ring-1 ring-inset ring-gray-200 shrink-0">
-                            Inactiva
+                            Inactivo
                           </span>
                         }
                       </div>
                       <div class="flex items-center gap-2 ml-2 shrink-0">
                         <button
                           type="button"
-                          (click)="abrirVarianteForm(v)"
+                          (click)="abrirHijoForm(h)"
                           class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors
                                  focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          aria-label="Editar variante"
+                          aria-label="Editar sub-producto"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -220,10 +226,10 @@ import Swal from 'sweetalert2';
                         </button>
                         <button
                           type="button"
-                          (click)="eliminarVariante(v)"
+                          (click)="eliminarHijo(h)"
                           class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors
                                  focus:outline-none focus:ring-2 focus:ring-red-500"
-                          aria-label="Eliminar variante"
+                          aria-label="Eliminar sub-producto"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -237,14 +243,14 @@ import Swal from 'sweetalert2';
                 </div>
               }
 
-              <!-- Formulario inline variante -->
-              @if (showVarianteForm()) {
+              <!-- Formulario inline hijo -->
+              @if (showHijoForm()) {
                 <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-4 space-y-3">
                   <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide">
-                    {{ editingVarianteId() ? 'Editar variante' : 'Nueva variante' }}
+                    {{ editingHijoId() ? 'Editar sub-producto' : 'Nuevo sub-producto' }}
                   </p>
 
-                  <!-- Nombre variante -->
+                  <!-- Nombre -->
                   <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">
                       Nombre <span class="text-red-500">*</span>
@@ -267,39 +273,58 @@ import Swal from 'sweetalert2';
                     }
                   </div>
 
-                  <!-- Código de barras -->
+                  <!-- Categoría heredada del padre -->
+                  @if (categoriaPadreNombre()) {
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Categoría</label>
+                      <div class="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-600">
+                        {{ categoriaPadreNombre() }}
+                        <span class="ml-1 text-xs text-gray-400">(heredada del producto)</span>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Código interno -->
                   <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Cód. barras</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Código interno <span class="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
-                      maxlength="100"
-                      placeholder="Opcional"
-                      [value]="varCodigoBarras()"
-                      (input)="varCodigoBarras.set($any($event.target).value)"
-                      class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200
-                             hover:border-gray-300 bg-white transition-colors
+                      maxlength="50"
+                      placeholder="Ej: ARM-001-M"
+                      [value]="varCodigoInterno()"
+                      (input)="varCodigoInterno.set($any($event.target).value)"
+                      (blur)="varCodigoInternoTouched.set(true)"
+                      class="w-full px-3 py-2 text-sm rounded-lg border transition-colors bg-white
+                             hover:border-gray-300
                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      [class.border-red-300]="!!varCodigoInternoError()"
+                      [class.border-gray-200]="!varCodigoInternoError()"
                     />
+                    @if (varCodigoInternoError()) {
+                      <p class="mt-0.5 text-xs text-red-600">{{ varCodigoInternoError() }}</p>
+                    }
                   </div>
 
-                  <!-- Activo variante (solo edición) -->
-                  @if (editingVarianteId()) {
+                  <!-- Activo (solo edición) -->
+                  @if (editingHijoId()) {
                     <label class="flex items-center justify-between py-2 px-3 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                      <span class="text-xs font-medium text-gray-700">Variante activa</span>
+                      <span class="text-xs font-medium text-gray-700">Sub-producto activo</span>
                       <input
                         type="checkbox"
-                        [checked]="varActivo()"
-                        (change)="varActivo.set($any($event.target).checked)"
+                        [checked]="varIsActivo()"
+                        (change)="varIsActivo.set($any($event.target).checked)"
                         class="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500"
                       />
                     </label>
                   }
 
-                  <!-- Botones variante -->
+                  <!-- Botones -->
                   <div class="flex justify-end gap-2 pt-1">
                     <button
                       type="button"
-                      (click)="cancelarVarianteForm()"
+                      (click)="cancelarHijoForm()"
                       class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200
                              rounded-lg hover:bg-gray-50 transition-colors
                              focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -308,7 +333,7 @@ import Swal from 'sweetalert2';
                     </button>
                     <button
                       type="button"
-                      (click)="guardarVariante()"
+                      (click)="guardarHijo()"
                       [disabled]="loadingVariante()"
                       class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white
                              bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
@@ -320,7 +345,7 @@ import Swal from 'sweetalert2';
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                         </svg>
                       }
-                      {{ editingVarianteId() ? 'Guardar cambios' : 'Agregar' }}
+                      {{ editingHijoId() ? 'Guardar cambios' : 'Agregar' }}
                     </button>
                   </div>
                 </div>
@@ -369,7 +394,7 @@ export class ProductoFormComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly producto = input<ProductoDto | null>(null);
-  readonly categorias = input<ProductoCategoriaDto[]>([]);
+  readonly categorias = input<CategoriaDto[]>([]);
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
@@ -380,10 +405,11 @@ export class ProductoFormComponent {
   readonly nombre = signal('');
   readonly nombreTouched = signal(false);
   readonly descripcion = signal('');
-  readonly tipoProducto = signal('Almacenable');
+  readonly tipo = signal('Producto');
   readonly categoriaId = signal('');
   readonly codigoInterno = signal('');
-  readonly activo = signal(true);
+  readonly codigoInternoTouched = signal(false);
+  readonly isActivo = signal(true);
 
   // ── Validación ───────────────────────────────────────────────────────────────
   readonly nombreError = computed(() => {
@@ -394,20 +420,28 @@ export class ProductoFormComponent {
     return '';
   });
 
-  readonly formValid = computed(() => {
-    const n = this.nombre().trim();
-    return !!n && n.length <= 200;
+  readonly codigoInternoError = computed(() => {
+    if (!this.codigoInternoTouched()) return '';
+    if (!this.codigoInterno().trim()) return 'El código interno es requerido.';
+    return '';
   });
 
-  // ── Variantes ────────────────────────────────────────────────────────────────
-  readonly variantes = signal<ProductoVarianteDto[]>([]);
-  readonly showVarianteForm = signal(false);
-  readonly editingVarianteId = signal<string | null>(null);
+  readonly formValid = computed(() => {
+    const n = this.nombre().trim();
+    const c = this.codigoInterno().trim();
+    return !!n && n.length <= 200 && !!c;
+  });
+
+  // ── Hijos (sub-productos) ─────────────────────────────────────────────────────
+  readonly hijos = signal<ProductoDto[]>([]);
+  readonly showHijoForm = signal(false);
+  readonly editingHijoId = signal<string | null>(null);
 
   readonly varNombre = signal('');
   readonly varNombreTouched = signal(false);
-  readonly varCodigoBarras = signal('');
-  readonly varActivo = signal(true);
+  readonly varCodigoInterno = signal('');
+  readonly varCodigoInternoTouched = signal(false);
+  readonly varIsActivo = signal(true);
   readonly loadingVariante = signal(false);
 
   readonly varNombreError = computed(() => {
@@ -416,7 +450,21 @@ export class ProductoFormComponent {
     return '';
   });
 
-  readonly varFormValid = computed(() => !!this.varNombre().trim());
+  readonly varCodigoInternoError = computed(() => {
+    if (!this.varCodigoInternoTouched()) return '';
+    if (!this.varCodigoInterno().trim()) return 'El código interno es requerido.';
+    return '';
+  });
+
+  readonly varFormValid = computed(
+    () => !!this.varNombre().trim() && !!this.varCodigoInterno().trim(),
+  );
+
+  readonly categoriaPadreNombre = computed(() => {
+    const catId = this.categoriaId();
+    if (!catId) return '';
+    return this.categorias().find(c => c.categoriaId === catId)?.nombre ?? '';
+  });
 
   constructor() {
     effect(() => {
@@ -424,16 +472,17 @@ export class ProductoFormComponent {
       if (!p) return;
       this.nombre.set(p.nombre);
       this.descripcion.set(p.descripcion ?? '');
-      this.tipoProducto.set(p.tipoProducto);
+      this.tipo.set(p.tipo);
       this.categoriaId.set(p.categoriaId ?? '');
       this.codigoInterno.set(p.codigoInterno ?? '');
-      this.activo.set(p.activo);
-      this.variantes.set([...p.variantes]);
+      this.isActivo.set(p.isActivo);
+      this.hijos.set([...p.hijos]);
     });
   }
 
   onSubmit(): void {
     this.nombreTouched.set(true);
+    this.codigoInternoTouched.set(true);
     if (!this.formValid()) return;
 
     this.loading.set(true);
@@ -441,12 +490,13 @@ export class ProductoFormComponent {
 
     if (existing) {
       const req: UpdateProductoRequest = {
-        categoriaId: this.categoriaId() || undefined,
+        codigoInterno: this.codigoInterno().trim(),
         nombre: this.nombre().trim(),
         descripcion: this.descripcion().trim() || undefined,
-        tipoProducto: this.tipoProducto(),
-        codigoInterno: this.codigoInterno().trim() || undefined,
-        activo: this.activo(),
+        tipo: this.tipo(),
+        categoriaId: this.categoriaId() || undefined,
+        productoPadreId: existing.productoPadreId,
+        isActivo: this.isActivo(),
       };
       this.productoService.update(existing.productoId, req).subscribe({
         next: () => this.onSuccess('actualizado'),
@@ -454,11 +504,11 @@ export class ProductoFormComponent {
       });
     } else {
       const req: CreateProductoRequest = {
-        categoriaId: this.categoriaId() || undefined,
+        codigoInterno: this.codigoInterno().trim(),
         nombre: this.nombre().trim(),
         descripcion: this.descripcion().trim() || undefined,
-        tipoProducto: this.tipoProducto(),
-        codigoInterno: this.codigoInterno().trim() || undefined,
+        tipo: this.tipo(),
+        categoriaId: this.categoriaId() || undefined,
       };
       this.productoService.create(req).subscribe({
         next: () => this.onSuccess('creado'),
@@ -467,107 +517,105 @@ export class ProductoFormComponent {
     }
   }
 
-  // ── Métodos de variantes ─────────────────────────────────────────────────────
+  // ── Métodos de hijos ──────────────────────────────────────────────────────────
 
-  abrirVarianteForm(variante: ProductoVarianteDto | null): void {
-    this.editingVarianteId.set(variante?.varianteId ?? null);
-    this.varNombre.set(variante?.nombre ?? '');
+  abrirHijoForm(hijo: ProductoDto | null): void {
+    this.editingHijoId.set(hijo?.productoId ?? null);
+    this.varNombre.set(hijo?.nombre ?? '');
     this.varNombreTouched.set(false);
-    this.varCodigoBarras.set(variante?.codigoBarras ?? '');
-    this.varActivo.set(variante?.activo ?? true);
-    this.showVarianteForm.set(true);
+    this.varCodigoInterno.set(hijo?.codigoInterno ?? '');
+    this.varIsActivo.set(hijo?.isActivo ?? true);
+    this.showHijoForm.set(true);
   }
 
-  cancelarVarianteForm(): void {
-    this.showVarianteForm.set(false);
-    this.editingVarianteId.set(null);
+  cancelarHijoForm(): void {
+    this.showHijoForm.set(false);
+    this.editingHijoId.set(null);
+    this.varCodigoInternoTouched.set(false);
+    this.varNombreTouched.set(false);
   }
 
-  guardarVariante(): void {
+  guardarHijo(): void {
     this.varNombreTouched.set(true);
+    this.varCodigoInternoTouched.set(true);
     if (!this.varFormValid()) return;
 
     const productoId = this.producto()?.productoId;
     if (!productoId) return;
 
     this.loadingVariante.set(true);
-    const editingId = this.editingVarianteId();
+    const editingId = this.editingHijoId();
 
     if (editingId) {
-      const req: UpdateProductoVarianteRequest = {
+      const hijoActual = this.hijos().find(h => h.productoId === editingId);
+      const req: UpdateProductoRequest = {
+        codigoInterno: this.varCodigoInterno().trim(),
         nombre: this.varNombre().trim(),
-        codigoBarras: this.varCodigoBarras().trim() || undefined,
-        activo: this.varActivo(),
+        tipo: hijoActual?.tipo ?? this.tipo(),
+        productoPadreId: productoId,
+        isActivo: this.varIsActivo(),
       };
       this.productoService
-        .updateVariante(productoId, editingId, req)
+        .update(editingId, req)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            this.variantes.update((list) =>
-              list.map((v) =>
-                v.varianteId === editingId
-                  ? { ...v, nombre: req.nombre, codigoBarras: req.codigoBarras, activo: req.activo }
-                  : v,
+            this.hijos.update(list =>
+              list.map(h =>
+                h.productoId === editingId
+                  ? { ...h, nombre: req.nombre, codigoInterno: req.codigoInterno, isActivo: req.isActivo }
+                  : h,
               ),
             );
             this.loadingVariante.set(false);
-            this.cancelarVarianteForm();
+            this.cancelarHijoForm();
           },
           error: () => {
             this.loadingVariante.set(false);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error al guardar variante',
-              confirmButtonColor: '#2563eb',
-              confirmButtonText: 'Cerrar',
-            });
+            Swal.fire({ icon: 'error', title: 'Error al guardar', confirmButtonColor: '#2563eb', confirmButtonText: 'Cerrar' });
           },
         });
     } else {
-      const req: CreateProductoVarianteRequest = {
+      const req: CreateProductoRequest = {
+        codigoInterno: this.varCodigoInterno().trim(),
         nombre: this.varNombre().trim(),
-        codigoBarras: this.varCodigoBarras().trim() || undefined,
+        tipo: this.tipo(),
+        categoriaId: this.categoriaId() || undefined,
+        productoPadreId: productoId,
       };
       this.productoService
-        .createVariante(productoId, req)
+        .create(req)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            const nueva: ProductoVarianteDto = {
-              varianteId: res.id,
-              productoId,
+            const nuevo: ProductoDto = {
+              productoId: res.id,
               tenantId: this.producto()!.tenantId,
+              productoPadreId: productoId,
+              codigoInterno: req.codigoInterno,
               nombre: req.nombre,
-              codigoBarras: req.codigoBarras,
-              activo: true,
+              tipo: req.tipo,
+              isActivo: true,
+              hijos: [],
               createdAt: new Date().toISOString(),
             };
-            this.variantes.update((list) => [...list, nueva]);
+            this.hijos.update(list => [...list, nuevo]);
             this.loadingVariante.set(false);
-            this.cancelarVarianteForm();
+            this.cancelarHijoForm();
           },
           error: () => {
             this.loadingVariante.set(false);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error al guardar variante',
-              confirmButtonColor: '#2563eb',
-              confirmButtonText: 'Cerrar',
-            });
+            Swal.fire({ icon: 'error', title: 'Error al guardar', confirmButtonColor: '#2563eb', confirmButtonText: 'Cerrar' });
           },
         });
     }
   }
 
-  eliminarVariante(variante: ProductoVarianteDto): void {
-    const productoId = this.producto()?.productoId;
-    if (!productoId) return;
-
+  eliminarHijo(hijo: ProductoDto): void {
     Swal.fire({
       icon: 'warning',
-      title: '¿Eliminar variante?',
-      html: `¿Está seguro que desea eliminar <strong>${variante.nombre}</strong>?`,
+      title: '¿Eliminar sub-producto?',
+      html: `¿Está seguro que desea eliminar <strong>${hijo.nombre}</strong>?`,
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
@@ -576,22 +624,13 @@ export class ProductoFormComponent {
       reverseButtons: true,
     }).then((result) => {
       if (!result.isConfirmed) return;
-
       this.productoService
-        .deleteVariante(productoId, variante.varianteId)
+        .delete(hijo.productoId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: () =>
-            this.variantes.update((list) =>
-              list.filter((v) => v.varianteId !== variante.varianteId),
-            ),
+          next: () => this.hijos.update(list => list.filter(h => h.productoId !== hijo.productoId)),
           error: () =>
-            Swal.fire({
-              icon: 'error',
-              title: 'Error al eliminar',
-              confirmButtonColor: '#2563eb',
-              confirmButtonText: 'Cerrar',
-            }),
+            Swal.fire({ icon: 'error', title: 'Error al eliminar', confirmButtonColor: '#2563eb', confirmButtonText: 'Cerrar' }),
         });
     });
   }
@@ -626,12 +665,6 @@ export class ProductoFormComponent {
         : err.status === 400
           ? 'Datos inválidos. Revise los campos e intente nuevamente.'
           : 'Error al guardar. Intente nuevamente más tarde.');
-    Swal.fire({
-      icon: 'error',
-      title: 'Error al guardar',
-      text: msg,
-      confirmButtonColor: '#2563eb',
-      confirmButtonText: 'Cerrar',
-    });
+    Swal.fire({ icon: 'error', title: 'Error al guardar', text: msg, confirmButtonColor: '#2563eb', confirmButtonText: 'Cerrar' });
   }
 }

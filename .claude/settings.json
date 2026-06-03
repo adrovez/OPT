@@ -1,17 +1,52 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Get-ChildItem -Recurse -Depth 2 -Directory)",
-      "Bash(Select-Object FullName)",
-      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\" -Force)",
-      "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(dotnet build *)",
-      "Bash(npm run *)",
-      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj OPT.Infrastructure/OPT.Infrastructure.csproj OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error|warning|Compilación|Errores\" } | Select-Object -Last 15)",
-      "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; dotnet build OPT.Application/OPT.Application.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.Infrastructure/OPT.Infrastructure.csproj --no-restore -v q 2>&1 | Select-Object -Last 5; dotnet build OPT.API/OPT.API.csproj --no-restore -v q 2>&1 | Where-Object { $_ -match \"error CS|Compilación|Errores\" } | Select-Object -Last 10)",
-      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\015_OPT_ProductoCategoria.sql\")",
-      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\016_OPT_Producto.sql\")",
-      "Bash(sqlcmd -S localhost -d dbOPT -E -i \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\\\\017_OPT_ProductoVariante.sql\")"
+      "Bash(dotnet restore)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet run:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run test)",
+      "Bash(npm run build)",
+      "Bash(ng serve:*)",
+      "Bash(ng test:*)",
+      "Bash(ng generate:*)",
+      "Bash(sqlcmd -S localhost -d dbOPT *)",
+      "Bash(npx tsc *)",
+      "Bash(grep -n \"selected\\\\|template literal\\\\|\\\\\\\\\\\\\\\\\\\\\\\\$\" \"C:/Users/alexi/.claude/projects/c--Adrovez-GitHub-OPT/memory/feedback_patterns.md\")"
+    ],
+    "deny": [
+      "Edit(old/**)",
+      "Write(old/**)",
+      "Read(**/appsettings*.json)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-old.ps1\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/sql-guard.ps1\""
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/tenant-guard.ps1\""
+          }
+        ]
+      }
     ]
   }
 }

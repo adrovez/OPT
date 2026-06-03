@@ -1,3 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
+
+@theme {
+  --color-opt-navy: #0D1B3D;
+  --color-opt-bg: #F3F6FA;
+  --font-sans: "Poppins", system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html, body {
+    height: 100%;
+    font-family: "Poppins", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F3F6FA;
+  }
+}

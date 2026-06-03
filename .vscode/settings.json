@@ -1,0 +1,20 @@
+{
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+  "search.exclude": {
+    "old/**": true,
+    "**/dist/**": true,
+    "**/node_modules/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true
+  },
+  "files.readonlyInclude": {
+    "old/**": true
+  },
+  "editor.formatOnSave": true,
+  "[csharp]": { "editor.defaultFormatter": "ms-dotnettools.csharp" },
+  "[typescript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "files.associations": { "*.sql": "sql" }
+}
