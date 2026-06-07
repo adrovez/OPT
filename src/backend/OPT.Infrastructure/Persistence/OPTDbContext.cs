@@ -14,6 +14,7 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Comuna> Comunas => Set<Comuna>();
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<FormaPago> FormasPago => Set<FormaPago>();
+    public DbSet<TipoPrevision> TiposPrevisiones => Set<TipoPrevision>();
 
     // ── Tenant entities ────────────────────────────────────────────────────
     public DbSet<Cliente> Clientes => Set<Cliente>();
@@ -37,6 +38,13 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<DocumentoEntradaLinea> DocumentosEntradaLineas => Set<DocumentoEntradaLinea>();
     public DbSet<Transferencia> Transferencias => Set<Transferencia>();
     public DbSet<TransferenciaLinea> TransferenciasLineas => Set<TransferenciaLinea>();
+
+    // ── Órdenes de Trabajo (script 029) ───────────────────────────────────
+    public DbSet<OrdenTrabajo> OrdenesTrabajo => Set<OrdenTrabajo>();
+    public DbSet<OrdenTrabajoLinea> OrdenesTrabajoLineas => Set<OrdenTrabajoLinea>();
+    public DbSet<OrdenTrabajoPago> OrdenesTrabajoPagos => Set<OrdenTrabajoPago>();
+    public DbSet<OrdenTrabajoCuota> OrdenesTrabajoCuotas => Set<OrdenTrabajoCuota>();
+    public DbSet<OrdenTrabajoBitacora> OrdenesTrabajoBitacora => Set<OrdenTrabajoBitacora>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,8 +159,6 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.HasIndex(a => new { a.TenantId, a.ClienteId }).HasFilter("[IsDeleted] = 0");
             e.HasOne(a => a.Cliente).WithMany()
              .HasForeignKey(a => a.ClienteId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(a => a.Atencion).WithMany()
-             .HasForeignKey(a => a.AtencionId).OnDelete(DeleteBehavior.Restrict);
             e.HasQueryFilter(a => !a.IsDeleted);
         });
 
@@ -190,8 +196,6 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.HasIndex(r => new { r.TenantId, r.ClienteId }).HasFilter("[IsDeleted] = 0");
             e.HasOne(r => r.Cliente).WithMany()
              .HasForeignKey(r => r.ClienteId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(r => r.Atencion).WithMany()
-             .HasForeignKey(r => r.AtencionId).OnDelete(DeleteBehavior.Restrict);
             e.HasQueryFilter(r => !r.IsDeleted);
         });
 
@@ -213,6 +217,15 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
             e.ToTable("OPT_Rol");
             e.HasKey(r => r.RolId);
             e.Property(r => r.Nombre).HasMaxLength(50).IsRequired();
+        });
+
+        // ── TipoPrevision ──────────────────────────────────────────────────
+        modelBuilder.Entity<TipoPrevision>(e =>
+        {
+            e.ToTable("OPT_TipoPrevision");
+            e.HasKey(t => t.IdTipoPrevision);
+            e.Property(t => t.Descripcion).HasMaxLength(100).IsRequired();
+            // Sin HasQueryFilter: catálogo global, sin IsDeleted
         });
 
         // ── Agenda ─────────────────────────────────────────────────────────
@@ -513,6 +526,156 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(l => l.Producto).WithMany()
              .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── OrdenTrabajo ───────────────────────────────────────────────────
+        modelBuilder.Entity<OrdenTrabajo>(e =>
+        {
+            e.ToTable("OPT_OrdenTrabajo");
+            e.HasKey(ot => ot.OTId);
+            e.Property(ot => ot.OTId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(ot => ot.SucursalId).HasColumnName("idSucursal");
+            e.Property(ot => ot.TenantId).IsRequired();
+            e.Property(ot => ot.NumeroOT).HasMaxLength(20).IsRequired();
+            e.Property(ot => ot.TipoFacturacion).HasMaxLength(20).IsRequired().HasDefaultValue("Particular");
+            e.Property(ot => ot.Beneficiario).HasMaxLength(200);
+            e.Property(ot => ot.SubTotal).HasColumnType("decimal(18,2)");
+            e.Property(ot => ot.Descuento).HasColumnType("decimal(18,2)");
+            e.Property(ot => ot.MontoTotal).HasColumnType("decimal(18,2)");
+            e.Property(ot => ot.TotalAbonado).HasColumnType("decimal(18,2)");
+            e.Property(ot => ot.Saldo).HasColumnType("decimal(18,2)");
+            e.Property(ot => ot.EstadoPago).HasMaxLength(20).IsRequired().HasDefaultValue("Pendiente");
+            e.Property(ot => ot.EtapaOT).HasMaxLength(20).IsRequired().HasDefaultValue("Ingresado");
+            e.Property(ot => ot.Observacion).HasMaxLength(2000);
+            e.Property(ot => ot.CreatedBy).HasMaxLength(100).IsRequired();
+            e.Property(ot => ot.UpdatedBy).HasMaxLength(100);
+
+            e.HasIndex(ot => new { ot.TenantId, ot.NumeroOT })
+             .HasFilter("[IsDeleted] = 0").IsUnique();
+            e.HasIndex(ot => new { ot.TenantId, ot.SucursalId, ot.FechaIngreso })
+             .HasFilter("[IsDeleted] = 0");
+
+            // FK a Cliente (dos FKs, sin colección inversa en Cliente)
+            e.HasOne(ot => ot.Cliente)
+             .WithMany()
+             .HasForeignKey(ot => ot.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(ot => ot.EmpresaCliente)
+             .WithMany()
+             .HasForeignKey(ot => ot.EmpresaClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Hijos
+            e.HasMany(ot => ot.Lineas)
+             .WithOne(l => l.OT)
+             .HasForeignKey(l => l.OTId);
+
+            e.HasMany(ot => ot.Pagos)
+             .WithOne(p => p.OT)
+             .HasForeignKey(p => p.OTId);
+
+            e.HasMany(ot => ot.Cuotas)
+             .WithOne(c => c.OT)
+             .HasForeignKey(c => c.OTId);
+
+            e.HasMany(ot => ot.Bitacora)
+             .WithOne(b => b.OT)
+             .HasForeignKey(b => b.OTId);
+
+            e.HasQueryFilter(ot => !ot.IsDeleted);
+        });
+
+        // ── OrdenTrabajoLinea ─────────────────────────────────────────────
+        modelBuilder.Entity<OrdenTrabajoLinea>(e =>
+        {
+            e.ToTable("OPT_OrdenTrabajoLinea");
+            e.HasKey(l => l.LineaId);
+            e.Property(l => l.LineaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(l => l.TenantId).IsRequired();
+            e.Property(l => l.ValorUnitario).HasColumnType("decimal(18,2)");
+            e.Property(l => l.Comentario).HasMaxLength(500);
+
+            e.HasIndex(l => l.OTId);
+
+            e.HasOne(l => l.OT)
+             .WithMany(ot => ot.Lineas)
+             .HasForeignKey(l => l.OTId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(l => l.Producto)
+             .WithMany()
+             .HasForeignKey(l => l.ProductoId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(l => !l.IsDeleted);
+        });
+
+        // ── OrdenTrabajoPago ──────────────────────────────────────────────
+        modelBuilder.Entity<OrdenTrabajoPago>(e =>
+        {
+            e.ToTable("OPT_OrdenTrabajoPago");
+            e.HasKey(p => p.PagoId);
+            e.Property(p => p.PagoId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(p => p.TenantId).IsRequired();
+            e.Property(p => p.Monto).HasColumnType("decimal(18,2)");
+            e.Property(p => p.Observacion).HasMaxLength(500);
+            e.Property(p => p.CreatedBy).HasMaxLength(100).IsRequired();
+
+            e.HasIndex(p => p.OTId);
+
+            e.HasOne(p => p.OT)
+             .WithMany(ot => ot.Pagos)
+             .HasForeignKey(p => p.OTId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(p => p.FormaPago)
+             .WithMany()
+             .HasForeignKey(p => p.FormaPagoId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasQueryFilter(p => !p.IsDeleted);
+        });
+
+        // ── OrdenTrabajoCuota ─────────────────────────────────────────────
+        modelBuilder.Entity<OrdenTrabajoCuota>(e =>
+        {
+            e.ToTable("OPT_OrdenTrabajoCuota");
+            e.HasKey(c => c.CuotaId);
+            e.Property(c => c.CuotaId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(c => c.TenantId).IsRequired();
+            e.Property(c => c.ValorCuota).HasColumnType("decimal(18,2)");
+            e.Property(c => c.Estado).HasMaxLength(20).IsRequired().HasDefaultValue("Pendiente");
+
+            e.HasIndex(c => c.OTId);
+
+            e.HasOne(c => c.OT)
+             .WithMany(ot => ot.Cuotas)
+             .HasForeignKey(c => c.OTId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasQueryFilter(c => !c.IsDeleted);
+        });
+
+        // ── OrdenTrabajoBitacora ──────────────────────────────────────────
+        modelBuilder.Entity<OrdenTrabajoBitacora>(e =>
+        {
+            e.ToTable("OPT_OrdenTrabajoBitacora");
+            e.HasKey(b => b.BitacoraId);
+            e.Property(b => b.BitacoraId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(b => b.TenantId).IsRequired();
+            e.Property(b => b.Etapa).HasMaxLength(20).IsRequired();
+            e.Property(b => b.Responsable).HasMaxLength(100).IsRequired();
+            e.Property(b => b.Observacion).HasMaxLength(2000);
+
+            e.HasIndex(b => new { b.OTId, b.Fecha });
+
+            e.HasOne(b => b.OT)
+             .WithMany(ot => ot.Bitacora)
+             .HasForeignKey(b => b.OTId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Sin HasQueryFilter: la bitácora es inmutable, no tiene IsDeleted
         });
     }
 }

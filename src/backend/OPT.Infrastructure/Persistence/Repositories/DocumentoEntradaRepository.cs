@@ -56,6 +56,7 @@ public class DocumentoEntradaRepository(OPTDbContext db) : IDocumentoEntradaRepo
 
         var doc = new DocumentoEntradaEntity
         {
+            DocumentoId     = Guid.NewGuid(),
             TenantId        = tenantId,
             SucursalId      = sucursalId,
             TipoDocumento   = tipoDocumento,

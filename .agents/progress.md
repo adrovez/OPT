@@ -3,14 +3,14 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-06-10 (Sesión 21 — Módulo Precios frontend + fixes Productos + fix modal Stock)
+> Updated: 2026-06-06 (Sesión 26 — Mejoras módulo OT frontend)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts `000–027` ejecutados — rediseño completo de inventario en script 027 (ver CLAUDE.md para tabla completa)
-- [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos (jerarquía self-ref), Stock, DocumentosEntrada, Precios (interno), Transferencias, Atenciones+CobroServicio
+- [x] Base de datos: scripts `000–029` ejecutados — script 029 crea 5 tablas del módulo Órdenes de Trabajo (ver CLAUDE.md para tabla completa)
+- [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos (jerarquía self-ref), Stock, DocumentosEntrada, Precios (interno), Transferencias, Atenciones+CobroServicio, OrdenTrabajo
 - [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
 - [x] Frontend Angular 21 completo: Login, Layout, AuthGuard, Interceptor JWT, RUT Validator
-- [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos (jerarquía padre/hijos + categorías), Stock (3 tabs + Documentos de Entrada + Primer movimiento + movimiento directo), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs con solo lectura en estado terminado)
+- [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos (jerarquía padre/hijos + categorías), Stock (4 tabs: Stock actual + Entradas + Historial + Transferencias), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs con solo lectura en estado terminado), Órdenes de Trabajo (lista + form + detalle)
 - [x] Módulo Inventario/Stock frontend completamente sincronizado con nuevo esquema (ProductoId, no VarianteId; jerarquía padre/hijos; DocumentoEntrada en lugar de DocumentoStock; PATCH estado para anular)
 - [x] Migración PKs INT → GUID en todas las entidades de negocio
 - [x] Patrones: shareReplay(1) catálogos, takeUntilDestroyed, Signal Forms, SucursalContextService
@@ -21,8 +21,51 @@ Track work sessions and current state for continuity between AI agent sessions.
 - [x] Fix frontend: tabs Anamnesis y Receta en `/atenciones/:id` son solo lectura cuando `estado ∈ {TerminadaServicio, DerivoOT}`
 - [x] Módulo Precios frontend: lista todos los productos con precios, filtros, stats, modal editar precio + historial
 
+### Completed This Session (Sesión 24)
+- **Frontend Órdenes de Trabajo — completado en su totalidad:**
+  - `core/models/orden-trabajo.model.ts` — interfaces TypeScript (OrdenTrabajoDto, OrdenTrabajoDetalleDto, OrdenTrabajoLineaDto, OrdenTrabajoPagoDto, OrdenTrabajoCuotaDto, OrdenTrabajoBitacoraDto, requests), constantes ETAPAS_OT, ETAPA_COLORS, ESTADOS_PAGO_OT, TIPOS_FACTURACION, PagedResult<T>
+  - `core/services/orden-trabajo.service.ts` — 8 métodos HTTP: getAll, getById, verificarNumero, create, update, remove, cambiarEtapa, registrarPago; envía `X-Sucursal-Id` header
+  - `features/ordenes-trabajo/ordenes-trabajo-list/ordenes-trabajo-list.component.ts` — tabla paginada con filtros N°OT / Etapa / EstadoPago; badges de color por etapa; acciones ver / editar / eliminar (Swal confirm)
+  - `features/ordenes-trabajo/orden-trabajo-form/orden-trabajo-form.component.ts` — página crear/editar completa: autocomplete cliente y producto con debounce; líneas dinámicas con cálculo en tiempo real (computed signals); abono inicial múltiple; cuotas opcionales; verificación asíncrona de número OT único
+  - `features/ordenes-trabajo/orden-trabajo-detail/orden-trabajo-detail.component.ts` — 2 tabs (Información / Atención-Receta); modales inline para cambiar etapa y registrar pago
+  - `app.routes.ts` — rutas `/ordenes-trabajo`, `/ordenes-trabajo/nueva`, `/ordenes-trabajo/:id`, `/ordenes-trabajo/:id/editar`
+  - `layout/main-layout/main-layout.component.ts` — "Órdenes de Trabajo" en dropdown Clínica; activeGroup actualizado
+- **Estado módulo Orden de Trabajo post-sesión**: BD ✅ | Backend ✅ | Frontend ✅
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
+
+### Completed This Session (Sesión 26)
+- **Mejoras módulo Orden de Trabajo (6 ítems):**
+  - **Script 030** `OPT_TipoPrevision` — catálogo compartido (INT PK, sin tenant), 7 tipos de previsión iniciales (Particular, FONASA, ISAPRE, DIPRECA, CAPREDENA, FF.AA./Carabineros, Sin previsión)
+  - **Backend TipoPrevision**: Domain entity + `ITipoPrevisionRepository` + `GetTipoPrevisionesQuery` + `TipoPrevisionRepository` + `GET /api/tipo-previsiones` controller + registro en DI y DbContext
+  - **Backend EditarOT**: `EditarOrdenTrabajoCommand` ahora incluye `Guid? RecetaCristalesId`; interfaz `IOrdenTrabajoRepository.ActualizarAsync` y repositorio actualizados
+  - **Frontend `prevision.service.ts`**: nuevo servicio con `shareReplay(1)` para `GET /api/tipo-previsiones`
+  - **Tab rename**: "Lentes" → "Productos o Servicios" en `orden-trabajo-form`
+  - **Comunas via API**: `orden-trabajo-form` ya no usa datos estáticos `REGIONES_COMUNAS`; carga `RegionService.getRegionesWithComunas()` igual que `cliente-form`
+  - **Previsión dinámica**: `orden-trabajo-form` y `cliente-form` cargan opciones desde API (eliminado `previsionOptions` hardcodeado)
+  - **Validación receta**: computed `recetaEsValida()` bloquea avance en tab 1 si una sección está activa pero sin valor esférico; mensaje de error visible
+  - **UX cuotas**: computed `cuotasPreview()` genera tabla de N°/vencimiento/valor en el tab Abonos
+  - **Receta en edición**: `cargarDetalle()` carga y pre-rellena el form de receta si la OT ya tiene `recetaCristalesId`; `finalizar()` hace PUT si existe o POST si es nueva; error visible con Swal
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
+
+### Completed This Session (Sesión 25)
+- **Documentación técnica Órdenes de Trabajo:**
+  - `docs/technical-manual/ordenes-trabajo.html` — manual HTML nuevo (estilo consistente con base-datos.html): descripción del módulo, 5 tablas SQL con todos los campos/constraints, 8 endpoints REST con ejemplos de request/response, modelos TypeScript, servicio Angular, componentes, rutas, notas técnicas (header X-Sucursal-Id, cálculo de montos, generación de cuotas)
+  - `docs/technical-manual/base-datos.html` — actualizado: nav sidebar agrega sección OT; header chips 24→29 tablas y scripts 000–028→000–029; tabla resumen agrega 5 filas OT; tabla scripts agrega fila 029; alerta próximo script 029→030; diagrama ERD extendido con flujo OT; secciones de las 5 tablas OT; tabla índices agrega 6 filas OT; tabla cascadas agrega 4 filas OT; guía próximo número 029→030
+  - `docs/api/README.md` — fecha actualizada, fila Órdenes de Trabajo en tabla de módulos, sección 17 con los 8 endpoints
+  - `docs/api/frontend-api-contracts.md` — fecha actualizada, OrdenTrabajo en tabla de IDs, sección completa con modelos TypeScript, firma de servicio, tabla de componentes; tabla de servicios actualizada
+  - `.agents/progress.md` — esta entrada
+
+### Completed This Session (Sesión 23)
+- **Script 029**: 5 tablas nuevas (OPT_OrdenTrabajo, OPT_OrdenTrabajoLinea, OPT_OrdenTrabajoPago, OPT_OrdenTrabajoCuota, OPT_OrdenTrabajoBitacora) + índice UNIQUE (TenantId, NumeroOT)
+- **Domain**: 5 entidades (OrdenTrabajo, OrdenTrabajoLinea, OrdenTrabajoPago, OrdenTrabajoCuota, OrdenTrabajoBitacora)
+- **Application**: IOrdenTrabajoRepository + OTLineaInput/OTAbonoInput records + DTOs (6 records) + 5 Commands + 3 Queries + 4 Validators
+- **Infrastructure**: OrdenTrabajoRepository (CrearAsync atómico con cuotas + bitácora; ActualizarAsync con replace lines/abonos; CambiarEtapaAsync; RegistrarPagoAsync) + OPTDbContext + DI
+- **API**: OrdenTrabajoController (7 endpoints) + request records
+- **Build**: dotnet build exitoso — 0 errores, 0 advertencias
+- **Próximo**: Frontend del módulo OT (completado en Sesión 24)
+
 ### Módulos Futuros Planificados
-- [ ] **Transferencias (frontend)**: pantalla para gestionar transferencias entre sucursales (backend ya implementado)
+- [x] **Transferencias (frontend)**: tab en `/stock` — lista, crear, Confirmar/Anular (script 028 + backend ✅ + frontend ✅)
 - [ ] **Salida (documentos)**: OrdenTrabajo, Devoluciones, OtroEgreso — por ahora solo Salida directa desde form
 - [ ] **Unit tests backend**: xUnit + Moq
 - [ ] **Autorización por rol** en controllers (actualmente solo `[Authorize]` sin roles específicos)
@@ -61,6 +104,35 @@ Track work sessions and current state for continuity between AI agent sessions.
 ---
 
 ## Session History
+
+### 2026-06-05 - Sesión 24: Frontend Órdenes de Trabajo completo
+
+- **Trabajo**: Implementación completa del frontend del módulo Órdenes de Trabajo. El backend ya estaba completo desde la sesión 23.
+
+- **Archivos nuevos** (5 archivos):
+  - `src/frontend/src/app/core/models/orden-trabajo.model.ts`
+  - `src/frontend/src/app/core/services/orden-trabajo.service.ts`
+  - `src/frontend/src/app/features/ordenes-trabajo/ordenes-trabajo-list/ordenes-trabajo-list.component.ts`
+  - `src/frontend/src/app/features/ordenes-trabajo/orden-trabajo-form/orden-trabajo-form.component.ts`
+  - `src/frontend/src/app/features/ordenes-trabajo/orden-trabajo-detail/orden-trabajo-detail.component.ts`
+
+- **Archivos modificados** (2 archivos):
+  - `src/frontend/src/app/app.routes.ts` — rutas `/ordenes-trabajo`, `/ordenes-trabajo/nueva`, `/ordenes-trabajo/:id`, `/ordenes-trabajo/:id/editar`
+  - `src/frontend/src/app/layout/main-layout/main-layout.component.ts` — link "Órdenes de Trabajo" en dropdown Clínica
+
+- **Decisiones de diseño**:
+  - Autocomplete de cliente y producto con debounce para evitar requests excesivos
+  - Computed signals para cálculo en tiempo real de totales por línea y global
+  - Cuotas y abono inicial opcionales: solo se envían si el usuario los completa
+  - Verificación asíncrona de número OT único (endpoint `GET /api/ordenes-trabajo/verificar/{numero}`)
+  - Detalle con 2 tabs: Información (datos OT, líneas, pagos, cuotas, bitácora) y Atención-Receta (tab reservado para integración futura con atención clínica)
+  - Modales inline (no rutas separadas) para cambiar etapa y registrar pago
+
+- **Estado módulo Orden de Trabajo**: BD ✅ | Backend ✅ | Frontend ✅
+
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol en controllers; unit tests backend (xUnit + Moq)
+
+---
 
 ### 2026-06-10 - Sesión 21: Módulo Precios frontend + fixes Productos y Stock
 

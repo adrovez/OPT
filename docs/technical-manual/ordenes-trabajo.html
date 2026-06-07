@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPT SaaS — Módulo Órdenes de Trabajo</title>
+<style>
+  :root {
+    --blue:#2563eb;--blue-light:#dbeafe;--blue-dark:#1e40af;
+    --green:#16a34a;--green-light:#dcfce7;
+    --amber:#d97706;--amber-light:#fef3c7;
+    --red:#dc2626;--red-light:#fee2e2;
+    --purple:#7c3aed;--purple-light:#ede9fe;
+    --cyan:#0891b2;--cyan-light:#cffafe;
+    --orange:#ea580c;--orange-light:#ffedd5;
+    --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-500:#6b7280;--gray-700:#374151;--gray-900:#111827;
+    --font:'Segoe UI',system-ui,sans-serif;
+    --mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--gray-900);background:var(--gray-50);line-height:1.6;}
+
+  .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+  nav{background:#0c1a2e;color:white;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  nav .logo{padding:22px 20px 14px;border-bottom:1px solid #1e3352;}
+  nav .logo h1{font-size:1.05rem;font-weight:700;color:white;}
+  nav .logo p{font-size:0.72rem;color:#64748b;margin-top:3px;}
+  nav ul{list-style:none;padding:8px 0;}
+  nav li a{display:block;padding:7px 20px;color:#94a3b8;text-decoration:none;font-size:0.83rem;transition:all 0.15s;border-left:3px solid transparent;}
+  nav li a:hover{background:#1e2d45;color:white;border-left-color:var(--cyan);}
+  nav li a.section-label{color:#475569;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:14px 20px 4px;pointer-events:none;}
+
+  .page-header{background:linear-gradient(135deg,#0c1a2e 0%,#7c3aed 100%);color:white;padding:40px 48px;}
+  .page-header h1{font-size:1.9rem;font-weight:800;color:white;margin-bottom:6px;}
+  .page-header p{color:#ddd6fe;font-size:0.95rem;}
+  .page-header .chips{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .chip{display:inline-block;padding:3px 10px;border-radius:9999px;font-size:0.73rem;font-weight:600;}
+  .chip-purple{background:rgba(124,58,237,0.4);color:#ddd6fe;}
+  .chip-cyan{background:rgba(8,145,178,0.4);color:#a5f3fc;}
+
+  main{padding:40px 48px;max-width:960px;}
+  h2{font-size:1.35rem;font-weight:700;margin:40px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--gray-200);}
+  h3{font-size:1rem;font-weight:600;color:var(--gray-700);margin:24px 0 10px;}
+  h4{font-size:0.9rem;font-weight:600;color:var(--gray-700);margin:16px 0 8px;}
+  p{color:var(--gray-700);line-height:1.65;margin-bottom:12px;font-size:0.9rem;}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:0.85rem;}
+  th{background:var(--gray-100);text-align:left;padding:9px 12px;font-weight:600;color:var(--gray-700);border-bottom:2px solid var(--gray-200);}
+  td{padding:8px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--gray-50);}
+  .pk{color:var(--amber);font-weight:700;}
+  .fk{color:var(--blue);font-weight:600;}
+  .nn{color:var(--red);}
+  .def{color:var(--green);}
+  .opt{color:var(--gray-500);}
+
+  pre{background:#1e293b;color:#e2e8f0;border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:0.8rem;line-height:1.65;margin:12px 0;}
+  code{font-family:var(--mono);font-size:0.83em;background:var(--gray-100);padding:1px 6px;border-radius:4px;color:#9333ea;}
+
+  .alert{border-radius:8px;padding:12px 16px;margin:14px 0;border-left:4px solid;font-size:0.875rem;line-height:1.5;}
+  .alert-red{background:var(--red-light);border-color:var(--red);color:#7f1d1d;}
+  .alert-blue{background:var(--blue-light);border-color:var(--blue);color:#1e3a8a;}
+  .alert-amber{background:var(--amber-light);border-color:var(--amber);color:#78350f;}
+  .alert-green{background:var(--green-light);border-color:var(--green);color:#14532d;}
+  .alert-cyan{background:var(--cyan-light);border-color:var(--cyan);color:#164e63;}
+  .alert-purple{background:var(--purple-light);border-color:var(--purple);color:#4c1d95;}
+  .alert strong{font-weight:700;}
+
+  .table-card{background:white;border:1px solid var(--gray-200);border-radius:10px;margin:20px 0;overflow:hidden;}
+  .table-card-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);}
+  .table-name{font-family:var(--mono);font-size:0.95rem;font-weight:700;color:var(--gray-900);}
+  .table-desc{font-size:0.8rem;color:var(--gray-500);}
+  .tenant-badge{margin-left:auto;background:var(--blue-light);color:var(--blue-dark);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+  .cascade-badge{margin-left:auto;background:var(--orange-light);color:var(--orange);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+  .immutable-badge{margin-left:auto;background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+
+  .audit-row td{background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;}
+  .fk-note{padding:12px 20px;border-top:1px solid var(--gray-200);font-size:0.82rem;}
+  .fk-note-blue{background:#eff6ff;color:#1e3a8a;}
+  .fk-note-amber{background:#fffbeb;color:#78350f;}
+
+  /* Endpoint cards */
+  .endpoint{background:white;border:1px solid var(--gray-200);border-radius:10px;margin:16px 0;overflow:hidden;}
+  .endpoint-header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--gray-200);background:var(--gray-50);}
+  .method{font-family:var(--mono);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:4px;}
+  .method-get{background:#dcfce7;color:#15803d;}
+  .method-post{background:#dbeafe;color:#1d4ed8;}
+  .method-put{background:#fef3c7;color:#b45309;}
+  .method-patch{background:#ede9fe;color:#7c3aed;}
+  .method-delete{background:#fee2e2;color:#b91c1c;}
+  .path{font-family:var(--mono);font-size:0.88rem;color:var(--gray-900);}
+  .endpoint-body{padding:14px 18px;}
+
+  /* Etapa flow */
+  .etapa-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 0;}
+  .etapa-box{padding:5px 12px;border-radius:6px;font-size:0.8rem;font-weight:600;}
+  .etapa-arrow{color:var(--gray-300);font-size:1.1rem;}
+  .e-gray{background:#f3f4f6;color:#374151;}
+  .e-blue{background:#dbeafe;color:#1d4ed8;}
+  .e-orange{background:#ffedd5;color:#c2410c;}
+  .e-violet{background:#ede9fe;color:#6d28d9;}
+  .e-yellow{background:#fef9c3;color:#a16207;}
+  .e-cyan{background:#cffafe;color:#0e7490;}
+  .e-green{background:#dcfce7;color:#15803d;}
+
+  /* Component cards */
+  .comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .comp-card{background:white;border:1px solid var(--gray-200);border-radius:8px;padding:16px;}
+  .comp-card h4{margin-top:0;color:var(--blue-dark);}
+  .comp-card p{margin-bottom:0;font-size:0.83rem;}
+  @media(max-width:700px){.comp-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav>
+    <div class="logo">
+      <h1>OPT SaaS — OT</h1>
+      <p>Módulo Órdenes de Trabajo</p>
+    </div>
+    <ul>
+      <li><a class="section-label">Introduccion</a></li>
+      <li><a href="#descripcion">Descripcion general</a></li>
+      <li><a href="#flujo">Flujo de trabajo</a></li>
+
+      <li><a class="section-label">Base de datos</a></li>
+      <li><a href="#ot-tabla">OPT_OrdenTrabajo</a></li>
+      <li><a href="#linea-tabla">OPT_OrdenTrabajoLinea</a></li>
+      <li><a href="#pago-tabla">OPT_OrdenTrabajoPago</a></li>
+      <li><a href="#cuota-tabla">OPT_OrdenTrabajoCuota</a></li>
+      <li><a href="#bitacora-tabla">OPT_OrdenTrabajoBitacora</a></li>
+      <li><a href="#constraints">Constraints y FK</a></li>
+
+      <li><a class="section-label">API REST</a></li>
+      <li><a href="#get-all">GET /ordenes-trabajo</a></li>
+      <li><a href="#verificar">GET verificar-numero</a></li>
+      <li><a href="#get-one">GET /{id}</a></li>
+      <li><a href="#crear">POST /ordenes-trabajo</a></li>
+      <li><a href="#editar">PUT /{id}</a></li>
+      <li><a href="#eliminar">DELETE /{id}</a></li>
+      <li><a href="#etapa">PATCH /{id}/etapa</a></li>
+      <li><a href="#pago">POST /{id}/pagos</a></li>
+
+      <li><a class="section-label">Frontend</a></li>
+      <li><a href="#modelos">Modelos TypeScript</a></li>
+      <li><a href="#servicio">OrdenTrabajoService</a></li>
+      <li><a href="#componentes">Componentes</a></li>
+      <li><a href="#rutas">Rutas</a></li>
+
+      <li><a class="section-label">Notas tecnicas</a></li>
+      <li><a href="#sucursal-header">Header X-Sucursal-Id</a></li>
+      <li><a href="#montos">Calculo de montos</a></li>
+      <li><a href="#cuotas-gen">Generacion de cuotas</a></li>
+    </ul>
+  </nav>
+
+  <div>
+    <div class="page-header">
+      <h1>Modulo Ordenes de Trabajo</h1>
+      <p>OPT SaaS · Script 029 · Backend .NET 10 · Frontend Angular 21</p>
+      <div class="chips">
+        <span class="chip chip-purple">5 tablas SQL</span>
+        <span class="chip chip-cyan">8 endpoints REST</span>
+        <span class="chip chip-purple">7 etapas de trabajo</span>
+        <span class="chip chip-cyan">X-Sucursal-Id requerido (POST)</span>
+        <span class="chip chip-purple">Implementado Junio 2026</span>
+      </div>
+    </div>
+
+    <main>
+
+      <!-- ══════════ DESCRIPCION GENERAL ══════════ -->
+      <h2 id="descripcion">Descripcion general</h2>
+      <p>Una <strong>Orden de Trabajo (OT)</strong> es el documento comercial central de una optica. Registra los trabajos encomendados a un laboratorio o al taller interno (cristales, monturas, lentes de contacto, etc.), su estado de fabricacion y los datos de facturacion y cobro.</p>
+
+      <p>Cada OT tiene:</p>
+      <ul style="margin:8px 0 12px 20px;font-size:0.9rem;color:var(--gray-700);line-height:2;">
+        <li>Un <strong>numero de OT</strong> ingresado manualmente (generalmente el numero del laboratorio), unico por tenant.</li>
+        <li>Un <strong>paciente</strong> (Cliente tipo Persona) y, opcionalmente, una <strong>empresa facturadora</strong> (Cliente tipo Empresa).</li>
+        <li>Lineas de productos/servicios del catalogo con precio libre.</li>
+        <li>Un <strong>abono inicial</strong> opcional y <strong>pagos posteriores</strong> ilimitados.</li>
+        <li>Un <strong>plan de cuotas</strong> opcional generado sobre el saldo al crear la OT.</li>
+        <li>Una <strong>bitacora inmutable</strong> de cambios de etapa fisica.</li>
+        <li>Vinculo opcional con una <strong>Atencion</strong> y/o <strong>RecetaCristales</strong>.</li>
+      </ul>
+
+      <div class="alert alert-blue">
+        <strong>Acceso al modulo:</strong> Menu lateral → Clinica → Ordenes de Trabajo (<code>/ordenes-trabajo</code>). Requiere JWT valido y sucursal activa seleccionada.
+      </div>
+
+      <!-- ══════════ FLUJO DE TRABAJO ══════════ -->
+      <h2 id="flujo">Flujo de trabajo</h2>
+
+      <h3>Etapas de la OT (<code>EtapaOT</code>)</h3>
+      <div class="etapa-flow">
+        <span class="etapa-box e-gray">Ingresado</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-blue">EnProceso</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-orange">Montaje</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-violet">Laboratorio</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-yellow">Calidad</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-cyan">Despacho</span>
+        <span class="etapa-arrow">→</span>
+        <span class="etapa-box e-green">Entregado</span>
+      </div>
+
+      <p>El backend valida que el valor de <code>EtapaOT</code> sea uno de los 7 permitidos (constraint SQL <code>CK_OPT_OT_EtapaOT</code>). No existe una maquina de estados estricta: se puede avanzar o retroceder libremente entre etapas. Cada cambio genera un registro en <code>OPT_OrdenTrabajoBitacora</code>.</p>
+
+      <h3>Estado de pago (<code>EstadoPago</code>)</h3>
+      <table>
+        <tr><th>Valor</th><th>Significado</th></tr>
+        <tr><td><code>Pendiente</code></td><td>Saldo &gt; 0. Estado inicial.</td></tr>
+        <tr><td><code>Pagado</code></td><td>Saldo = 0. El repositorio lo establece automaticamente al registrar un pago que liquida el saldo.</td></tr>
+      </table>
+
+      <h3>Tipo de facturacion (<code>TipoFacturacion</code>)</h3>
+      <table>
+        <tr><th>Valor</th><th>Descripcion</th><th>EmpresaClienteId</th></tr>
+        <tr><td><code>Particular</code></td><td>Factura a nombre del paciente (ClienteId)</td><td>NULL (constraint lo exige)</td></tr>
+        <tr><td><code>Empresa</code></td><td>Factura a una empresa vinculada al tenant</td><td>Obligatorio — FK a OPT_Cliente (Empresa)</td></tr>
+      </table>
+
+      <!-- ══════════ TABLAS SQL ══════════ -->
+      <h2 id="ot-tabla">Tabla: OPT_OrdenTrabajo</h2>
+      <p>Cabecera de la orden. Creada por el script <code>029_OPT_OrdenTrabajo.sql</code>.</p>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajo</span>
+          <span class="table-desc">Cabecera de la OT — un registro por orden</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Null</th><th>Default / Constraint</th><th>Descripcion</th></tr>
+          <tr><td><span class="pk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK logico al tenant</td></tr>
+          <tr><td><span class="fk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK a OPT_Sucursal (header X-Sucursal-Id al crear)</td></tr>
+          <tr><td>NumeroOT</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td>UNIQUE (TenantId, NumeroOT) filtrado IsDeleted=0</td><td>Numero externo — ingresado manualmente</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK a OPT_Cliente (paciente, tipo Persona)</td></tr>
+          <tr><td>TipoFacturacion</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td>'Particular' | CHECK IN('Particular','Empresa')</td><td>Modo de facturacion</td></tr>
+          <tr><td><span class="fk">EmpresaClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="opt">NULL</td><td>FK a OPT_Cliente (Empresa). Requerido si TipoFacturacion='Empresa'</td><td>Empresa a quien se factura</td></tr>
+          <tr><td>Beneficiario</td><td>NVARCHAR(100)</td><td class="opt">NULL</td><td>—</td><td>Nombre libre del receptor si difiere del paciente</td></tr>
+          <tr><td><span class="fk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td class="opt">NULL</td><td>FK a OPT_Atencion</td><td>Vinculo clinico opcional</td></tr>
+          <tr><td><span class="fk">RecetaCristalesId</span></td><td>UNIQUEIDENTIFIER</td><td class="opt">NULL</td><td>FK a OPT_RecetaCristales</td><td>Receta asociada</td></tr>
+          <tr><td>FechaIngreso</td><td>DATE</td><td class="nn">NOT NULL</td><td>CAST(GETDATE() AS DATE)</td><td>Fecha de creacion (solo fecha)</td></tr>
+          <tr><td>FechaEntrega</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td>Fecha comprometida de entrega</td></tr>
+          <tr><td>HoraEntrega</td><td>TIME(0)</td><td class="opt">NULL</td><td>'12:00:00'</td><td>Hora de entrega (opcional)</td></tr>
+          <tr><td>SubTotal</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>0</td><td>Suma de (Cantidad * ValorUnitario) de todas las lineas</td></tr>
+          <tr><td>Descuento</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>0, CHECK >= 0</td><td>Descuento aplicado al total</td></tr>
+          <tr><td>MontoTotal</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>0 (= SubTotal - Descuento)</td><td>Importe total a cobrar</td></tr>
+          <tr><td>TotalAbonado</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>0</td><td>Suma de pagos registrados</td></tr>
+          <tr><td>Saldo</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>0 (= MontoTotal - TotalAbonado)</td><td>Saldo pendiente de cobro</td></tr>
+          <tr><td>NumeroCuotas</td><td>INT</td><td class="nn">NOT NULL</td><td>0, CHECK >= 0</td><td>0 = sin cuotas; &gt;0 genera plan en OPT_OrdenTrabajoCuota</td></tr>
+          <tr><td>FechaInicioCuotas</td><td>DATE</td><td class="opt">NULL</td><td>—</td><td>Vencimiento de la primera cuota</td></tr>
+          <tr><td>EstadoPago</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td>'Pendiente' | CHECK IN('Pendiente','Pagado')</td><td>Estado de cobro</td></tr>
+          <tr><td>EtapaOT</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td>'Ingresado' | CHECK IN(7 valores)</td><td>Etapa fisica de la OT</td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(500)</td><td class="opt">NULL</td><td>—</td><td>Notas libres</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt (DATETIME2), CreatedBy, UpdatedAt, UpdatedBy, IsDeleted (BIT DEFAULT 0)</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue">
+          <strong>Indices:</strong>
+          UQ_OPT_OT_NumeroOT (TenantId, NumeroOT) WHERE IsDeleted=0 |
+          IX_OPT_OT_TenantSucursal (TenantId, idSucursal) |
+          IX_OPT_OT_Cliente (TenantId, ClienteId) |
+          IX_OPT_OT_Atencion (AtencionId) WHERE AtencionId IS NOT NULL
+        </div>
+      </div>
+
+      <h2 id="linea-tabla">Tabla: OPT_OrdenTrabajoLinea</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoLinea</span>
+          <span class="table-desc">Productos / servicios de la OT</span>
+          <span class="cascade-badge">CASCADE DELETE</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">LineaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>PK, NEWSEQUENTIALID()</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK ON DELETE CASCADE a OPT_OrdenTrabajo</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>Desnormalizado para queries directas</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK a OPT_Producto (Producto o Servicio del catalogo)</td></tr>
+          <tr><td>Cantidad</td><td>INT</td><td class="nn">NOT NULL</td><td>CHECK &gt; 0, DEFAULT 1</td></tr>
+          <tr><td>ValorUnitario</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>Precio libre — no toma el precio del catalogo. CHECK &gt;= 0</td></tr>
+          <tr><td>Comentario</td><td>NVARCHAR(250)</td><td class="opt">NULL</td><td>Nota opcional por linea</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td>DEFAULT 0</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber">
+          Al editar una OT (PUT), el repositorio elimina (soft-delete) todas las lineas existentes y las reemplaza con las nuevas.
+        </div>
+      </div>
+
+      <h2 id="pago-tabla">Tabla: OPT_OrdenTrabajoPago</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoPago</span>
+          <span class="table-desc">Abonos (al crear) y pagos posteriores unificados</span>
+          <span class="cascade-badge">CASCADE DELETE</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">PagoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>PK, NEWSEQUENTIALID()</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK ON DELETE CASCADE a OPT_OrdenTrabajo</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td></tr>
+          <tr><td><span class="fk">FormaPagoId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>FK a OPT_FormaPago (catalogo INT)</td></tr>
+          <tr><td>Monto</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>CHECK &gt; 0</td></tr>
+          <tr><td>FechaPago</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td></tr>
+          <tr><td>EsAbono</td><td>BIT</td><td class="nn">NOT NULL</td><td>1 = registrado al crear la OT; 0 = pago posterior via <code>POST /{id}/pagos</code></td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(200)</td><td class="opt">NULL</td><td>—</td></tr>
+          <tr><td>CreatedAt</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td></tr>
+          <tr><td>CreatedBy</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td>RUT del operador</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td>DEFAULT 0</td></tr>
+        </table>
+      </div>
+
+      <h2 id="cuota-tabla">Tabla: OPT_OrdenTrabajoCuota</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoCuota</span>
+          <span class="table-desc">Plan de cuotas generado sobre el saldo</span>
+          <span class="cascade-badge">CASCADE DELETE</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">CuotaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>PK, NEWSEQUENTIALID()</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK ON DELETE CASCADE a OPT_OrdenTrabajo</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td></tr>
+          <tr><td>Numero</td><td>INT</td><td class="nn">NOT NULL</td><td>CHECK &gt; 0. Secuencia: 1, 2, 3...</td></tr>
+          <tr><td>ValorCuota</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>CHECK &gt; 0. La ultima cuota absorbe el residuo del redondeo</td></tr>
+          <tr><td>FechaVencimiento</td><td>DATE</td><td class="nn">NOT NULL</td><td>FechaInicioCuotas + (Numero - 1) meses</td></tr>
+          <tr><td>FechaPago</td><td>DATE</td><td class="opt">NULL</td><td>Completado desde modulo Caja (futuro)</td></tr>
+          <tr><td>Estado</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td>'Pendiente' | CHECK IN('Pendiente','Pagada')</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td>DEFAULT 0</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue">
+          Indice: IX_OPT_OTCuota_OT_Numero (OTId, Numero) WHERE IsDeleted=0 — permite recuperar el plan ordenado eficientemente.
+        </div>
+      </div>
+
+      <h2 id="bitacora-tabla">Tabla: OPT_OrdenTrabajoBitacora</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoBitacora</span>
+          <span class="table-desc">Historial inmutable de cambios de etapa</span>
+          <span class="immutable-badge">Sin IsDeleted — inmutable</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">BitacoraId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>PK, NEWSEQUENTIALID()</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK a OPT_OrdenTrabajo — <strong>sin</strong> ON DELETE CASCADE (historico)</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td></tr>
+          <tr><td>Etapa</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td>CHECK IN(7 etapas). Etapa a la que se transiciono</td></tr>
+          <tr><td>Fecha</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE(). Momento exacto del cambio</td></tr>
+          <tr><td>Responsable</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>RUT del usuario que cambio la etapa</td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(500)</td><td class="opt">NULL</td><td>Nota adicional al cambio</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber">
+          <strong>Sin soft-delete:</strong> la bitacora es historica y permanente. No se elimina aunque se haga soft-delete de la OT.
+          Indice: IX_OPT_OTBitacora_OT_Fecha (OTId, Fecha DESC).
+        </div>
+      </div>
+
+      <h2 id="constraints">Constraints y relaciones clave</h2>
+      <table>
+        <tr><th>Constraint</th><th>Tabla</th><th>Regla</th></tr>
+        <tr><td><code>CK_OPT_OT_EtapaOT</code></td><td>OPT_OrdenTrabajo</td><td>EtapaOT IN ('Ingresado','EnProceso','Montaje','Laboratorio','Calidad','Despacho','Entregado')</td></tr>
+        <tr><td><code>CK_OPT_OT_EstadoPago</code></td><td>OPT_OrdenTrabajo</td><td>EstadoPago IN ('Pendiente','Pagado')</td></tr>
+        <tr><td><code>CK_OPT_OT_TipoFacturacion</code></td><td>OPT_OrdenTrabajo</td><td>TipoFacturacion IN ('Particular','Empresa')</td></tr>
+        <tr><td><code>CK_OPT_OT_EmpresaRequerida</code></td><td>OPT_OrdenTrabajo</td><td>TipoFacturacion='Particular' OR EmpresaClienteId IS NOT NULL</td></tr>
+        <tr><td><code>CK_OPT_OT_Descuento</code></td><td>OPT_OrdenTrabajo</td><td>Descuento &gt;= 0</td></tr>
+        <tr><td><code>CK_OPT_OT_Montos</code></td><td>OPT_OrdenTrabajo</td><td>SubTotal &gt;= 0 AND MontoTotal &gt;= 0 AND TotalAbonado &gt;= 0 AND Saldo &gt;= 0</td></tr>
+        <tr><td><code>UQ_OPT_OT_NumeroOT</code></td><td>OPT_OrdenTrabajo</td><td>UNIQUE (TenantId, NumeroOT) WHERE IsDeleted=0</td></tr>
+        <tr><td>FK Linea/Pago/Cuota → OT</td><td>3 tablas hijo</td><td>ON DELETE CASCADE — al eliminar OT (fisico) se eliminan sus hijos</td></tr>
+        <tr><td>FK Bitacora → OT</td><td>OPT_OrdenTrabajoBitacora</td><td>Sin CASCADE — la bitacora sobrevive</td></tr>
+      </table>
+
+      <div class="alert alert-amber">
+        <strong>Soft delete en OT:</strong> el endpoint DELETE hace soft-delete (IsDeleted=true), no DELETE fisico. La bitacora queda intacta. Las tablas hijo con CASCADE son para eliminacion fisica de pruebas.
+      </div>
+
+      <!-- ══════════ API REST ══════════ -->
+      <h2>API REST</h2>
+      <p><strong>Base:</strong> <code>http://localhost:5005/api/ordenes-trabajo</code> · Auth JWT requerida en todos los endpoints.</p>
+
+      <div class="alert alert-purple">
+        <strong>Header X-Sucursal-Id:</strong> El endpoint <strong>POST</strong> (crear OT) requiere el header <code>X-Sucursal-Id: {guid}</code>. Los demas endpoints lo aceptan opcionalmente para filtrar por sucursal en el listado. Sin este header en POST → 400 Bad Request.
+      </div>
+
+      <!-- GET ALL -->
+      <h2 id="get-all">GET /api/ordenes-trabajo</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-get">GET</span>
+          <span class="path">/api/ordenes-trabajo</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Lista paginada de OTs del tenant. Filtra opcionalmente por sucursal (header), numero de OT, cliente, estado de pago y etapa.</p>
+
+          <h4>Query parameters</h4>
+          <table>
+            <tr><th>Param</th><th>Tipo</th><th>Default</th><th>Descripcion</th></tr>
+            <tr><td><code>page</code></td><td>int</td><td>1</td><td>Numero de pagina (1-based)</td></tr>
+            <tr><td><code>pageSize</code></td><td>int</td><td>50</td><td>Registros por pagina</td></tr>
+            <tr><td><code>numeroOT</code></td><td>string</td><td>null</td><td>Busqueda parcial por numero de OT</td></tr>
+            <tr><td><code>clienteId</code></td><td>Guid</td><td>null</td><td>Filtrar por paciente</td></tr>
+            <tr><td><code>estadoPago</code></td><td>string</td><td>null</td><td><code>Pendiente</code> | <code>Pagado</code></td></tr>
+            <tr><td><code>etapaOT</code></td><td>string</td><td>null</td><td>Cualquiera de las 7 etapas</td></tr>
+          </table>
+
+          <h4>Response 200</h4>
+<pre>{
+  "items": [
+    {
+      "otId":          "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "numeroOT":      "LAB-001234",
+      "clienteId":     "uuid",
+      "clienteNombre": "Juan Perez",
+      "clienteRut":    "12345678-9",
+      "tipoFacturacion": "Particular",
+      "empresaClienteId": null,
+      "empresaNombre":    null,
+      "beneficiario":     null,
+      "fechaIngreso":  "2026-06-05",
+      "fechaEntrega":  "2026-06-10",
+      "subTotal":      150000,
+      "descuento":     0,
+      "montoTotal":    150000,
+      "totalAbonado":  50000,
+      "saldo":         100000,
+      "estadoPago":    "Pendiente",
+      "etapaOT":       "EnProceso"
+    }
+  ],
+  "totalCount": 1,
+  "page": 1,
+  "pageSize": 50,
+  "totalPages": 1,
+  "hasNextPage": false,
+  "hasPreviousPage": false
+}</pre>
+        </div>
+      </div>
+
+      <!-- VERIFICAR NUMERO -->
+      <h2 id="verificar">GET /api/ordenes-trabajo/verificar-numero</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-get">GET</span>
+          <span class="path">/api/ordenes-trabajo/verificar-numero?numeroOT=X[&amp;excluirId=Y]</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Verifica si un numero de OT ya existe en el tenant. Usado para validacion asincrona en el formulario. El parametro <code>excluirId</code> permite excluir la propia OT al editar.</p>
+          <h4>Response 200</h4>
+<pre>{ "existe": false }</pre>
+          <p>Si <code>existe: true</code>, el numero ya esta en uso y no puede repetirse.</p>
+        </div>
+      </div>
+
+      <!-- GET BY ID -->
+      <h2 id="get-one">GET /api/ordenes-trabajo/{id}</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-get">GET</span>
+          <span class="path">/api/ordenes-trabajo/{id}</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Devuelve el detalle completo de una OT incluyendo lineas, pagos, cuotas y bitacora.</p>
+          <h4>Response 200 — OrdenTrabajoDetalleDto</h4>
+<pre>{
+  "otId":              "3fa85f64-...",
+  "numeroOT":          "LAB-001234",
+  "clienteId":         "uuid",
+  "clienteNombre":     "Juan Perez",
+  "clienteRut":        "12345678-9",
+  "tipoFacturacion":   "Particular",
+  "empresaClienteId":  null,
+  "empresaNombre":     null,
+  "beneficiario":      null,
+  "atencionId":        null,
+  "recetaCristalesId": null,
+  "fechaIngreso":      "2026-06-05",
+  "fechaEntrega":      "2026-06-10",
+  "horaEntrega":       "14:00:00",
+  "subTotal":          150000,
+  "descuento":         0,
+  "montoTotal":        150000,
+  "totalAbonado":      50000,
+  "saldo":             100000,
+  "numeroCuotas":      2,
+  "fechaInicioCuotas": "2026-07-01",
+  "estadoPago":        "Pendiente",
+  "etapaOT":           "EnProceso",
+  "observacion":       null,
+  "createdAt":         "2026-06-05T10:00:00Z",
+  "createdBy":         "12345678-9",
+  "lineas": [
+    {
+      "lineaId":       "uuid",
+      "productoId":    "uuid",
+      "productoNombre":"Cristal Progresivo Alta Def",
+      "codigoInterno": "CRIST-001",
+      "cantidad":      1,
+      "valorUnitario": 120000,
+      "subtotalLinea": 120000,
+      "comentario":    null
+    }
+  ],
+  "pagos": [
+    {
+      "pagoId":             "uuid",
+      "formaPagoId":        1,
+      "formaPagoDescripcion":"Efectivo",
+      "monto":              50000,
+      "fechaPago":          "2026-06-05",
+      "esAbono":            true,
+      "observacion":        null,
+      "createdAt":          "2026-06-05T10:00:00Z",
+      "createdBy":          "12345678-9"
+    }
+  ],
+  "cuotas": [
+    { "cuotaId": "uuid", "numero": 1, "valorCuota": 50000,
+      "fechaVencimiento": "2026-07-01", "fechaPago": null, "estado": "Pendiente" },
+    { "cuotaId": "uuid", "numero": 2, "valorCuota": 50000,
+      "fechaVencimiento": "2026-08-01", "fechaPago": null, "estado": "Pendiente" }
+  ],
+  "bitacora": [
+    { "bitacoraId": "uuid", "etapa": "Ingresado",
+      "fecha": "2026-06-05T10:00:00Z", "responsable": "12345678-9", "observacion": null },
+    { "bitacoraId": "uuid", "etapa": "EnProceso",
+      "fecha": "2026-06-05T11:30:00Z", "responsable": "12345678-9", "observacion": "Enviado al laboratorio" }
+  ]
+}</pre>
+          <p><strong>Response 404:</strong> OT no encontrada o no pertenece al tenant.</p>
+        </div>
+      </div>
+
+      <!-- POST CREAR -->
+      <h2 id="crear">POST /api/ordenes-trabajo</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="path">/api/ordenes-trabajo</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Crea una OT de forma atomica: cabecera + lineas + abonos iniciales + cuotas (si NumeroCuotas &gt; 0) + primer registro en bitacora (etapa Ingresado). Requiere header <code>X-Sucursal-Id</code>.</p>
+
+          <h4>Request body</h4>
+<pre>{
+  "numeroOT":          "LAB-001234",
+  "clienteId":         "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "tipoFacturacion":   "Particular",
+  "empresaClienteId":  null,
+  "beneficiario":      null,
+  "atencionId":        null,
+  "recetaCristalesId": null,
+  "fechaEntrega":      "2026-06-10",
+  "horaEntrega":       "14:00:00",
+  "descuento":         0,
+  "numeroCuotas":      2,
+  "fechaInicioCuotas": "2026-07-01",
+  "observacion":       null,
+  "lineas": [
+    { "productoId": "uuid", "cantidad": 1, "valorUnitario": 120000, "comentario": null },
+    { "productoId": "uuid", "cantidad": 1, "valorUnitario": 30000,  "comentario": "Montura cliente" }
+  ],
+  "abonos": [
+    { "formaPagoId": 1, "monto": 50000, "fechaPago": "2026-06-05", "observacion": null }
+  ]
+}</pre>
+
+          <table>
+            <tr><th>Campo</th><th>Requerido</th><th>Descripcion</th></tr>
+            <tr><td><code>numeroOT</code></td><td>Si</td><td>Unico por tenant (validacion asincrona en formulario)</td></tr>
+            <tr><td><code>clienteId</code></td><td>Si</td><td>UUID del paciente</td></tr>
+            <tr><td><code>tipoFacturacion</code></td><td>Si</td><td>'Particular' | 'Empresa'</td></tr>
+            <tr><td><code>empresaClienteId</code></td><td>Si si Empresa</td><td>Obligatorio cuando tipoFacturacion='Empresa'</td></tr>
+            <tr><td><code>fechaEntrega</code></td><td>Si</td><td>Formato ISO date: "2026-06-10"</td></tr>
+            <tr><td><code>horaEntrega</code></td><td>No</td><td>Formato "HH:mm:ss"</td></tr>
+            <tr><td><code>descuento</code></td><td>Si</td><td>&gt;= 0</td></tr>
+            <tr><td><code>numeroCuotas</code></td><td>Si</td><td>0 = sin cuotas</td></tr>
+            <tr><td><code>fechaInicioCuotas</code></td><td>Si si numeroCuotas &gt; 0</td><td>—</td></tr>
+            <tr><td><code>lineas</code></td><td>Si, min 1</td><td>Array de items con productoId, cantidad, valorUnitario</td></tr>
+            <tr><td><code>abonos</code></td><td>No</td><td>Array vacio [] si no hay abono inicial</td></tr>
+          </table>
+
+          <p><strong>Response 201:</strong> <code>{ "otId": "uuid" }</code> + header <code>Location: /api/ordenes-trabajo/{id}</code></p>
+          <p><strong>Response 400:</strong> Header X-Sucursal-Id ausente o datos invalidos.</p>
+          <p><strong>Response 409:</strong> NumeroOT ya existe en el tenant.</p>
+        </div>
+      </div>
+
+      <!-- PUT EDITAR -->
+      <h2 id="editar">PUT /api/ordenes-trabajo/{id}</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-put">PUT</span>
+          <span class="path">/api/ordenes-trabajo/{id}</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Actualiza la OT. Las lineas se reemplazan completamente (soft-delete de las anteriores + INSERT de las nuevas). Los abonos se reemplazan de igual modo. El campo <code>SucursalId</code> no cambia.</p>
+          <p>El body es identico al de creacion excepto que no incluye <code>atencionId</code> ni <code>recetaCristalesId</code> (esos vinculos no se editan).</p>
+          <p><strong>Response 204:</strong> No Content.</p>
+          <p><strong>Response 404:</strong> OT no encontrada.</p>
+          <p><strong>Response 409:</strong> NumeroOT ya existe en otro registro del tenant.</p>
+        </div>
+      </div>
+
+      <!-- DELETE -->
+      <h2 id="eliminar">DELETE /api/ordenes-trabajo/{id}</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-delete">DELETE</span>
+          <span class="path">/api/ordenes-trabajo/{id}</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Soft-delete de la OT (IsDeleted = true). La bitacora queda intacta.</p>
+          <p><strong>Response 204:</strong> No Content.</p>
+          <p><strong>Response 404:</strong> OT no encontrada.</p>
+          <p><strong>Response 409:</strong> Regla de negocio que impide eliminar (ej. ya entregada — depende del validator).</p>
+        </div>
+      </div>
+
+      <!-- PATCH ETAPA -->
+      <h2 id="etapa">PATCH /api/ordenes-trabajo/{id}/etapa</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-patch">PATCH</span>
+          <span class="path">/api/ordenes-trabajo/{id}/etapa</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Cambia la etapa de trabajo de la OT y registra el cambio en la bitacora.</p>
+          <h4>Request body</h4>
+<pre>{
+  "etapa":      "Montaje",
+  "observacion": "Enviado al montajista Norte"
+}</pre>
+          <table>
+            <tr><th>Campo</th><th>Descripcion</th></tr>
+            <tr><td><code>etapa</code></td><td>Requerido. Debe ser uno de los 7 valores validos.</td></tr>
+            <tr><td><code>observacion</code></td><td>Opcional. Se guarda en la bitacora.</td></tr>
+          </table>
+          <p><strong>Response 204:</strong> No Content.</p>
+          <p><strong>Response 400:</strong> Etapa invalida.</p>
+          <p><strong>Response 404:</strong> OT no encontrada.</p>
+        </div>
+      </div>
+
+      <!-- POST PAGO -->
+      <h2 id="pago">POST /api/ordenes-trabajo/{id}/pagos</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method method-post">POST</span>
+          <span class="path">/api/ordenes-trabajo/{id}/pagos</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Registra un pago posterior a la creacion de la OT. Actualiza <code>TotalAbonado</code> y <code>Saldo</code> de la cabecera. Si el saldo resultante es 0, cambia <code>EstadoPago</code> a <code>Pagado</code> automaticamente.</p>
+          <h4>Request body</h4>
+<pre>{
+  "formaPagoId": 2,
+  "monto":       100000,
+  "fechaPago":   "2026-06-12",
+  "observacion": "Saldo cancelado"
+}</pre>
+          <p><strong>Response 200:</strong> <code>{ "pagoId": "uuid" }</code></p>
+          <p><strong>Response 400:</strong> Monto invalido o datos faltantes.</p>
+          <p><strong>Response 404:</strong> OT no encontrada.</p>
+        </div>
+      </div>
+
+      <!-- ══════════ FRONTEND ══════════ -->
+      <h2>Frontend Angular 21</h2>
+
+      <h2 id="modelos">Modelos TypeScript</h2>
+      <p>Archivo: <code>src/frontend/src/app/core/models/orden-trabajo.model.ts</code></p>
+
+<pre>// Constantes y tipos literales
+export const ETAPAS_OT = ['Ingresado','EnProceso','Montaje',
+  'Laboratorio','Calidad','Despacho','Entregado'] as const;
+export type EtapaOT = (typeof ETAPAS_OT)[number];
+
+export const ESTADOS_PAGO_OT = ['Pendiente', 'Pagado'] as const;
+export type EstadoPagoOT = (typeof ESTADOS_PAGO_OT)[number];
+
+export const TIPOS_FACTURACION = ['Particular', 'Empresa'] as const;
+export type TipoFacturacion = (typeof TIPOS_FACTURACION)[number];
+
+// Mapa de colores Tailwind por etapa
+export const ETAPA_COLORS: Record&lt;EtapaOT, string&gt; = {
+  Ingresado:   'bg-gray-100 text-gray-700',
+  EnProceso:   'bg-blue-100 text-blue-700',
+  Montaje:     'bg-orange-100 text-orange-700',
+  Laboratorio: 'bg-violet-100 text-violet-700',
+  Calidad:     'bg-yellow-100 text-yellow-700',
+  Despacho:    'bg-cyan-100 text-cyan-700',
+  Entregado:   'bg-green-100 text-green-700',
+};
+
+// DTO de lista (GET /ordenes-trabajo)
+export interface OrdenTrabajoDto {
+  otId: string;              // UUID
+  numeroOT: string;
+  clienteId: string;         // UUID
+  clienteNombre: string;
+  sucursalId: string;        // UUID
+  sucursalNombre: string;
+  fechaIngreso: string;      // ISO date "2026-06-05"
+  fechaEntrega: string;
+  horaEntrega: string | null;
+  subTotal: number;
+  descuento: number;
+  montoTotal: number;
+  totalAbonado: number;
+  saldo: number;
+  estadoPago: EstadoPagoOT;
+  etapaOT: EtapaOT;
+  createdAt: string;
+}
+
+// DTO de detalle (GET /ordenes-trabajo/{id})
+export interface OrdenTrabajoDetalleDto extends OrdenTrabajoDto {
+  beneficiario: string | null;
+  tipoFacturacion: TipoFacturacion;
+  empresaClienteId: string | null;
+  atencionId: string | null;
+  recetaCristalesId: string | null;
+  numeroCuotas: number;
+  fechaInicioCuotas: string | null;
+  lineas: OrdenTrabajoLineaDto[];
+  pagos: OrdenTrabajoPagoDto[];
+  cuotas: OrdenTrabajoCuotaDto[];
+  bitacora: OrdenTrabajoBitacoraDto[];
+}
+
+// Requests
+export interface CreateOrdenTrabajoRequest {
+  numeroOT: string;
+  clienteId: string;
+  beneficiario?: string;
+  tipoFacturacion: TipoFacturacion;
+  empresaClienteId?: string;
+  fechaEntrega: string;
+  horaEntrega?: string;
+  descuento: number;
+  numeroCuotas: number;
+  fechaInicioCuotas?: string;
+  lineas: LineaRequest[];
+  abonos: AbonoRequest[];
+}
+
+export interface CambiarEtapaRequest {
+  etapa: EtapaOT;
+  observacion?: string;
+}
+
+export interface RegistrarPagoOTRequest {
+  formaPagoId: number;
+  monto: number;
+  fechaPago: string;
+  observacion?: string;
+}</pre>
+
+      <h2 id="servicio">OrdenTrabajoService</h2>
+      <p>Archivo: <code>src/frontend/src/app/core/services/orden-trabajo.service.ts</code></p>
+      <p>El servicio inyecta <code>SucursalContextService</code> para adjuntar automaticamente el header <code>X-Sucursal-Id</code> en cada llamada.</p>
+
+      <table>
+        <tr><th>Metodo</th><th>Firma</th><th>Endpoint</th></tr>
+        <tr><td><code>getAll</code></td><td><code>getAll(filtros?): Observable&lt;PagedResult&lt;OrdenTrabajoDto&gt;&gt;</code></td><td>GET /ordenes-trabajo</td></tr>
+        <tr><td><code>getById</code></td><td><code>getById(id: string): Observable&lt;OrdenTrabajoDetalleDto&gt;</code></td><td>GET /ordenes-trabajo/{id}</td></tr>
+        <tr><td><code>verificarNumero</code></td><td><code>verificarNumero(numero, otId?): Observable&lt;{ disponible: boolean }&gt;</code></td><td>GET verificar-numero</td></tr>
+        <tr><td><code>create</code></td><td><code>create(data): Observable&lt;{ otId: string }&gt;</code></td><td>POST /ordenes-trabajo</td></tr>
+        <tr><td><code>update</code></td><td><code>update(id, data): Observable&lt;void&gt;</code></td><td>PUT /ordenes-trabajo/{id}</td></tr>
+        <tr><td><code>remove</code></td><td><code>remove(id): Observable&lt;void&gt;</code></td><td>DELETE /ordenes-trabajo/{id}</td></tr>
+        <tr><td><code>cambiarEtapa</code></td><td><code>cambiarEtapa(id, data): Observable&lt;void&gt;</code></td><td>PATCH /ordenes-trabajo/{id}/etapa</td></tr>
+        <tr><td><code>registrarPago</code></td><td><code>registrarPago(id, data): Observable&lt;{ pagoId: string }&gt;</code></td><td>POST /ordenes-trabajo/{id}/pagos</td></tr>
+      </table>
+
+      <h2 id="componentes">Componentes</h2>
+      <div class="comp-grid">
+        <div class="comp-card">
+          <h4>ordenes-trabajo-list</h4>
+          <p>Tabla paginada de OTs. Filtros por N°OT, Etapa y EstadoPago. Badges de color por etapa (ETAPA_COLORS). Acciones: ver / editar / eliminar con confirmacion SweetAlert2.</p>
+        </div>
+        <div class="comp-card">
+          <h4>orden-trabajo-form</h4>
+          <p>Formulario crear/editar. Autocomplete de cliente y producto con debounce RxJS (300ms). Lineas dinamicas con subtotales en tiempo real via computed signals. Abono inicial multiple. Cuotas opcionales. Verificacion asincrona del N°OT.</p>
+        </div>
+        <div class="comp-card">
+          <h4>orden-trabajo-detail</h4>
+          <p>Vista de detalle en 2 tabs: Informacion (datos, lineas, pagos, cuotas, bitacora) y Atencion/Receta (lazy). Modales inline para cambiar etapa y registrar pago posterior.</p>
+        </div>
+      </div>
+
+      <h2 id="rutas">Rutas del modulo</h2>
+      <table>
+        <tr><th>Path</th><th>Componente</th><th>Descripcion</th></tr>
+        <tr><td><code>/ordenes-trabajo</code></td><td>OrdenesTrabajListComponent</td><td>Lista paginada con filtros</td></tr>
+        <tr><td><code>/ordenes-trabajo/nueva</code></td><td>OrdenTrabajoFormComponent</td><td>Crear nueva OT</td></tr>
+        <tr><td><code>/ordenes-trabajo/:id</code></td><td>OrdenTrabajoDetailComponent</td><td>Vista detalle con 2 tabs</td></tr>
+        <tr><td><code>/ordenes-trabajo/:id/editar</code></td><td>OrdenTrabajoFormComponent</td><td>Editar OT existente</td></tr>
+      </table>
+
+      <p>Todas las rutas son lazy-loaded y estan protegidas por <code>authGuard</code>. Acceso desde el menu lateral: <strong>Clinica → Ordenes de Trabajo</strong>.</p>
+
+      <!-- ══════════ NOTAS TECNICAS ══════════ -->
+      <h2>Notas tecnicas</h2>
+
+      <h2 id="sucursal-header">Header X-Sucursal-Id</h2>
+      <p>El header <code>X-Sucursal-Id</code> es <strong>obligatorio</strong> al crear una OT (<code>POST</code>). En los demas endpoints es opcional — si se envia, filtra los resultados por sucursal; si se omite, devuelve OTs de todas las sucursales del tenant.</p>
+      <p>El frontend lo adjunta automaticamente desde <code>SucursalContextService.sucursalActual()?.sucursalId</code> en el metodo privado <code>headers()</code> del servicio.</p>
+
+      <div class="alert alert-red">
+        <strong>Sin X-Sucursal-Id en POST → 400 Bad Request:</strong> el controller verifica el header antes de enviar el command y retorna un ProblemDetails con <code>title: "Header requerido"</code>.
+      </div>
+
+      <h2 id="montos">Calculo de montos</h2>
+      <p>El repositorio calcula y persiste los montos al crear o editar:</p>
+<pre>SubTotal    = SUM(linea.Cantidad * linea.ValorUnitario)
+MontoTotal  = SubTotal - Descuento
+TotalAbonado = SUM(abono.Monto)
+Saldo        = MontoTotal - TotalAbonado
+EstadoPago   = Saldo &lt;= 0 ? "Pagado" : "Pendiente"</pre>
+      <p>Al registrar un pago posterior (<code>POST /{id}/pagos</code>), el repositorio actualiza <code>TotalAbonado</code>, recalcula <code>Saldo</code> y actualiza <code>EstadoPago</code> si corresponde.</p>
+
+      <h2 id="cuotas-gen">Generacion de cuotas</h2>
+      <p>Si <code>NumeroCuotas &gt; 0</code> y <code>FechaInicioCuotas</code> esta informada, el repositorio genera automaticamente el plan al crear la OT:</p>
+<pre>ValorCuota(n) = ROUND(Saldo / NumeroCuotas, 0)
+// La ultima cuota absorbe el residuo del redondeo.
+
+FechaVencimiento(n) = FechaInicioCuotas.AddMonths(n - 1)
+Estado inicial de cada cuota = "Pendiente"</pre>
+      <p>La gestion del cobro de cuotas (marcar como Pagada, registrar FechaPago) es parte del modulo de Caja, pendiente de implementacion.</p>
+
+      <div class="alert alert-green">
+        <strong>Ultimo script ejecutado:</strong> <code>029_OPT_OrdenTrabajo.sql</code>. Proximo script incremental: <code>030_</code>.
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

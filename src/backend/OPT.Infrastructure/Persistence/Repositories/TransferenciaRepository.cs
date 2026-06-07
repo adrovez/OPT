@@ -61,6 +61,7 @@ public class TransferenciaRepository(OPTDbContext db) : ITransferenciaRepository
 
         var transferencia = new TransferenciaEntity
         {
+            TransferenciaId    = Guid.NewGuid(),
             TenantId           = tenantId,
             SucursalOrigenId   = sucursalOrigenId,
             SucursalDestinoId  = sucursalDestinoId,
@@ -76,6 +77,7 @@ public class TransferenciaRepository(OPTDbContext db) : ITransferenciaRepository
         {
             db.TransferenciasLineas.Add(new LineaEntity
             {
+                LineaId          = Guid.NewGuid(),
                 TenantId         = tenantId,
                 TransferenciaId  = transferencia.TransferenciaId,
                 ProductoId       = linea.ProductoId,
@@ -121,6 +123,7 @@ public class TransferenciaRepository(OPTDbContext db) : ITransferenciaRepository
 
             db.MovimientosStock.Add(new MovimientoEntity
             {
+                MovimientoId      = Guid.NewGuid(),
                 TenantId          = tenantId,
                 SucursalId        = transferencia.SucursalOrigenId,
                 ProductoId        = linea.ProductoId,
@@ -169,6 +172,7 @@ public class TransferenciaRepository(OPTDbContext db) : ITransferenciaRepository
 
             db.MovimientosStock.Add(new MovimientoEntity
             {
+                MovimientoId      = Guid.NewGuid(),
                 TenantId          = tenantId,
                 SucursalId        = transferencia.SucursalDestinoId,
                 ProductoId        = linea.ProductoId,
@@ -207,68 +211,73 @@ public class TransferenciaRepository(OPTDbContext db) : ITransferenciaRepository
 
         if (transferencia.Estado == "Confirmada")
         {
-            // Revertir movimientos compensatorios
+            if (!transferencia.Lineas.Any())
+                throw new InvalidOperationException(
+                    "No se puede anular una transferencia confirmada sin líneas.");
+
             foreach (var linea in transferencia.Lineas)
             {
-                // Devolver al origen
+                // Devolver stock al origen
                 var stockOrigen = await db.Stocks
+                    .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(
                         s => s.TenantId == tenantId &&
                              s.SucursalId == transferencia.SucursalOrigenId &&
-                             s.ProductoId == linea.ProductoId, ct);
+                             s.ProductoId == linea.ProductoId, ct)
+                    ?? throw new InvalidOperationException(
+                        $"No se encontró stock del producto {linea.ProductoId} en sucursal origen.");
 
-                if (stockOrigen is not null)
+                var antesOrigen = stockOrigen.CantidadDisponible;
+                stockOrigen.CantidadDisponible += linea.Cantidad;
+                stockOrigen.UpdatedAt = now;
+                stockOrigen.UpdatedBy = updatedBy;
+
+                db.MovimientosStock.Add(new MovimientoEntity
                 {
-                    var antes = stockOrigen.CantidadDisponible;
-                    stockOrigen.CantidadDisponible += linea.Cantidad;
-                    stockOrigen.UpdatedAt = now;
-                    stockOrigen.UpdatedBy = updatedBy;
+                    MovimientoId    = Guid.NewGuid(),
+                    TenantId        = tenantId,
+                    SucursalId      = transferencia.SucursalOrigenId,
+                    ProductoId      = linea.ProductoId,
+                    UsuarioId       = usuarioId,
+                    TipoMovimiento  = "Ajuste",
+                    Cantidad        = linea.Cantidad,
+                    CantidadAntes   = antesOrigen,
+                    CantidadDespues = stockOrigen.CantidadDisponible,
+                    TransferenciaId = transferenciaId,
+                    Observacion     = $"Anulación transferencia {transferenciaId}",
+                    FechaMovimiento = now, CreatedAt = now, CreatedBy = updatedBy
+                });
 
-                    db.MovimientosStock.Add(new MovimientoEntity
-                    {
-                        TenantId        = tenantId,
-                        SucursalId      = transferencia.SucursalOrigenId,
-                        ProductoId      = linea.ProductoId,
-                        UsuarioId       = usuarioId,
-                        TipoMovimiento  = "Ajuste",
-                        Cantidad        = linea.Cantidad,
-                        CantidadAntes   = antes,
-                        CantidadDespues = stockOrigen.CantidadDisponible,
-                        TransferenciaId = transferenciaId,
-                        Observacion     = $"Anulación de transferencia {transferenciaId}",
-                        FechaMovimiento = now, CreatedAt = now, CreatedBy = updatedBy
-                    });
-                }
-
-                // Descontar del destino
+                // Descontar stock del destino
                 var stockDestino = await db.Stocks
+                    .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(
                         s => s.TenantId == tenantId &&
                              s.SucursalId == transferencia.SucursalDestinoId &&
-                             s.ProductoId == linea.ProductoId, ct);
+                             s.ProductoId == linea.ProductoId, ct)
+                    ?? throw new InvalidOperationException(
+                        $"No se encontró stock del producto {linea.ProductoId} en sucursal destino.");
 
-                if (stockDestino is not null)
+                var antesDestino = stockDestino.CantidadDisponible;
+                stockDestino.CantidadDisponible -= linea.Cantidad;
+                stockDestino.UpdatedAt = now;
+                stockDestino.UpdatedBy = updatedBy;
+
+                db.MovimientosStock.Add(new MovimientoEntity
                 {
-                    var antes = stockDestino.CantidadDisponible;
-                    stockDestino.CantidadDisponible -= linea.Cantidad;
-                    stockDestino.UpdatedAt = now;
-                    stockDestino.UpdatedBy = updatedBy;
-
-                    db.MovimientosStock.Add(new MovimientoEntity
-                    {
-                        TenantId        = tenantId,
-                        SucursalId      = transferencia.SucursalDestinoId,
-                        ProductoId      = linea.ProductoId,
-                        UsuarioId       = usuarioId,
-                        TipoMovimiento  = "Ajuste",
-                        Cantidad        = -linea.Cantidad,
-                        CantidadAntes   = antes,
-                        CantidadDespues = stockDestino.CantidadDisponible,
-                        TransferenciaId = transferenciaId,
-                        Observacion     = $"Anulación de transferencia {transferenciaId}",
-                        FechaMovimiento = now, CreatedAt = now, CreatedBy = updatedBy
-                    });
-                }
+                    MovimientoId    = Guid.NewGuid(),
+                    TenantId        = tenantId,
+                    SucursalId      = transferencia.SucursalDestinoId,
+                    ProductoId      = linea.ProductoId,
+                    UsuarioId       = usuarioId,
+                    TipoMovimiento  = "Ajuste",
+                    Cantidad        = -linea.Cantidad,
+                    CantidadAntes   = antesDestino,
+                    CantidadDespues = stockDestino.CantidadDisponible,
+                    TransferenciaId = transferenciaId,
+                    Observacion     = $"Anulación transferencia {transferenciaId}",
+                    FechaMovimiento = now, CreatedAt = now, CreatedBy = updatedBy
+                });
             }
         }
 

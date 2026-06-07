@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-05-31 (Sesión 16 — todos los módulos completos: Stock, Precios, DocumentosStock, Atenciones, CobroServicio, Roles, FormaPago)
+> **Última actualización:** 2026-06-05 (Sesión 24 — Módulo Órdenes de Trabajo completo: backend + frontend)
 
 ## Overview
 
@@ -34,7 +34,8 @@
 | Precios | (interno) | — | ✅ Historial de precios actualizado al confirmar documento; script `019_OPT_Precio.sql` — sin pantalla dedicada aún |
 | Atenciones | `/api/atenciones` | JWT | ✅ POST /iniciar (atómico), GET lista/detalle, PATCH /estado; scripts `022–024` |
 | CobroServicio | (interno a Atención) | — | ✅ Asociado a Atención; script `023_OPT_CobroServicio.sql` |
-| Salida (documentos) | — | — | 🔮 Futuro — OrdenTrabajo, Devoluciones, OtroEgreso (`025_`) |
+| Órdenes de Trabajo | `/api/ordenes-trabajo` | JWT + `X-Sucursal-Id` (POST) | ✅ Completo — 8 endpoints; script `029_OPT_OrdenTrabajo.sql` |
+| Salida (documentos) | — | — | 🔮 Futuro — Devoluciones, OtroEgreso |
 
 ---
 
@@ -1186,6 +1187,108 @@ curl -X POST https://localhost:5001/api/auth/register \
     "rol": "TenantAdmin"
   }'
 ```
+
+---
+
+## 17. Órdenes de Trabajo API
+
+**Auth:** Requiere JWT  
+**Header adicional:** `X-Sucursal-Id: {guid}` — obligatorio en POST, opcional (filtra por sucursal) en GET
+
+**Etapas válidas:** `Ingresado` · `EnProceso` · `Montaje` · `Laboratorio` · `Calidad` · `Despacho` · `Entregado`  
+**EstadoPago:** `Pendiente` · `Pagado`  
+**TipoFacturacion:** `Particular` · `Empresa`
+
+### GET /api/ordenes-trabajo
+
+Lista paginada. Filtros opcionales: `numeroOT`, `clienteId`, `estadoPago`, `etapaOT`. Si se envía `X-Sucursal-Id`, filtra por sucursal.
+
+**Query Parameters:** `page` (default 1) · `pageSize` (default 50) · `numeroOT?` · `clienteId?` · `estadoPago?` · `etapaOT?`
+
+**Response 200:** `PagedResult<OrdenTrabajoDto>`
+
+### GET /api/ordenes-trabajo/verificar-numero
+
+Verifica si un `numeroOT` ya está en uso en el tenant.
+
+**Query Parameters:** `numeroOT` (requerido) · `excluirId?` (GUID — excluye esta OT al editar)
+
+**Response 200:** `{ "existe": false }`
+
+### GET /api/ordenes-trabajo/{id}
+
+Detalle completo de la OT incluyendo lineas, pagos, cuotas y bitácora.
+
+**Response 200:** `OrdenTrabajoDetalleDto`  
+**Response 404:** OT no encontrada o no pertenece al tenant.
+
+### POST /api/ordenes-trabajo
+
+Crea la OT atómicamente: cabecera + lineas + abonos iniciales + cuotas + primer registro en bitácora (etapa Ingresado).
+
+**Headers requeridos:** `X-Sucursal-Id: {guid}`
+
+**Request:**
+```json
+{
+  "numeroOT":          "LAB-001234",
+  "clienteId":         "uuid",
+  "tipoFacturacion":   "Particular",
+  "empresaClienteId":  null,
+  "beneficiario":      null,
+  "atencionId":        null,
+  "recetaCristalesId": null,
+  "fechaEntrega":      "2026-06-10",
+  "horaEntrega":       "14:00:00",
+  "descuento":         0,
+  "numeroCuotas":      2,
+  "fechaInicioCuotas": "2026-07-01",
+  "observacion":       null,
+  "lineas": [
+    { "productoId": "uuid", "cantidad": 1, "valorUnitario": 120000, "comentario": null }
+  ],
+  "abonos": [
+    { "formaPagoId": 1, "monto": 50000, "fechaPago": "2026-06-05", "observacion": null }
+  ]
+}
+```
+
+**Response 201:** `{ "otId": "uuid" }` + header `Location`  
+**Response 400:** Header X-Sucursal-Id ausente o datos inválidos.  
+**Response 409:** NumeroOT ya existe en el tenant.
+
+### PUT /api/ordenes-trabajo/{id}
+
+Actualiza la OT. Las lineas y abonos se reemplazan completamente (soft-delete + re-insert). No modifica SucursalId, AtencionId ni RecetaCristalesId.
+
+**Response 204:** No Content  
+**Response 404/409:** Ver POST.
+
+### DELETE /api/ordenes-trabajo/{id}
+
+Soft-delete (IsDeleted = true). La bitácora queda intacta.
+
+**Response 204:** No Content  
+**Response 404:** OT no encontrada.
+
+### PATCH /api/ordenes-trabajo/{id}/etapa
+
+Cambia la etapa de la OT y registra el cambio en la bitácora.
+
+**Request:** `{ "etapa": "Montaje", "observacion": "Enviado al montajista" }`
+
+**Response 204:** No Content  
+**Response 400:** Etapa inválida.  
+**Response 404:** OT no encontrada.
+
+### POST /api/ordenes-trabajo/{id}/pagos
+
+Registra un pago posterior. Actualiza TotalAbonado, Saldo y EstadoPago automáticamente.
+
+**Request:** `{ "formaPagoId": 2, "monto": 100000, "fechaPago": "2026-06-12", "observacion": null }`
+
+**Response 200:** `{ "pagoId": "uuid" }`  
+**Response 404:** OT no encontrada.
 
 ---
 

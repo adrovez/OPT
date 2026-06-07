@@ -40,7 +40,7 @@ ng generate component features/<modulo>/<nombre> --standalone
 
 ### Base de datos
 
-Scripts SQL en `src/basedatos/` numerados `000–026`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `027_`**.
+Scripts SQL en `src/basedatos/` numerados `000–029`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `031_`**.
 
 ```bash
 sqlcmd -S localhost -d dbOPT -E -i src/basedatos/<script>.sql
@@ -73,6 +73,10 @@ sqlcmd -S localhost -d dbOPT -E -i src/basedatos/<script>.sql
 | `024` | ALTER a `OPT_RecetaCristales` (+`AtencionId`, +`Fuente`) y `OPT_Anamnesis` (+`AtencionId`) |
 | `025` | ALTER `OPT_Agenda` — reemplaza estado `Pendiente` → `Ingresado` (DEFAULT + CHECK + datos) |
 | `026` | Migración de datos legacy desde `DatosParaMigrar.xlsx` (idempotente; requiere 000–025) |
+| `027` | Rediseño módulo Inventario — drop tablas antiguas (ProductoCategoria, ProductoVariante, DocumentoStock, DocumentoStockLinea) y crea: `OPT_Categoria`, `OPT_Producto` (jerarquía self-ref), `OPT_PrecioProducto`, `OPT_Stock`, `OPT_DocumentoEntrada`, `OPT_DocumentoEntradaLinea`, `OPT_Transferencia`, `OPT_MovimientoStock` |
+| `028` | `OPT_TransferenciaLinea` — líneas de transferencia de stock (ON DELETE CASCADE desde `OPT_Transferencia`) |
+| `029` | `OPT_OrdenTrabajo` + `OPT_OrdenTrabajoLinea` + `OPT_OrdenTrabajoPago` + `OPT_OrdenTrabajoCuota` + `OPT_OrdenTrabajoBitacora` |
+| `030` | `OPT_TipoPrevision` (catálogo compartido, INT PK, 7 filas iniciales) |
 
 ---
 
@@ -116,6 +120,8 @@ app.routes.ts   # rutas raíz con lazy loading
 | `/clientes` | `ClientesListComponent` | Clientes |
 | `/clientes/:id` | `ClienteDetailComponent` | Clientes |
 | `/clientes/:id/anamnesis` | `AnamnesisListComponent` | Anamnesis |
+| `/clientes/:id/recetas` | `RecetasClienteListComponent` | Recetas del cliente |
+| `/precios` | `PreciosListComponent` | Precios |
 | `/sucursales` | `SucursalesListComponent` | Sucursales |
 | `/usuarios` | `UsuariosListComponent` | Usuarios |
 | `/productos` | `ProductosListComponent` | Productos |
@@ -125,6 +131,9 @@ app.routes.ts   # rutas raíz con lazy loading
 | `/atenciones/iniciar?agendaId=` | `AtencionIniciarComponent` | Wizard 3 pasos (requiere agendaId) |
 | `/atenciones/nueva` | `AtencionFormComponent` | Formulario atención directa |
 | `/atenciones/:id` | `AtencionDetailComponent` | Detalle (4 tabs, lazy load Anamnesis/Receta) |
+| `/ordenes-trabajo` | `OrdenesTrabajoListComponent` | OT — lista + filtros |
+| `/ordenes-trabajo/nueva` | `OrdenTrabajoFormComponent` | Crear OT |
+| `/ordenes-trabajo/:id` | `OrdenTrabajoDetailComponent` | Detalle (2 tabs: Info + Atención) |
 
 Las llamadas HTTP siempre van a través de servicios en `core/services/`, nunca directamente desde componentes. El JWT se inyecta automáticamente via `core/interceptors/auth.interceptor.ts`.
 
@@ -181,6 +190,8 @@ Las queries de listado usan `PagedResult<T>` (`OPT.Application.Common`). El repo
 ### Soft delete
 Todos los borrados setean `IsDeleted = true`. Nunca usar `DELETE` físico.
 
+**Excepción — entidades bitácora (audit log):** `OPT_OrdenTrabajoBitacora` y similares son append-only: sin `IsDeleted`, sin `HasQueryFilter`, FK con `OnDelete(DeleteBehavior.Restrict)`. Cada cambio queda registrado permanentemente. Al leer, ordenar siempre por `Fecha`.
+
 ### CQRS
 Commands y queries viven en `OPT.Application/<Modulo>/Commands/` y `Queries/`. Cada handler accede a datos solo a través de interfaces de repositorio — nunca directamente a `OPTDbContext`.
 
@@ -230,6 +241,8 @@ entity.HasOne(ct => ct.Cliente).WithMany().HasForeignKey(ct => ct.ClienteId);
 ### Columna `idSucursal` en SQL (gotcha conocido)
 La entidad `Sucursal` mapea su PK con `HasColumnName("idSucursal")` porque la tabla SQL legacy usa ese nombre de columna. En C# la propiedad se llama `SucursalId` — al escribir SQL directo o scripts de migración, recordar que la columna en BD es `idSucursal`, no `SucursalId`.
 
+**Esto aplica también a FKs:** cualquier tabla que referencie a `OPT_Sucursal` debe declarar la FK sobre la columna `idSucursal`, y el mapping de EF Core necesita `.HasColumnName("idSucursal")` en la propiedad `SucursalId` de la entidad dependiente.
+
 ### PagedResult — siempre object initializer (gotcha conocido)
 `PagedResult<T>` en `OPT.Application.Common` usa propiedades `init`, no constructor con parámetros. Usar siempre object initializer o el compilador lanza CS1739:
 
@@ -261,22 +274,54 @@ using StockEntity = OPT.Domain.Entities.Stock;
 Afecta a todos los archivos en `OPT.Application.<Módulo>/` que referencien la clase del mismo nombre, y también a `OPT.Application/Interfaces/I<Módulo>Repository.cs`.
 
 ### Transiciones de estado vía PATCH
-Para entidades con máquina de estados (ej. Agenda), exponer un endpoint dedicado en vez de incluir el campo estado en el PUT:
+Para entidades con máquina de estados, exponer un endpoint dedicado en vez de incluir el campo estado en el PUT:
 
 ```
-PATCH /api/agenda/{id}/estado  →  body: { "estado": "Confirmada" }
+PATCH /api/agenda/{id}/estado          →  body: { "estado": "Confirmada" }
+PATCH /api/ordenes-trabajo/{id}/etapa  →  body: { "etapa": "Montaje" }
 ```
 
 El backend valida la transición permitida; el PUT normal actualiza los demás campos sin tocar el estado.
 
+Para workflows con múltiples etapas (ej. OrdenTrabajo: `Ingresado → EnProceso → Montaje → Laboratorio → Calidad → Despacho → Entregado`), el repositorio puede restringir edición/borrado a las primeras etapas:
+
+```csharp
+if (ot.EtapaOT is not ("Ingresado" or "EnProceso"))
+    throw new InvalidOperationException("Solo se puede modificar en etapas iniciales");
+```
+
+### Patrón Input wrapper para comandos con colecciones anidadas
+Cuando un command acepta colecciones complejas (líneas, abonos), definir records de entrada ligeros en la *interfaz* del repositorio, no en el DTO del request:
+
+```csharp
+// En IOrdenTrabajoRepository.cs
+public record OTLineaInput(Guid ProductoId, int Cantidad, decimal PrecioUnitario, string? Observacion);
+public record OTAbonoInput(Guid FormaPagoId, decimal Monto);
+// El command acepta IReadOnlyList<OTLineaInput>
+// El controller mapea desde el request antes de construir el command
+```
+
+### DTOs lista vs. detalle
+Para módulos con datos anidados, usar dos DTOs distintos: uno ligero para listas y uno completo para el detalle:
+- `OrdenTrabajoDto` — campos escalares, sin colecciones hijas (para `GetPaged`)
+- `OrdenTrabajoDetalleDto` — incluye `Lineas`, `Pagos`, `Cuotas`, `Bitacora` (para `GetById`)
+
+### X-Sucursal-Id: requerido en escritura, opcional en lectura
+Para módulos scoped por sucursal, la convención es: el header `X-Sucursal-Id` es **requerido** en `POST`/`PUT` (retorna 400 si falta) y **opcional** en `GET` (filtra si se provee, devuelve todos si no). Verificar explícitamente en el controller para escrituras:
+
+```csharp
+if (!Guid.TryParse(Request.Headers["X-Sucursal-Id"], out var sucursalId))
+    return BadRequest(new ProblemDetails { Title = "X-Sucursal-Id requerido" });
+```
+
 ### Checklist para nuevo módulo
-**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`021_...`)
+**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`030_...`)
 
 **Frontend:** `core/models/<mod>.model.ts` → `core/services/<mod>.service.ts` → componentes en `features/<mod>/` → ruta en `app.routes.ts`
 
 ---
 
-## Estado de módulos (Mayo 2026)
+## Estado de módulos (Junio 2026)
 
 | Módulo | Backend | Frontend |
 |--------|---------|----------|
@@ -292,26 +337,36 @@ El backend valida la transición permitida; el PUT normal actualiza los demás c
 | FormaPago (catálogo) | ✅ (`021_OPT_FormaPago.sql` + `GET /api/forma-pagos`) | ✅ `forma-pago.service.ts` con `shareReplay(1)` |
 | Atención + CobroServicio | ✅ (`022–024` scripts; `POST /api/atenciones/iniciar` crea Atención+Anamnesis+RecetaCristales atómicamente) | ✅ Lista `/atenciones` (2 tabs: Sala de espera/Historial), wizard `/atenciones/iniciar` (3 pasos: Atención→Anamnesis→RecetaCristales), detalle `/atenciones/:id` (4 tabs: Información, Anamnesis, Receta Cristales, Cobro con lazy load) |
 | Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ✅ `/productos` con lista + formulario + gestión de categorías |
-| Stock / Inventario | ✅ (`018_OPT_Stock.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ (3 tabs: Stock actual, Entradas, Historial) |
-| Precios | ✅ (`019_OPT_Precio.sql` — historial de costo, actualizado al confirmar documento de entrada) | ⏳ Sin pantalla dedicada (solo se actualiza via Entradas) |
-| Documentos de Entrada | ✅ (`020_OPT_DocumentoStock.sql` — FacturaCompra, BoletaCompra, OtroIngreso + Anular) | ✅ (tab Entradas en `/stock`) |
+| Stock / Inventario | ✅ (`018_OPT_Stock.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ (4 tabs: Stock actual, Entradas, Historial de movimientos, Transferencias) |
+| Precios | ✅ (`027` — `OPT_PrecioProducto` global por producto; `GET/POST /api/precios`) | ✅ `/precios` — lista con filtros, edición inline, historial por producto |
+| Documentos de Entrada | ✅ (`027` — `OPT_DocumentoEntrada`; FacturaCompra, BoletaCompra, OtroIngreso + Anular) | ✅ (tab Entradas en `/stock`) |
+| Transferencias de Stock | ✅ (`028_OPT_TransferenciaLinea.sql` + `POST /api/transferencias` + `PATCH /api/transferencias/{id}/estado`) | ✅ tab Transferencias en `/stock` — lista, crear, Confirmar/Anular |
+| Orden de Trabajo | ✅ (`029` — 5 tablas + 7 endpoints; `POST /api/ordenes-trabajo`, `PATCH /{id}/etapa`, `POST /{id}/pagos`) | ✅ Lista `/ordenes-trabajo` (tabla+filtros), form crear/editar, detalle 2 tabs (Info+Atención), modales cambiar etapa y registrar pago |
 | Salida (documentos) | 🔮 Futuro — por ahora solo Salida directa desde formulario | ⏳ Salida directa disponible en form por fila |
 
-### Arquitectura: Documentos de Stock y Precios
+### Arquitectura: Inventario (post-script 027)
+
+**Jerarquía de Productos (self-reference):**
+- `OPT_Producto` usa `ProductoPadreId` (nullable): nodo raíz (`NULL`) = familia, nodo hijo = SKU concreto con stock
+- `Tipo` ∈ `{'Producto', 'Servicio'}` — los servicios nunca tienen hijos ni stock
+- `OPT_Categoria` reemplaza `OPT_ProductoCategoria` (catálogo plano por tenant)
+- No existe `OPT_ProductoVariante`: las variantes son ahora nodos hijo de `OPT_Producto`
 
 **Flujo de Entrada (documento-based):**
-- El usuario crea un documento (`FacturaCompra`, `BoletaCompra`, `OtroIngreso`) con múltiples líneas (variante + cantidad + precio costo opcional)
-- Al confirmar: genera `MovimientoStock(TipoMovimiento="Entrada", DocumentoId=FK)` por cada línea y actualiza `OPT_PrecioProducto` (cierra el precio vigente, crea uno nuevo)
-- Al anular: genera `MovimientoStock(TipoMovimiento="Ajuste", Cantidad=-n)` como compensación. Los precios NO se revierten
-- Los movimientos directos (Salida, Ajuste) NO requieren documento y siguen el flujo original
-- `OPT_MovimientoStock` tiene `DocumentoId NULLABLE FK` → null para movimientos directos
+- El usuario crea un `OPT_DocumentoEntrada` (`FacturaCompra`, `BoletaCompra`, `OtroIngreso`) con líneas (`OPT_DocumentoEntradaLinea`: producto + cantidad + precio costo opcional)
+- Al confirmar: genera `OPT_MovimientoStock(TipoMovimiento="Entrada", DocumentoId=FK)` por cada línea y actualiza `OPT_PrecioProducto` (cierra el precio vigente, crea uno nuevo)
+- Al anular: genera `OPT_MovimientoStock(TipoMovimiento="Ajuste", Cantidad=-n)` como compensación. Los precios NO se revierten
+- Los movimientos directos (Salida, Ajuste) NO requieren documento — `DocumentoId` es NULLABLE
+- `OPT_Transferencia` está en BD (script 027) para movimientos entre sucursales — pendiente de implementar
 
 **Estructura de precios:**
-- `OPT_PrecioProducto(VarianteId, SucursalId?, PrecioCosto, PrecioVenta?, VigenciaDesde, VigenciaHasta)` — historial de precios; `VigenciaHasta NULL` = vigente
+- `OPT_PrecioProducto(ProductoId, TenantId, PrecioCosto?, PrecioVenta?, VigenciaDesde, VigenciaHasta)` — precio global por producto (sin SucursalId); `VigenciaHasta NULL` = vigente
 - Sin IsDeleted: la expiración se maneja con `VigenciaHasta`
 
 ### Regla de negocio: SucursalId en módulos sucursal-scoped
-Los módulos asociados a sucursal (Agenda y futuros) reciben el `SucursalId` via header HTTP `X-Sucursal-Id`. El frontend lo envía desde `SucursalContextService.sucursalActual().sucursalId`. Los datos generales (Clientes, Anamnesis, RecetaCristales) NO requieren este header — son datos del tenant completo.
+Los módulos asociados a sucursal (Agenda, Stock) reciben el `SucursalId` via header HTTP `X-Sucursal-Id`. El frontend lo envía desde `SucursalContextService.sucursalActual().sucursalId`. Los datos generales (Clientes, Anamnesis, RecetaCristales) NO requieren este header — son datos del tenant completo.
+
+**Excepción — stock cross-sucursal:** `GET /api/stock/por-producto/{productoId}` devuelve el stock del producto en *todas* las sucursales del tenant y no requiere `X-Sucursal-Id`. Retorna `IReadOnlyList<StockPorSucursalDto>` (SucursalId, SucursalNombre, CantidadDisponible, StockMinimo, BajoMinimo).
 
 ---
 

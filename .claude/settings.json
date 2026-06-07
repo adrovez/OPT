@@ -13,7 +13,16 @@
       "Bash(ng generate:*)",
       "Bash(sqlcmd -S localhost -d dbOPT *)",
       "Bash(npx tsc *)",
-      "Bash(grep -n \"selected\\\\|template literal\\\\|\\\\\\\\\\\\\\\\\\\\\\\\$\" \"C:/Users/alexi/.claude/projects/c--Adrovez-GitHub-OPT/memory/feedback_patterns.md\")"
+      "Bash(grep -n \"selected\\\\|template literal\\\\|\\\\\\\\\\\\\\\\\\\\\\\\$\" \"C:/Users/alexi/.claude/projects/c--Adrovez-GitHub-OPT/memory/feedback_patterns.md\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\basedatos\" -Filter \"*027*\")",
+      "Bash(Select-Object -First 5)",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\" -Recurse -Filter \"OPTDbContext.cs\")",
+      "Bash(New-Item -ItemType Directory -Force -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\frontend\\\\src\\\\app\\\\features\\\\ordenes-trabajo\\\\ordenes-trabajo-list\")",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType Directory -Force -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\frontend\\\\src\\\\app\\\\features\\\\ordenes-trabajo\\\\orden-trabajo-form\")",
+      "Bash(New-Item -ItemType Directory -Force -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\frontend\\\\src\\\\app\\\\features\\\\ordenes-trabajo\\\\orden-trabajo-detail\")",
+      "Bash(Write-Host \"Directorios creados\")"
     ],
     "deny": [
       "Edit(old/**)",

@@ -58,6 +58,14 @@ public class StockRepository(OPTDbContext context) : IStockRepository
         return await query.OrderByDescending(m => m.FechaMovimiento).ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<StockEntity>> GetStockPorProductoAsync(
+        Guid tenantId, Guid productoId, CancellationToken ct = default)
+        => await context.Stocks
+            .Include(s => s.Sucursal)
+            .Where(s => s.TenantId == tenantId && s.ProductoId == productoId)
+            .OrderBy(s => s.Sucursal.Nombre)
+            .ToListAsync(ct);
+
     public async Task<Guid> RegistrarMovimientoDirectoAsync(
         Guid tenantId, Guid sucursalId, Guid productoId, Guid usuarioId,
         string tipoMovimiento, int cantidad, string? referencia, string? observacion,

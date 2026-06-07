@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StockDto, MovimientoStockDto, RegistrarMovimientoRequest } from '../models/stock.model';
+import { StockPorSucursalDto } from '../models/stock-por-sucursal.model';
 import { SucursalContextService } from './sucursal-context.service';
 import { environment } from '../../../environments/environment';
 
@@ -41,5 +42,10 @@ export class StockService {
       headers: this.headers(),
       params: httpParams,
     });
+  }
+
+  getStockPorProducto(productoId: string): Observable<StockPorSucursalDto[]> {
+    // NO incluir X-Sucursal-Id — este endpoint devuelve todas las sucursales del tenant
+    return this.http.get<StockPorSucursalDto[]>(`${this.apiUrl}/por-producto/${productoId}`);
   }
 }

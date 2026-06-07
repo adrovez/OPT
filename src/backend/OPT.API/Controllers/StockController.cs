@@ -108,6 +108,20 @@ public class StockController(IMediator mediator, ICurrentTenantService tenantSer
             new { movimientoId });
     }
 
+    // ── GET /api/stock/por-producto/{productoId} ────────────────────────────
+    /// <summary>
+    /// Devuelve el stock del producto en TODAS las sucursales del tenant.
+    /// No requiere header X-Sucursal-Id.
+    /// </summary>
+    [HttpGet("por-producto/{productoId:guid}")]
+    [ProducesResponseType(typeof(IReadOnlyList<StockPorSucursalDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPorProducto(
+        Guid productoId,
+        CancellationToken cancellationToken)
+        => Ok(await mediator.Send(
+            new GetStockPorProductoQuery(tenantService.TenantId, productoId),
+            cancellationToken));
+
     // ── GET /api/stock/movimientos ───────────────────────────────────────────
     [HttpGet("movimientos")]
     [ProducesResponseType(typeof(IReadOnlyList<MovimientoStockDto>), StatusCodes.Status200OK)]

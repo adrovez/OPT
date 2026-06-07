@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { RecetaCristalesDto, UpdateRecetaCristalesRequest } from '../models/receta-cristales.model';
+import { RecetaCristalesDto, CreateRecetaCristalesRequest, UpdateRecetaCristalesRequest } from '../models/receta-cristales.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,10 @@ export class RecetaCristalesService {
 
   getByCliente(clienteId: string): Observable<RecetaCristalesDto[]> {
     return this.http.get<RecetaCristalesDto[]>(`${this.apiUrl}?clienteId=${clienteId}`);
+  }
+
+  create(request: CreateRecetaCristalesRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(this.apiUrl, request);
   }
 
   update(id: string, request: UpdateRecetaCristalesRequest): Observable<void> {

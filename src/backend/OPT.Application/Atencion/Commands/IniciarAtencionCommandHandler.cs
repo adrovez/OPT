@@ -52,7 +52,6 @@ public class IniciarAtencionCommandHandler(
         {
             TenantId      = cmd.TenantId,
             ClienteId     = cmd.ClienteId,
-            AtencionId    = atencion.AtencionId,
             Hipertension  = cmd.Hipertension,
             Diabetes      = cmd.Diabetes,
             Alergias      = cmd.Alergias,
@@ -68,7 +67,6 @@ public class IniciarAtencionCommandHandler(
         {
             TenantId                  = cmd.TenantId,
             ClienteId                 = cmd.ClienteId,
-            AtencionId                = atencion.AtencionId,
             Fuente                    = "Consulta",
             LejosODEsferico           = cmd.LejosODEsferico,
             LejosODCilindro           = cmd.LejosODCilindro,

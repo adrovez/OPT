@@ -1,12 +1,16 @@
-import { Component, inject, signal, computed, OnInit, DestroyRef, effect, untracked } from '@angular/core';
+import { Component, inject, signal, computed, DestroyRef, effect, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StockService } from '../../../core/services/stock.service';
+import { TransferenciaService } from '../../../core/services/transferencia.service';
 import { SucursalContextService } from '../../../core/services/sucursal-context.service';
 import { StockDto, MovimientoStockDto, TIPOS_MOVIMIENTO } from '../../../core/models/stock.model';
+import { TransferenciaDto } from '../../../core/models/transferencia.model';
+import { StockPorSucursalDto } from '../../../core/models/stock-por-sucursal.model';
 import { MovimientoFormComponent } from '../movimiento-form/movimiento-form.component';
 import { PrimerMovimientoFormComponent } from '../primer-movimiento-form/primer-movimiento-form.component';
 import { DocumentoEntradaFormComponent } from '../documento-entrada-form/documento-entrada-form.component';
+import { TransferenciaFormComponent } from '../transferencia-form/transferencia-form.component';
 import { DocumentoStockService } from '../../../core/services/documento-stock.service';
 import {
   DocumentoStockDto,
@@ -17,7 +21,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-stock-list',
   standalone: true,
-  imports: [DatePipe, MovimientoFormComponent, PrimerMovimientoFormComponent, DocumentoEntradaFormComponent],
+  imports: [DatePipe, MovimientoFormComponent, PrimerMovimientoFormComponent, DocumentoEntradaFormComponent, TransferenciaFormComponent],
   template: `
     <div class="p-6 lg:p-8 max-w-7xl mx-auto">
 
@@ -86,6 +90,20 @@ import Swal from 'sweetalert2';
           [class.hover:text-gray-700]="activeTab() !== 'historial'"
         >
           Historial de movimientos
+        </button>
+        <button
+          (click)="onActivarTransferencias()"
+          class="px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors focus:outline-none"
+          [class.bg-blue-50]="activeTab() === 'transferencias'"
+          [class.text-blue-700]="activeTab() === 'transferencias'"
+          [class.text-gray-500]="activeTab() !== 'transferencias'"
+          [class.hover:text-gray-700]="activeTab() !== 'transferencias'"
+        >
+          Transferencias
+          @if (transferencias().length > 0) {
+            <span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full
+                         bg-gray-100 text-gray-500">{{ transferencias().length }}</span>
+          }
         </button>
       </div>
 
@@ -222,6 +240,21 @@ import Swal from 'sweetalert2';
                                 d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                             </svg>
                             Movimiento
+                          </button>
+                          <button
+                            (click)="verStockTotal(s)"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600
+                                   bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors ml-2
+                                   focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            [attr.aria-label]="'Ver stock en todas las sucursales para ' + s.productoNombre"
+                            title="Ver stock en todas las sucursales"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9
+                                   a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Todas
                           </button>
                         </td>
 
@@ -583,6 +616,112 @@ import Swal from 'sweetalert2';
         }
       }
 
+      <!-- ══════════════════════ TAB TRANSFERENCIAS ══════════════════════ -->
+      @if (activeTab() === 'transferencias') {
+        <div class="flex justify-end mb-4">
+          <button
+            type="button"
+            (click)="showTransferenciaForm.set(true)"
+            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
+                   bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+            Nueva transferencia
+          </button>
+        </div>
+
+        @if (loadingTransferencias()) {
+          <div class="flex items-center justify-center py-24 gap-3">
+            <svg class="w-5 h-5 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 12h4z"/>
+            </svg>
+            <span class="text-sm text-gray-500">Cargando transferencias...</span>
+          </div>
+        }
+
+        @if (!loadingTransferencias()) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            @if (transferencias().length === 0) {
+              <div class="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                <svg class="w-10 h-10 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+                <p class="text-sm font-medium text-gray-700">Sin transferencias</p>
+                <p class="text-xs text-gray-400">Crea una transferencia para mover stock entre sucursales.</p>
+              </div>
+            } @else {
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50/50">
+                      <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                      <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Origen</th>
+                      <th class="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Destino</th>
+                      <th class="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Líneas</th>
+                      <th class="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                      <th class="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-50">
+                    @for (t of transferencias(); track t.transferenciaId) {
+                      <tr class="hover:bg-gray-50/50 transition-colors"
+                          [class.opacity-60]="t.estado === 'Anulada'">
+                        <td class="px-5 py-3.5 text-xs font-mono text-gray-700">
+                          {{ t.fechaTransferencia | date:'dd/MM/yyyy' }}
+                        </td>
+                        <td class="px-5 py-3.5">
+                          <span class="text-sm text-gray-900">{{ t.sucursalOrigenNombre ?? t.sucursalOrigenId }}</span>
+                        </td>
+                        <td class="px-5 py-3.5">
+                          <span class="text-sm text-gray-900">{{ t.sucursalDestinoNombre ?? t.sucursalDestinoId }}</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-center hidden sm:table-cell">
+                          <span class="text-xs text-gray-500">{{ t.lineas.length }}</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-center">
+                          @if (t.estado === 'Confirmada') {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                         bg-green-50 text-green-700 ring-1 ring-inset ring-green-200">Confirmada</span>
+                          } @else if (t.estado === 'Pendiente') {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                         bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Pendiente</span>
+                          } @else {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                         bg-red-50 text-red-700 ring-1 ring-inset ring-red-200">Anulada</span>
+                          }
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <div class="inline-flex gap-2">
+                            @if (t.estado === 'Pendiente') {
+                              <button (click)="confirmarTransferencia(t)"
+                                class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100
+                                       rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500">
+                                Confirmar
+                              </button>
+                              <button (click)="anularTransferencia(t)"
+                                class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100
+                                       rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+                                Anular
+                              </button>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+      }
+
     </div>
 
     <!-- Modal movimiento (fila existente) -->
@@ -610,15 +749,103 @@ import Swal from 'sweetalert2';
         (cancelled)="showDocumentoForm.set(false)"
       />
     }
+
+    <!-- Modal nueva transferencia -->
+    @if (showTransferenciaForm()) {
+      <app-transferencia-form
+        (saved)="onTransferenciaSaved()"
+        (cancelled)="showTransferenciaForm.set(false)"
+      />
+    }
+
+    <!-- Modal stock en todas las sucursales -->
+    @if (showStockTotalModal()) {
+      <div
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        (click)="showStockTotalModal.set(false)"
+      >
+        <div
+          class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+            <div class="min-w-0">
+              <h2 class="text-base font-semibold text-gray-900 truncate">{{ stockTotalProductoNombre() }}</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Stock en todas las sucursales</p>
+            </div>
+            <button type="button" (click)="showStockTotalModal.set(false)"
+              class="ml-4 text-gray-400 hover:text-gray-600 transition-colors rounded-lg p-1
+                     focus:outline-none focus:ring-2 focus:ring-gray-300" aria-label="Cerrar">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto">
+            @if (loadingStockTotal()) {
+              <div class="flex items-center justify-center py-12">
+                <svg class="w-5 h-5 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              </div>
+            } @else if (stockTotalItems().length === 0) {
+              <p class="text-sm text-gray-400 text-center py-10">Sin registros en ninguna sucursal.</p>
+            } @else {
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-100 bg-gray-50">
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Sucursal</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cantidad</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Estado</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (item of stockTotalItems(); track item.sucursalId) {
+                    <tr [class.bg-red-50]="item.cantidadDisponible <= 0">
+                      <td class="px-5 py-3 font-medium text-gray-900">{{ item.sucursalNombre }}</td>
+                      <td class="px-5 py-3 text-center">
+                        <span class="text-base font-bold"
+                          [class.text-red-600]="item.cantidadDisponible <= 0"
+                          [class.text-amber-600]="item.bajoMinimo && item.cantidadDisponible > 0"
+                          [class.text-gray-900]="!item.bajoMinimo && item.cantidadDisponible > 0">
+                          {{ item.cantidadDisponible }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-3 text-center hidden sm:table-cell">
+                        @if (item.cantidadDisponible <= 0) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                       bg-red-100 text-red-700 ring-1 ring-inset ring-red-200">Sin stock</span>
+                        } @else if (item.bajoMinimo) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                       bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Bajo mín.</span>
+                        } @else {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                       bg-green-50 text-green-700 ring-1 ring-inset ring-green-200">OK</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class StockListComponent {
   private readonly stockService = inject(StockService);
   private readonly documentoStockService = inject(DocumentoStockService);
+  private readonly transferenciaService = inject(TransferenciaService);
   private readonly sucursalContext = inject(SucursalContextService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly tipos = TIPOS_MOVIMIENTO;
-  readonly activeTab = signal<'stock' | 'entradas' | 'historial'>('stock');
+  readonly activeTab = signal<'stock' | 'entradas' | 'historial' | 'transferencias'>('stock');
   readonly tiposDocumentoLabel = TIPOS_DOCUMENTO_LABEL;
 
   // ── Stock actual ─────────────────────────────────────────────────────────────
@@ -643,11 +870,23 @@ export class StockListComponent {
   readonly desdeFiltro = signal('');
   readonly hastaFiltro = signal('');
 
+  // ── Transferencias ────────────────────────────────────────────────────────────
+  readonly transferencias = signal<TransferenciaDto[]>([]);
+  readonly loadingTransferencias = signal(false);
+  readonly errorTransferencias = signal('');
+  readonly showTransferenciaForm = signal(false);
+
   // ── Modales ───────────────────────────────────────────────────────────────────
   readonly showMovimientoForm = signal(false);
   readonly stockSeleccionado = signal<StockDto | null>(null);
   readonly showNuevoMovimiento = signal(false);
   readonly existingProductoIds = computed(() => this.stocks().map(s => s.productoId));
+
+  // ── Modal stock por sucursal ──────────────────────────────────────────────────
+  readonly showStockTotalModal = signal(false);
+  readonly stockTotalProductoNombre = signal('');
+  readonly stockTotalItems = signal<StockPorSucursalDto[]>([]);
+  readonly loadingStockTotal = signal(false);
 
   constructor() {
     // Recargar cuando cambie la sucursal activa
@@ -658,6 +897,7 @@ export class StockListComponent {
         this.cargarStock();
         this.documentos.set([]);
         this.movimientos.set([]);
+        this.transferencias.set([]);
       });
     });
   }
@@ -665,16 +905,18 @@ export class StockListComponent {
   cargarStock(): void {
     this.loading.set(true);
     this.errorMessage.set('');
-    this.stockService.getStock().subscribe({
-      next: (items) => {
-        this.stocks.set(items);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('Error al cargar el stock. Verifique la conexión.');
-        this.loading.set(false);
-      },
-    });
+    this.stockService.getStock()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.stocks.set(items);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Error al cargar el stock. Verifique la conexión.');
+          this.loading.set(false);
+        },
+      });
   }
 
   cargarHistorial(): void {
@@ -686,6 +928,7 @@ export class StockListComponent {
         desde: this.desdeFiltro() || undefined,
         hasta: this.hastaFiltro() || undefined,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (items) => {
           this.movimientos.set(items);
@@ -710,16 +953,18 @@ export class StockListComponent {
   cargarDocumentos(): void {
     this.loadingDocumentos.set(true);
     this.errorDocumentos.set('');
-    this.documentoStockService.getDocumentos().subscribe({
-      next: res => {
-        this.documentos.set(res.items);
-        this.loadingDocumentos.set(false);
-      },
-      error: () => {
-        this.errorDocumentos.set('Error al cargar los documentos. Verifique la conexión.');
-        this.loadingDocumentos.set(false);
-      },
-    });
+    this.documentoStockService.getDocumentos()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.documentos.set(res.items);
+          this.loadingDocumentos.set(false);
+        },
+        error: () => {
+          this.errorDocumentos.set('Error al cargar los documentos. Verifique la conexión.');
+          this.loadingDocumentos.set(false);
+        },
+      });
   }
 
   onDocumentoSaved(): void {
@@ -741,28 +986,30 @@ export class StockListComponent {
       cancelButtonText: 'Cancelar',
     }).then(result => {
       if (!result.isConfirmed) return;
-      this.documentoStockService.anular(doc.documentoId).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Documento anulado',
-            timer: 1500,
-            timerProgressBar: true,
-            showConfirmButton: false,
-          });
-          this.cargarDocumentos();
-          this.cargarStock();
-          this.movimientos.set([]);
-        },
-        error: (err: { error?: { detail?: string } }) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al anular',
-            text: err.error?.detail ?? 'No se pudo anular el documento.',
-            confirmButtonColor: '#2563eb',
-          });
-        },
-      });
+      this.documentoStockService.anular(doc.documentoId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Documento anulado',
+              timer: 1500,
+              timerProgressBar: true,
+              showConfirmButton: false,
+            });
+            this.cargarDocumentos();
+            this.cargarStock();
+            this.movimientos.set([]);
+          },
+          error: (err: { error?: { detail?: string } }) => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error al anular',
+              text: err.error?.detail ?? 'No se pudo anular el documento.',
+              confirmButtonColor: '#2563eb',
+            });
+          },
+        });
     });
   }
 
@@ -782,6 +1029,116 @@ export class StockListComponent {
     this.desdeFiltro.set('');
     this.hastaFiltro.set('');
     this.cargarHistorial();
+  }
+
+  // ── Transferencias ────────────────────────────────────────────────────────────
+
+  onActivarTransferencias(): void {
+    this.activeTab.set('transferencias');
+    if (this.transferencias().length === 0 && !this.loadingTransferencias()) {
+      this.cargarTransferencias();
+    }
+  }
+
+  cargarTransferencias(): void {
+    const sucursalId = this.sucursalContext.sucursalActual()?.sucursalId;
+    if (!sucursalId) return;
+    this.loadingTransferencias.set(true);
+    this.errorTransferencias.set('');
+    this.transferenciaService.getAll({ sucursalId, pageSize: 200 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.transferencias.set(res.items);
+          this.loadingTransferencias.set(false);
+        },
+        error: () => {
+          this.errorTransferencias.set('Error al cargar las transferencias.');
+          this.loadingTransferencias.set(false);
+        },
+      });
+  }
+
+  onTransferenciaSaved(): void {
+    this.showTransferenciaForm.set(false);
+    this.cargarTransferencias();
+    this.cargarStock();
+  }
+
+  confirmarTransferencia(t: TransferenciaDto): void {
+    Swal.fire({
+      title: '¿Confirmar transferencia?',
+      html: `Se moverá stock de <b>${t.sucursalOrigenNombre}</b> a <b>${t.sucursalDestinoNombre}</b>.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.transferenciaService.confirmar(t.transferenciaId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            Swal.fire({ icon: 'success', title: 'Confirmada', timer: 1500, timerProgressBar: true, showConfirmButton: false });
+            this.cargarTransferencias();
+            this.cargarStock();
+            this.movimientos.set([]);
+          },
+          error: (err: { error?: { detail?: string } }) => {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.error?.detail ?? 'No se pudo confirmar.', confirmButtonColor: '#2563eb' });
+          },
+        });
+    });
+  }
+
+  anularTransferencia(t: TransferenciaDto): void {
+    Swal.fire({
+      title: '¿Anular transferencia?',
+      html: t.estado === 'Confirmada'
+        ? 'Se generarán movimientos compensatorios. Esta acción no se puede deshacer.'
+        : 'La transferencia pasará a estado Anulada.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, anular',
+      cancelButtonText: 'Cancelar',
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.transferenciaService.anular(t.transferenciaId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            Swal.fire({ icon: 'success', title: 'Anulada', timer: 1500, timerProgressBar: true, showConfirmButton: false });
+            this.cargarTransferencias();
+            this.cargarStock();
+            this.movimientos.set([]);
+          },
+          error: (err: { error?: { detail?: string } }) => {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.error?.detail ?? 'No se pudo anular.', confirmButtonColor: '#2563eb' });
+          },
+        });
+    });
+  }
+
+  // ── Modal stock por sucursal ──────────────────────────────────────────────────
+
+  verStockTotal(s: StockDto): void {
+    this.stockTotalProductoNombre.set(s.productoNombre);
+    this.stockTotalItems.set([]);
+    this.showStockTotalModal.set(true);
+    this.loadingStockTotal.set(true);
+    this.stockService.getStockPorProducto(s.productoId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: items => {
+          this.stockTotalItems.set(items);
+          this.loadingStockTotal.set(false);
+        },
+        error: () => { this.loadingStockTotal.set(false); },
+      });
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────────
@@ -813,9 +1170,11 @@ export class StockListComponent {
   deltaDisplay(m: MovimientoStockDto): string {
     switch (m.tipoMovimiento) {
       case 'Entrada': return `+${m.cantidad}`;
+      case 'TransferenciaEntrada': return `+${m.cantidad}`;
       case 'Salida':
       case 'Merma':
       case 'DevolucionProveedor': return `-${m.cantidad}`;
+      case 'TransferenciaSalida': return `-${m.cantidad}`;
       case 'Ajuste':  return m.cantidad > 0 ? `+${m.cantidad}` : `${m.cantidad}`;
       default:        return `${m.cantidad}`;
     }
@@ -824,9 +1183,11 @@ export class StockListComponent {
   deltaClass(m: MovimientoStockDto): string {
     switch (m.tipoMovimiento) {
       case 'Entrada': return 'text-green-600';
+      case 'TransferenciaEntrada': return 'text-cyan-600';
       case 'Salida':
       case 'Merma':
       case 'DevolucionProveedor': return 'text-red-600';
+      case 'TransferenciaSalida': return 'text-orange-600';
       case 'Ajuste':  return m.cantidad >= 0 ? 'text-blue-600' : 'text-orange-600';
       default:        return 'text-gray-700';
     }
@@ -835,7 +1196,9 @@ export class StockListComponent {
   tipoBadgeClass(tipo: string): string {
     switch (tipo) {
       case 'Entrada': return 'bg-green-50 text-green-700 ring-green-200';
+      case 'TransferenciaEntrada': return 'bg-cyan-50 text-cyan-700 ring-cyan-200';
       case 'Salida':  return 'bg-red-50 text-red-700 ring-red-200';
+      case 'TransferenciaSalida': return 'bg-orange-50 text-orange-700 ring-orange-200';
       case 'Ajuste':  return 'bg-blue-50 text-blue-700 ring-blue-200';
       case 'Merma':   return 'bg-orange-50 text-orange-700 ring-orange-200';
       case 'DevolucionProveedor': return 'bg-purple-50 text-purple-700 ring-purple-200';

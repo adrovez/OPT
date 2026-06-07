@@ -1,6 +1,6 @@
 # Frontend API Contracts - OPT System
 
-> **Última actualización:** 2026-05-22 (Sesión 15 — Productos: catálogo puro, modelos TypeScript limpios; Precios y Stock como módulos futuros)
+> **Última actualización:** 2026-06-05 (Sesión 24 — Órdenes de Trabajo: modelos TypeScript, servicio y componentes completos)
 
 Este documento describe los contratos de API entre el frontend Angular y el backend .NET.
 
@@ -24,6 +24,7 @@ En TypeScript/Angular, los UUIDs se representan como **`string`** (no `number`).
 | ProductoCategoria | `string` | UUID |
 | Producto | `string` | UUID |
 | ProductoVariante | `string` | UUID |
+| OrdenTrabajo | `string` | UUID |
 | UsuarioSucursal | — | Join table — no tiene ID propio, PK compuesta en SQL |
 | Region (catálogo) | `number` | `7` |
 | Comuna (catálogo) | `number` | `318` |
@@ -869,11 +870,225 @@ Todos los endpoints devuelven errores en este formato:
 | `RecetaCristalesService` | `receta-cristales.service.ts` | `getByCliente(clienteId: string)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` — **pendiente** |
 | `SucursalService` | `sucursal.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)` |
 | `UsuarioService` | `usuario.service.ts` | `getAll()`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)`, `changePassword(id, req)`, `assignSucursal(id, req)`, `removeSucursal(id, sucursalId)` |
-| `RolService` | `rol.service.ts` | `getRoles()` con `shareReplay(1)` — **pendiente** |
+| `RolService` | `rol.service.ts` | `getRoles()` con `shareReplay(1)` |
 | `ProductoService` | `producto.service.ts` | `getAll(params)`, `getById(id)`, `create(req)`, `update(id, req)`, `delete(id)`, variante CRUD |
 | `ProductoCategoriaService` | `producto-categoria.service.ts` | `getAll()`, `create(req)`, `update(id, req)`, `delete(id)` |
+| `OrdenTrabajoService` | `orden-trabajo.service.ts` | `getAll(filtros)`, `getById(id)`, `verificarNumero(numero, otId?)`, `create(req)`, `update(id, req)`, `remove(id)`, `cambiarEtapa(id, req)`, `registrarPago(id, req)` |
 
 > **Todos los `id` de entidades de negocio son `string` (UUID). Los catálogos (Region, Comuna) siguen usando `number`.**
+
+---
+
+---
+
+## Órdenes de Trabajo
+
+### Modelos TypeScript — Implementado en Sesión 24
+
+**Endpoints:** `GET|POST /api/ordenes-trabajo`, `GET|PUT|DELETE /api/ordenes-trabajo/{id}`, `PATCH /api/ordenes-trabajo/{id}/etapa`, `POST /api/ordenes-trabajo/{id}/pagos`, `GET /api/ordenes-trabajo/verificar-numero`
+
+```typescript
+// core/models/orden-trabajo.model.ts
+
+export const ETAPAS_OT = [
+  'Ingresado', 'EnProceso', 'Montaje', 'Laboratorio',
+  'Calidad', 'Despacho', 'Entregado',
+] as const;
+export type EtapaOT = (typeof ETAPAS_OT)[number];
+
+export const ESTADOS_PAGO_OT = ['Pendiente', 'Pagado'] as const;
+export type EstadoPagoOT = (typeof ESTADOS_PAGO_OT)[number];
+
+export const TIPOS_FACTURACION = ['Particular', 'Empresa'] as const;
+export type TipoFacturacion = (typeof TIPOS_FACTURACION)[number];
+
+/** Clases Tailwind para badge de etapa en la lista */
+export const ETAPA_COLORS: Record<EtapaOT, string> = {
+  Ingresado:   'bg-gray-100 text-gray-700',
+  EnProceso:   'bg-blue-100 text-blue-700',
+  Montaje:     'bg-orange-100 text-orange-700',
+  Laboratorio: 'bg-violet-100 text-violet-700',
+  Calidad:     'bg-yellow-100 text-yellow-700',
+  Despacho:    'bg-cyan-100 text-cyan-700',
+  Entregado:   'bg-green-100 text-green-700',
+};
+
+export interface OrdenTrabajoDto {
+  otId: string;              // UUID
+  numeroOT: string;
+  clienteId: string;         // UUID
+  clienteNombre: string;
+  clienteRut: string;
+  tipoFacturacion: TipoFacturacion;
+  empresaClienteId: string | null;
+  empresaNombre: string | null;
+  beneficiario: string | null;
+  sucursalId: string;        // UUID — desnormalizado para el frontend
+  sucursalNombre: string;
+  fechaIngreso: string;      // ISO date "2026-06-05"
+  fechaEntrega: string;
+  horaEntrega: string | null;
+  subTotal: number;
+  descuento: number;
+  montoTotal: number;
+  totalAbonado: number;
+  saldo: number;
+  estadoPago: EstadoPagoOT;
+  etapaOT: EtapaOT;
+  createdAt: string;
+}
+
+export interface OrdenTrabajoDetalleDto extends OrdenTrabajoDto {
+  atencionId: string | null;
+  recetaCristalesId: string | null;
+  numeroCuotas: number;
+  fechaInicioCuotas: string | null;
+  observacion: string | null;
+  createdBy: string;
+  lineas: OrdenTrabajoLineaDto[];
+  pagos: OrdenTrabajoPagoDto[];
+  cuotas: OrdenTrabajoCuotaDto[];
+  bitacora: OrdenTrabajoBitacoraDto[];
+}
+
+export interface OrdenTrabajoLineaDto {
+  lineaId: string;
+  productoId: string;
+  productoNombre: string;
+  codigoInterno: string;
+  cantidad: number;
+  valorUnitario: number;
+  subtotalLinea: number;
+  comentario: string | null;
+}
+
+export interface OrdenTrabajoPagoDto {
+  pagoId: string;
+  formaPagoId: number;
+  formaPagoDescripcion: string;
+  monto: number;
+  fechaPago: string;
+  esAbono: boolean;
+  observacion: string | null;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface OrdenTrabajoCuotaDto {
+  cuotaId: string;
+  numero: number;
+  valorCuota: number;
+  fechaVencimiento: string;
+  fechaPago: string | null;
+  estado: 'Pendiente' | 'Pagada';
+}
+
+export interface OrdenTrabajoBitacoraDto {
+  bitacoraId: string;
+  etapa: string;
+  fecha: string;
+  responsable: string;
+  observacion: string | null;
+}
+
+// Requests
+
+export interface LineaRequest {
+  productoId: string;
+  cantidad: number;
+  valorUnitario: number;
+  comentario?: string;
+}
+
+export interface AbonoRequest {
+  formaPagoId: number;
+  monto: number;
+  fechaPago: string;
+  observacion?: string;
+}
+
+export interface CreateOrdenTrabajoRequest {
+  numeroOT: string;
+  clienteId: string;
+  tipoFacturacion: TipoFacturacion;
+  empresaClienteId?: string;
+  beneficiario?: string;
+  atencionId?: string;
+  recetaCristalesId?: string;
+  fechaEntrega: string;     // "2026-06-10"
+  horaEntrega?: string;     // "14:00:00"
+  descuento: number;
+  numeroCuotas: number;
+  fechaInicioCuotas?: string;
+  observacion?: string;
+  lineas: LineaRequest[];
+  abonos: AbonoRequest[];
+}
+
+export interface UpdateOrdenTrabajoRequest {
+  numeroOT: string;
+  clienteId: string;
+  tipoFacturacion: TipoFacturacion;
+  empresaClienteId?: string;
+  beneficiario?: string;
+  fechaEntrega: string;
+  horaEntrega?: string;
+  descuento: number;
+  numeroCuotas: number;
+  fechaInicioCuotas?: string;
+  observacion?: string;
+  lineas: LineaRequest[];
+  abonos: AbonoRequest[];
+}
+
+export interface CambiarEtapaRequest {
+  etapa: EtapaOT;
+  observacion?: string;
+}
+
+export interface RegistrarPagoOTRequest {
+  formaPagoId: number;
+  monto: number;
+  fechaPago: string;
+  observacion?: string;
+}
+
+export interface OrdenTrabajoFiltros {
+  numeroOT?: string;
+  clienteId?: string;
+  estadoPago?: EstadoPagoOT | '';
+  etapaOT?: EtapaOT | '';
+  page: number;
+  pageSize: number;
+}
+```
+
+### Servicio Angular — Implementado en Sesión 24
+
+```typescript
+// core/services/orden-trabajo.service.ts
+
+// El servicio inyecta SucursalContextService y adjunta X-Sucursal-Id en headers()
+// para todos los métodos. No requiere lógica extra en los componentes.
+
+getAll(filtros?: Partial<OrdenTrabajoFiltros>): Observable<PagedResult<OrdenTrabajoDto>>
+getById(id: string): Observable<OrdenTrabajoDetalleDto>
+verificarNumero(numeroOT: string, otId?: string): Observable<{ disponible: boolean }>
+create(data: CreateOrdenTrabajoRequest): Observable<{ otId: string }>
+update(id: string, data: UpdateOrdenTrabajoRequest): Observable<void>
+remove(id: string): Observable<void>
+cambiarEtapa(id: string, data: CambiarEtapaRequest): Observable<void>
+registrarPago(id: string, data: RegistrarPagoOTRequest): Observable<{ pagoId: string }>
+// URL base: /api/ordenes-trabajo
+```
+
+### Componentes Angular — Implementado en Sesión 24
+
+| Componente | Ruta | Descripción |
+|---|---|---|
+| `OrdenesTrabajListComponent` | `/ordenes-trabajo` | Lista paginada con filtros N°OT/Etapa/EstadoPago. Badges de color por etapa (ETAPA_COLORS). SweetAlert2 para eliminación. |
+| `OrdenTrabajoFormComponent` | `/ordenes-trabajo/nueva` y `/:id/editar` | Crear/editar. Autocomplete cliente y producto con debounce 300ms. Líneas dinámicas con computed signals. Abono inicial múltiple. Cuotas opcionales. Verificación asíncrona de N°OT. |
+| `OrdenTrabajoDetailComponent` | `/ordenes-trabajo/:id` | 2 tabs: Información (datos, líneas, pagos, cuotas, bitácora) y Atención/Receta. Modales inline cambiar etapa y registrar pago. |
 
 ---
 

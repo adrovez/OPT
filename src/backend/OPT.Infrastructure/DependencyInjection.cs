@@ -72,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<IDocumentoEntradaRepository, DocumentoEntradaRepository>();
         services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
+        services.AddScoped<IOrdenTrabajoRepository, OrdenTrabajoRepository>();
+        services.AddScoped<ITipoPrevisionRepository, TipoPrevisionRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
         services.AddScoped<IJwtService, JwtService>();

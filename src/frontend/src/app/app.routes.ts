@@ -116,6 +116,34 @@ export const routes: Routes = [
             (m) => m.AtencionDetailComponent,
           ),
       },
+      {
+        path: 'ordenes-trabajo',
+        loadComponent: () =>
+          import('./features/ordenes-trabajo/ordenes-trabajo-list/ordenes-trabajo-list.component').then(
+            (m) => m.OrdenesTrabajoListComponent,
+          ),
+      },
+      {
+        path: 'ordenes-trabajo/nueva',
+        loadComponent: () =>
+          import('./features/ordenes-trabajo/orden-trabajo-form/orden-trabajo-form.component').then(
+            (m) => m.OrdenTrabajoFormComponent,
+          ),
+      },
+      {
+        path: 'ordenes-trabajo/:id/editar',
+        loadComponent: () =>
+          import('./features/ordenes-trabajo/orden-trabajo-form/orden-trabajo-form.component').then(
+            (m) => m.OrdenTrabajoFormComponent,
+          ),
+      },
+      {
+        path: 'ordenes-trabajo/:id',
+        loadComponent: () =>
+          import('./features/ordenes-trabajo/orden-trabajo-detail/orden-trabajo-detail.component').then(
+            (m) => m.OrdenTrabajoDetailComponent,
+          ),
+      },
     ],
   },
   {

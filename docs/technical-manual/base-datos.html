@@ -42,7 +42,6 @@
   h3{font-size:1rem;font-weight:600;color:var(--gray-700);margin:24px 0 10px;}
   p{color:var(--gray-700);line-height:1.65;margin-bottom:12px;font-size:0.9rem;}
 
-  /* Tables */
   table{width:100%;border-collapse:collapse;margin:14px 0;font-size:0.85rem;}
   th{background:var(--gray-100);text-align:left;padding:9px 12px;font-weight:600;color:var(--gray-700);border-bottom:2px solid var(--gray-200);}
   td{padding:8px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:top;}
@@ -53,11 +52,9 @@
   .nn{color:var(--red);}
   .def{color:var(--green);}
 
-  /* Code */
   pre{background:#1e293b;color:#e2e8f0;border-radius:8px;padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:0.8rem;line-height:1.65;margin:12px 0;}
   code{font-family:var(--mono);font-size:0.83em;background:var(--gray-100);padding:1px 6px;border-radius:4px;color:#9333ea;}
 
-  /* Alerts */
   .alert{border-radius:8px;padding:12px 16px;margin:14px 0;border-left:4px solid;font-size:0.875rem;line-height:1.5;}
   .alert-red{background:var(--red-light);border-color:var(--red);color:#7f1d1d;}
   .alert-blue{background:var(--blue-light);border-color:var(--blue);color:#1e3a8a;}
@@ -66,20 +63,22 @@
   .alert-cyan{background:var(--cyan-light);border-color:var(--cyan);color:#164e63;}
   .alert strong{font-weight:700;}
 
-  /* ERD Diagram */
-  .erd-container{background:#1e293b;border-radius:10px;padding:24px;margin:20px 0;overflow-x:auto;}
-
-  /* Table cards */
   .table-card{background:white;border:1px solid var(--gray-200);border-radius:10px;margin:20px 0;overflow:hidden;}
   .table-card-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);}
   .table-name{font-family:var(--mono);font-size:0.95rem;font-weight:700;color:var(--gray-900);}
   .table-desc{font-size:0.8rem;color:var(--gray-500);}
   .tenant-badge{margin-left:auto;background:var(--blue-light);color:var(--blue-dark);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
   .global-badge{margin-left:auto;background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+  .pivot-badge{margin-left:auto;background:var(--amber-light);color:var(--amber);padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
 
-  /* Script table */
   .script-num{font-family:var(--mono);font-size:0.82rem;color:var(--blue);}
   .status-ok{color:var(--green);font-weight:600;}
+  .status-replaced{color:var(--red);font-style:italic;}
+
+  .audit-row td{background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;}
+  .fk-note{padding:12px 20px;border-top:1px solid var(--gray-200);font-size:0.82rem;}
+  .fk-note-blue{background:#eff6ff;color:#1e3a8a;}
+  .fk-note-amber{background:#fffbeb;color:#78350f;}
 </style>
 </head>
 <body>
@@ -92,24 +91,55 @@
     </div>
     <ul>
       <li><a class="section-label">Introducción</a></li>
-      <li><a href="#overview">Resumen</a></li>
+      <li><a href="#overview">Resumen general</a></li>
       <li><a href="#scripts">Scripts SQL</a></li>
-      <li><a href="#diagrama">Diagrama de Tablas</a></li>
-      <li><a class="section-label">Catálogos</a></li>
+      <li><a href="#diagrama">Diagrama ERD</a></li>
+
+      <li><a class="section-label">Catálogos globales</a></li>
       <li><a href="#region">OPT_Region</a></li>
       <li><a href="#comuna">OPT_Comuna</a></li>
-      <li><a class="section-label">Negocio</a></li>
+      <li><a href="#rol">OPT_Rol</a></li>
+      <li><a href="#formapago">OPT_FormaPago</a></li>
+
+      <li><a class="section-label">SaaS / Tenancy</a></li>
       <li><a href="#tenant">OPT_Tenant</a></li>
       <li><a href="#sucursal">OPT_Sucursal</a></li>
-      <li><a href="#cliente">OPT_Cliente</a></li>
-      <li><a href="#contacto">OPT_Contacto</a></li>
       <li><a href="#usuario">OPT_Usuario</a></li>
       <li><a href="#usuariosucursal">OPT_UsuarioSucursal</a></li>
+
+      <li><a class="section-label">Clientes</a></li>
+      <li><a href="#cliente">OPT_Cliente</a></li>
+      <li><a href="#contacto">OPT_Contacto</a></li>
+
+      <li><a class="section-label">Clínica</a></li>
+      <li><a href="#agenda">OPT_Agenda</a></li>
+      <li><a href="#anamnesis">OPT_Anamnesis</a></li>
+      <li><a href="#receta">OPT_RecetaCristales</a></li>
+      <li><a href="#atencion">OPT_Atencion</a></li>
+      <li><a href="#cobro">OPT_CobroServicio</a></li>
+
+      <li><a class="section-label">Inventario</a></li>
+      <li><a href="#categoria">OPT_Categoria</a></li>
+      <li><a href="#producto">OPT_Producto</a></li>
+      <li><a href="#precio">OPT_PrecioProducto</a></li>
+      <li><a href="#stock">OPT_Stock</a></li>
+      <li><a href="#docent">OPT_DocumentoEntrada</a></li>
+      <li><a href="#docentlinea">OPT_DocumentoEntradaLinea</a></li>
+      <li><a href="#transferencia">OPT_Transferencia</a></li>
+      <li><a href="#translinea">OPT_TransferenciaLinea</a></li>
+      <li><a href="#movimiento">OPT_MovimientoStock</a></li>
+
+      <li><a class="section-label">Ordenes de Trabajo</a></li>
+      <li><a href="#ordentrabajo">OPT_OrdenTrabajo</a></li>
+      <li><a href="#otlinea">OPT_OrdenTrabajoLinea</a></li>
+      <li><a href="#otpago">OPT_OrdenTrabajoPago</a></li>
+      <li><a href="#otcuota">OPT_OrdenTrabajoCuota</a></li>
+      <li><a href="#otbitacora">OPT_OrdenTrabajoBitacora</a></li>
+
       <li><a class="section-label">Guías</a></li>
       <li><a href="#indices">Índices</a></li>
       <li><a href="#cascadas">Cascadas FK</a></li>
       <li><a href="#nuevo-script">Agregar Script</a></li>
-      <li><a href="#roles">Roles de Usuario</a></li>
     </ul>
   </nav>
 
@@ -119,203 +149,291 @@
       <p>OPT SaaS · SQL Server 2022 · Azure SQL Compatible · Multi-Tenant</p>
       <div class="chips">
         <span class="chip chip-cyan">Base de datos: dbOPT</span>
-        <span class="chip chip-cyan">23 tablas</span>
-        <span class="chip chip-cyan">Soft-delete en todas</span>
-        <span class="chip chip-cyan">Multi-tenant</span>
+        <span class="chip chip-cyan">29 tablas</span>
+        <span class="chip chip-cyan">Scripts 000–029</span>
+        <span class="chip chip-cyan">Soft-delete universal</span>
+        <span class="chip chip-cyan">Multi-tenant GUID</span>
       </div>
     </div>
 
     <main>
 
-      <!-- RESUMEN -->
-      <h2 id="overview">Resumen</h2>
-      <p>La base de datos <strong>dbOPT</strong> está en SQL Server 2022 (compatible con Azure SQL). Toda la evolución del esquema se gestiona con scripts SQL numerados en <code>src/basedatos/</code>. No se usa Entity Framework Migrations.</p>
+      <!-- ══════════════════════ RESUMEN ══════════════════════ -->
+      <h2 id="overview">Resumen general</h2>
+      <p>La base de datos <strong>dbOPT</strong> corre en SQL Server 2022 (compatible Azure SQL). El esquema se gestiona con scripts numerados en <code>src/basedatos/</code> — no se usa EF Core Migrations.</p>
 
       <div class="alert alert-red">
-        <strong>Regla multi-tenant:</strong> Todas las tablas de negocio tienen columna <code>TenantId</code>. Nunca hacer consultas sin filtrar por TenantId. Un error aquí expone datos de otros clientes.
+        <strong>Regla multi-tenant:</strong> Todas las tablas de negocio tienen columna <code>TenantId</code>. Nunca consultar sin filtrar por TenantId — un error aquí expone datos de otros clientes.
       </div>
-      <div class="alert alert-blue" style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 16px;margin-top:12px;border-radius:4px;">
-        <strong>Convención de tipos de PK:</strong>
-        Las tablas de negocio (tenant-aware) usan <code>UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()</code> como PK y FK.
-        Se usa <code>NEWSEQUENTIALID()</code> (no <code>NEWID()</code>) para evitar fragmentación del índice clustered.
-        Los catálogos compartidos (<code>OPT_Region</code>, <code>OPT_Comuna</code>) mantienen <code>INT IDENTITY</code>.
-        Ver ADR: <code>.agents/decisions/2026-05-08-migracion-pk-guid.md</code>
+      <div class="alert alert-blue">
+        <strong>PKs:</strong> Tablas de negocio → <code>UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()</code>. Catálogos compartidos → <code>INT IDENTITY</code>. Nunca usar <code>NEWID()</code> como DEFAULT (fragmenta índice clustered).
       </div>
 
       <table>
-        <tr><th>Tipo</th><th>Tabla</th><th>TenantId</th><th>Descripción</th></tr>
-        <tr><td>Catálogo</td><td>OPT_Region</td><td>No</td><td>16 regiones de Chile (solo lectura)</td></tr>
-        <tr><td>Catálogo</td><td>OPT_Comuna</td><td>No</td><td>Comunas por región (solo lectura)</td></tr>
-        <tr><td>Raíz SaaS</td><td>OPT_Tenant</td><td>No</td><td>Empresas clientes del SaaS</td></tr>
-        <tr><td>Negocio</td><td>OPT_Sucursal</td><td>Sí</td><td>Sucursales de la óptica — API CRUD implementada (<code>/api/sucursales</code>)</td></tr>
-        <tr><td>Negocio</td><td>OPT_Cliente</td><td>Sí</td><td>Clientes (Persona y Empresa unificados)</td></tr>
-        <tr><td>Negocio</td><td>OPT_Contacto</td><td>Sí</td><td>Contactos de clientes Empresa</td></tr>
-        <tr><td>Auth</td><td>OPT_Usuario</td><td>Sí</td><td>Usuarios del sistema (login JWT)</td></tr>
-        <tr><td>Negocio</td><td>OPT_Anamnesis</td><td>Sí</td><td>Historial de salud del cliente</td></tr>
-        <tr><td>Negocio</td><td>OPT_RecetaCristales</td><td>Sí</td><td>Receta óptica (lejos/cerca/DP/ADD + flags)</td></tr>
-        <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de sucursales a usuarios (PK compuesta: UsuarioId + SucursalId)</td></tr>
-        <tr><td>Catálogo</td><td>OPT_Rol</td><td>No</td><td>Catálogo de roles del sistema (Admin, Operador, Lectura, etc.) — INT IDENTITY PK</td></tr>
-        <tr><td>Negocio</td><td>OPT_Agenda</td><td>Sí</td><td>Citas de clientes — asociadas a la Sucursal activa del usuario. API CRUD (<code>/api/agenda</code>)</td></tr>
-        <tr><td>Catálogo</td><td>OPT_FormaPago</td><td>No</td><td>Catálogo de formas de pago (5 filas: Efectivo, Tarjeta Débito, Crédito, Transferencia, Cheque); script <code>021_</code></td></tr>
-        <tr><td>Catálogo</td><td>OPT_Categoria</td><td>Sí</td><td>Catálogo plano de categorías de productos/servicios. Reemplaza OPT_ProductoCategoria; agrega Descripcion + IsActivo.</td></tr>
-        <tr><td>Negocio</td><td>OPT_Producto</td><td>Sí</td><td>Jerarquía self-ref (<code>ProductoPadreId</code> nullable). <code>Tipo</code>: 'Producto' | 'Servicio'. Nodos hoja = SKUs con stock. CodigoInterno único por tenant. Sin variantes — los hijos son los SKUs.</td></tr>
-        <tr><td>Negocio</td><td>OPT_PrecioProducto</td><td>Sí</td><td>Historial de precios <strong>global</strong> por producto (sin SucursalId). PrecioCosto + PrecioVenta opcionales. VigenciaHasta NULL = vigente. Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_Stock</td><td>Sí</td><td>Stock por ProductoId + SucursalId. CantidadDisponible permite negativo. StockMinimo para alertas. UNIQUE(TenantId, ProductoId, SucursalId). Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_DocumentoEntrada</td><td>Sí</td><td>Documentos de entrada de mercadería (FacturaCompra, BoletaCompra, GuiaDespacho, OtroIngreso). Estado: Borrador → Confirmado | Anulado. ProveedorNombre + ProveedorRut libres. Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_DocumentoEntradaLinea</td><td>—</td><td>Líneas del documento de entrada. ProductoId FK, Cantidad > 0, PrecioCosto nullable. ON DELETE CASCADE. Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_Transferencia</td><td>Sí</td><td><strong>Nueva.</strong> Transferencias de stock entre sucursales. Estado: Pendiente → Confirmada | Anulada. El stock se mueve al Confirmar. Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_MovimientoStock</td><td>Sí</td><td>Registro inmutable. 7 tipos: Entrada, Salida, Ajuste, Merma, DevolucionProveedor, TransferenciaEntrada, TransferenciaSalida. FK opcional a DocumentoEntrada y Transferencia. Script <code>027_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_Atencion</td><td>Sí</td><td>Atención clínica del cliente. Estados: EnEspera/EnAtencion/Finalizada. Vincula AgendaId opcional; script <code>022_</code></td></tr>
-        <tr><td>Negocio</td><td>OPT_CobroServicio</td><td>Sí</td><td>Cobro asociado a una Atención (FormaPagoId, Monto, etc.); script <code>023_</code></td></tr>
+        <tr><th>Módulo</th><th>Tabla</th><th>TenantId</th><th>Descripción</th></tr>
+        <tr><td>Catálogo</td><td>OPT_Region</td><td>No</td><td>16 regiones de Chile (INT PK)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_Comuna</td><td>No</td><td>346 comunas por región (INT PK)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_Rol</td><td>No</td><td>Catálogo de roles del sistema (INT PK, 6 filas semilla)</td></tr>
+        <tr><td>Catálogo</td><td>OPT_FormaPago</td><td>No</td><td>Formas de pago (INT PK, 5 filas: Efectivo, Débito, Crédito, Cheque, Transferencia)</td></tr>
+        <tr><td>SaaS raíz</td><td>OPT_Tenant</td><td>No</td><td>Empresas clientes del SaaS (raíz multi-tenancy)</td></tr>
+        <tr><td>Tenancy</td><td>OPT_Sucursal</td><td>Sí</td><td>Sucursales de la óptica — PK nombrada <code>idSucursal</code> en BD</td></tr>
+        <tr><td>Auth</td><td>OPT_Usuario</td><td>Sí</td><td>Usuarios del sistema (login JWT, hash BCrypt)</td></tr>
+        <tr><td>Pivote M:N</td><td>OPT_UsuarioSucursal</td><td>—</td><td>Asignación de usuarios a sucursales (PK compuesta)</td></tr>
+        <tr><td>Clientes</td><td>OPT_Cliente</td><td>Sí</td><td>Persona y Empresa unificados en una tabla</td></tr>
+        <tr><td>Clientes</td><td>OPT_Contacto</td><td>Sí</td><td>Contactos de clientes tipo Empresa</td></tr>
+        <tr><td>Clínica</td><td>OPT_Agenda</td><td>Sí</td><td>Citas — estado: Ingresado → Confirmada / Cancelada / NoShow / Atendida</td></tr>
+        <tr><td>Clínica</td><td>OPT_Anamnesis</td><td>Sí</td><td>Antecedentes médicos del cliente (opcionalmente ligada a Atención)</td></tr>
+        <tr><td>Clínica</td><td>OPT_RecetaCristales</td><td>Sí</td><td>Receta óptica (Lejos/Cerca/DP/ADD + flags, opcionalmente ligada a Atención)</td></tr>
+        <tr><td>Clínica</td><td>OPT_Atencion</td><td>Sí</td><td>Visita clínica — vincula Agenda, Anamnesis y RecetaCristales</td></tr>
+        <tr><td>Clínica</td><td>OPT_CobroServicio</td><td>Sí</td><td>Cobro 1:1 asociado a una Atención</td></tr>
+        <tr><td>Inventario</td><td>OPT_Categoria</td><td>Sí</td><td>Catálogo plano de categorías de productos por tenant</td></tr>
+        <tr><td>Inventario</td><td>OPT_Producto</td><td>Sí</td><td>Jerarquía self-ref: raíz = familia, hijos = SKUs con stock. Tipo: Producto | Servicio</td></tr>
+        <tr><td>Inventario</td><td>OPT_PrecioProducto</td><td>Sí</td><td>Historial de precios global por producto. VigenciaHasta NULL = vigente</td></tr>
+        <tr><td>Inventario</td><td>OPT_Stock</td><td>Sí</td><td>Stock materializado por (Tenant, Producto, Sucursal). UNIQUE constraint</td></tr>
+        <tr><td>Inventario</td><td>OPT_DocumentoEntrada</td><td>Sí</td><td>Cabecera de ingreso de mercadería (FacturaCompra, BoletaCompra, GuiaDespacho, OtroIngreso)</td></tr>
+        <tr><td>Inventario</td><td>OPT_DocumentoEntradaLinea</td><td>Sí</td><td>Líneas del documento de entrada (ON DELETE CASCADE)</td></tr>
+        <tr><td>Inventario</td><td>OPT_Transferencia</td><td>Sí</td><td>Transferencia entre sucursales — estado: Pendiente → Confirmada | Anulada</td></tr>
+        <tr><td>Inventario</td><td>OPT_TransferenciaLinea</td><td>Sí</td><td>Líneas de transferencia (Producto + Cantidad). ON DELETE CASCADE</td></tr>
+        <tr><td>Inventario</td><td>OPT_MovimientoStock</td><td>Sí</td><td>Registro inmutable de todos los movimientos (7 tipos). FK nullable a Documento y Transferencia</td></tr>
+        <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajo</td><td>Sí</td><td>Cabecera de la OT — número externo único por tenant, etapas, montos y estado de cobro</td></tr>
+        <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoLinea</td><td>Sí</td><td>Líneas de productos/servicios de la OT. ON DELETE CASCADE</td></tr>
+        <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoPago</td><td>Sí</td><td>Abonos iniciales y pagos posteriores unificados. EsAbono distingue el origen. ON DELETE CASCADE</td></tr>
+        <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoCuota</td><td>Sí</td><td>Plan de cuotas generado sobre el saldo. ON DELETE CASCADE</td></tr>
+        <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoBitacora</td><td>Sí</td><td>Historial inmutable de cambios de etapa. Sin IsDeleted, sin CASCADE</td></tr>
       </table>
 
-      <!-- SCRIPTS -->
+      <!-- ══════════════════════ SCRIPTS ══════════════════════ -->
       <h2 id="scripts">Scripts SQL</h2>
-      <p>Los scripts se ejecutan en orden numérico una sola vez para crear la base de datos. Son idempotentes donde corresponde (verifican existencia antes de insertar).</p>
+      <p>Ejecutar en orden numérico sobre la base de datos <code>dbOPT</code>. Son idempotentes donde se indica.</p>
 
       <table>
         <tr><th>Script</th><th>Descripción</th><th>Estado</th></tr>
         <tr><td><span class="script-num">000</span> creacion_base_datos.sql</td><td>Crea la base de datos <code>dbOPT</code></td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">001</span> OPT_Tenant.sql</td><td>Tabla raíz del SaaS, RutEmpresa único</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">002</span> OPT_Region.sql</td><td>Catálogo de regiones (código + nombre)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">003</span> OPT_Comuna.sql</td><td>Catálogo de comunas (FK a Region)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">004</span> OPT_Sucursal.sql</td><td>Sucursales de la óptica (con TenantId) — módulo backend CRUD implementado en Sesión 11</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">001</span> OPT_Tenant.sql</td><td>Tabla raíz SaaS, RutEmpresa único</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">002</span> OPT_Region.sql</td><td>Catálogo de regiones de Chile</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">003</span> OPT_Comuna.sql</td><td>Catálogo de comunas (FK a Región)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">004</span> OPT_Sucursal.sql</td><td>Sucursales (con TenantId, PK <code>idSucursal</code>)</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">005</span> OPT_Cliente.sql</td><td>Tabla unificada Persona + Empresa</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">006</span> OPT_Contacto.sql</td><td>Contactos de clientes Empresa</td><td><span class="status-ok">✓ corregido</span></td></tr>
-        <tr><td><span class="script-num">007</span> datos_iniciales.sql</td><td>16 regiones + Tenant demo (idempotente)</td><td><span class="status-ok">✓ corregido</span></td></tr>
-        <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices)</td><td><span class="status-ok">✓ corregido</span></td></tr>
-        <tr><td><span class="script-num">010</span> OPT_Anamnesis.sql</td><td>Historial de salud del cliente (antecedentes médicos)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">011</span> OPT_RecetaCristales.sql</td><td>Receta óptica — Lejos/Cerca (OD, OI, DP) + ADD + flags + auditoría</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Tabla pivote M:N — asignación de sucursales a usuarios del tenant</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">013</span> OPT_Rol.sql</td><td>Catálogo de roles — <code>RolId INT IDENTITY PK</code>, sin TenantId, datos semilla: Admin/Operador/Lectura/etc.</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">014</span> OPT_Agenda.sql</td><td>Citas de clientes — FK a Sucursal, Cliente y Usuario. Estado con CHECK constraint. 3 índices filtrados.</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">015–020</span> (reemplazados por 027)</td><td>ProductoCategoria, Producto, ProductoVariante, Stock, Precio, DocumentoStock — <em>eliminados y rediseñados en script 027</em></td><td style="color:#dc2626;font-style:italic">Reemplazados</td></tr>
-        <tr><td><span class="script-num">021</span> OPT_FormaPago.sql</td><td>Catálogo OPT_FormaPago INT PK — 5 formas de pago semilla</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">022</span> OPT_Atencion.sql</td><td>Atención clínica — FK a Cliente, Sucursal, Usuario, AgendaId (nullable). Estado CHECK.</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">023</span> OPT_CobroServicio.sql</td><td>Cobro asociado a Atención — FK a Atención y FormaPago</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">024</span> ALTER_RecetaAnamnesis.sql</td><td>ALTER TABLE OPT_RecetaCristales ADD AtencionId, Fuente; ALTER TABLE OPT_Anamnesis ADD AtencionId</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">025</span> OPT_Agenda_Estado.sql</td><td>ALTER OPT_Agenda — reemplaza estado <code>Pendiente</code> → <code>Ingresado</code> (DEFAULT + CHECK + datos)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">026</span> migracion_legacy.sql</td><td>Migración de datos legacy desde DatosParaMigrar.xlsx (idempotente; requiere 000–025)</td><td><span class="status-ok">✓</span></td></tr>
-        <tr><td><span class="script-num">027</span> inventario_redesign.sql</td><td>Rediseño completo inventario: DROP 8 tablas antiguas + CREATE OPT_Categoria, OPT_Producto (jerarquía), OPT_PrecioProducto, OPT_Stock, OPT_DocumentoEntrada, OPT_DocumentoEntradaLinea, OPT_Transferencia, OPT_MovimientoStock</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">006</span> OPT_Contacto.sql</td><td>Contactos de clientes Empresa</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">007</span> datos_iniciales.sql</td><td>16 regiones + Tenant demo (idempotente)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">008</span> OPT_Usuario.sql</td><td>Usuarios JWT (Rol NOT NULL, índices, hash BCrypt)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">009</span> comunas_datos.sql</td><td>346 comunas de Chile (INSERT masivo, idempotente)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">010</span> OPT_Anamnesis.sql</td><td>Historial de salud del cliente</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">011</span> OPT_RecetaCristales.sql</td><td>Receta óptica (Lejos/Cerca OD/OI/DP + ADD + flags)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">012</span> OPT_UsuarioSucursal.sql</td><td>Pivote M:N usuario↔sucursal</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">013</span> OPT_Rol.sql</td><td>Catálogo de roles — INT PK, 6 filas semilla</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">014</span> OPT_Agenda.sql</td><td>Citas de clientes — FK a Sucursal, Cliente, Usuario. 3 índices filtrados</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">015–020</span> (reemplazados)</td><td>ProductoCategoria, Producto antiguo, ProductoVariante, Stock antiguo, Precio antiguo, DocumentoStock — <em>eliminados en script 027</em></td><td><span class="status-replaced">Reemplazados</span></td></tr>
+        <tr><td><span class="script-num">021</span> OPT_FormaPago.sql</td><td>Catálogo de formas de pago — INT PK, 5 filas semilla</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">022</span> OPT_Atencion.sql</td><td>Atención clínica — FK a Agenda (nullable), Cliente, Sucursal, Usuario, Anamnesis, Receta</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">023</span> OPT_CobroServicio.sql</td><td>Cobro 1:1 de Atención — FK a FormaPago, Sucursal</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">024</span> ALTER_RecetaAnamnesis.sql</td><td>ALTER OPT_RecetaCristales: +AtencionId, +Fuente; ALTER OPT_Anamnesis: +AtencionId</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">025</span> alter_agenda_estado_ingresado.sql</td><td>ALTER OPT_Agenda — reemplaza estado <code>Pendiente</code> → <code>Ingresado</code> (DEFAULT + CHECK + datos)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">026</span> migracion_datos_legacy.sql</td><td>Migración de datos desde DatosParaMigrar.xlsx (solo INSERTs, idempotente, requiere 000–025)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">027</span> inventario_redesign.sql</td><td>DROP 8 tablas antiguas (015–020) + CREATE: OPT_Categoria, OPT_Producto (self-ref), OPT_PrecioProducto, OPT_Stock, OPT_DocumentoEntrada, OPT_DocumentoEntradaLinea, OPT_Transferencia, OPT_MovimientoStock</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">028</span> OPT_TransferenciaLinea.sql</td><td>CREATE OPT_TransferenciaLinea — líneas de transferencia (FK CASCADE a OPT_Transferencia)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">029</span> OPT_OrdenTrabajo.sql</td><td>CREATE: OPT_OrdenTrabajo + OPT_OrdenTrabajoLinea + OPT_OrdenTrabajoPago + OPT_OrdenTrabajoCuota + OPT_OrdenTrabajoBitacora. Índice UNIQUE (TenantId, NumeroOT)</td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> <code>028_</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados.
-      </div>
-      <div class="alert alert-green">
-        <strong>Inventario completo (Sesiones 18–20):</strong> Etapa 1 (BD script 027) ✅ · Etapa 2 (Backend .NET: Domain, repositorios, handlers CQRS, controllers) ✅ · Etapa 3 (Frontend Angular: modelos, servicios, componentes) ✅. Módulo Precios frontend también completo (Sesión 21).
+        <strong>Próximo script:</strong> <code>030_</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
       </div>
 
-      <!-- DIAGRAMA -->
-      <h2 id="diagrama">Diagrama de Relaciones</h2>
-      <div class="erd-container">
-        <svg viewBox="0 0 820 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:Consolas,monospace;">
-          <!-- Lines FK -->
-          <!-- Region → Comuna -->
-          <line x1="130" y1="130" x2="130" y2="220" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,3"/>
-          <!-- Tenant → Sucursal -->
-          <line x1="340" y1="100" x2="340" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
-          <!-- Tenant → Cliente -->
-          <line x1="370" y1="100" x2="490" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
-          <!-- Tenant → Usuario -->
-          <line x1="390" y1="100" x2="660" y2="200" stroke="#3b82f6" stroke-width="1.5"/>
-          <!-- Tenant → Contacto -->
-          <line x1="360" y1="100" x2="490" y2="320" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,3"/>
-          <!-- Cliente → Contacto -->
-          <line x1="530" y1="270" x2="530" y2="320" stroke="#22d3ee" stroke-width="2"/>
-          <!-- Comuna → Cliente -->
-          <line x1="160" y1="250" x2="470" y2="230" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <!-- ══════════════════════ DIAGRAMA ══════════════════════ -->
+      <h2 id="diagrama">Diagrama de Relaciones (módulos)</h2>
+      <pre style="font-size:0.75rem;line-height:1.5;">
+  ┌─────────────┐        ┌──────────────┐
+  │  OPT_Region │──1:N──▶│  OPT_Comuna  │
+  └─────────────┘        └──────┬───────┘
+                                │ FK (opt)
+  ┌─────────────────────────────▼───────────────────────────────────────┐
+  │                         OPT_Tenant                                  │
+  │              (raíz SaaS — todas las FK de negocio apuntan aquí)     │
+  └──┬──────────┬──────────┬──────────────────────────────┬────────────┘
+     │CASCADE   │CASCADE   │CASCADE                       │
+     ▼          ▼          ▼                              ▼
+ OPT_Sucursal  OPT_Cliente OPT_Usuario              OPT_Categoria
+     │          │    │      │    │                       │
+     │          │    └──1:N─▼    │                       ▼
+     │          │  OPT_Contacto  │                  OPT_Producto
+     │          │                │               (jerarquía self-ref)
+     │          │                │                /    |    \
+     │          └────────────────┤           OPT_   OPT_  OPT_
+     │                           │           Stock  Precio Movimiento
+     ▼                           │           Stock  Producto Stock
+ OPT_UsuarioSucursal             │
+ (M:N usuario↔sucursal)          │          OPT_DocumentoEntrada
+                                 │               │ (CASCADE)
+  ──── Flujo clínico ────        │          OPT_DocumentoEntradaLinea
+  OPT_Agenda ──────────────────▶ │
+       │ (nullable)              │          OPT_Transferencia
+       ▼                         │               │ (CASCADE)
+  OPT_Atencion ◀────────────────┘          OPT_TransferenciaLinea
+       │         │ (nullable FK)
+       ├──▶ OPT_Anamnesis        └──────────────────────────────────────┐
+       ├──▶ OPT_RecetaCristales ──────────────────────────────────────┐ │
+       └──▶ OPT_CobroServicio ──▶ OPT_FormaPago                      │ │
+                                                                      │ │
+  ──── Órdenes de Trabajo ────                                        │ │
+  OPT_OrdenTrabajo ◀── AtencionId (nullable) ────────────────────────┘ │
+       │             ◀── RecetaCristalesId (nullable) ──────────────────┘
+       ├──▶ OPT_OrdenTrabajoLinea    (CASCADE) → OPT_Producto
+       ├──▶ OPT_OrdenTrabajoPago     (CASCADE) → OPT_FormaPago
+       ├──▶ OPT_OrdenTrabajoCuota    (CASCADE)
+       └──▶ OPT_OrdenTrabajoBitacora (sin CASCADE — inmutable)
+      </pre>
 
-          <!-- Tenant table (center top) -->
-          <rect x="280" y="30" width="160" height="70" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
-          <text x="360" y="52" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Tenant</text>
-          <line x1="285" y1="58" x2="435" y2="58" stroke="#3b82f6" stroke-width="1"/>
-          <text x="295" y="72" fill="#fde68a" font-size="9">🔑 TenantId (PK)</text>
-          <text x="295" y="86" fill="#94a3b8" font-size="9">RutEmpresa, Nombre, Email</text>
-
-          <!-- Region -->
-          <rect x="50" y="50" width="150" height="70" rx="8" fill="#1e2d3d" stroke="#8b5cf6" stroke-width="2"/>
-          <text x="125" y="72" fill="#c4b5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Region</text>
-          <line x1="55" y1="78" x2="195" y2="78" stroke="#8b5cf6" stroke-width="1"/>
-          <text x="65" y="92" fill="#fde68a" font-size="9">🔑 idRegion (PK)</text>
-          <text x="65" y="106" fill="#94a3b8" font-size="9">Region, Codigo</text>
-
-          <!-- Comuna -->
-          <rect x="50" y="175" width="150" height="80" rx="8" fill="#1e2d3d" stroke="#8b5cf6" stroke-width="2"/>
-          <text x="125" y="197" fill="#c4b5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Comuna</text>
-          <line x1="55" y1="203" x2="195" y2="203" stroke="#8b5cf6" stroke-width="1"/>
-          <text x="65" y="217" fill="#fde68a" font-size="9">🔑 idComuna (PK)</text>
-          <text x="65" y="231" fill="#60a5fa" font-size="9">🔗 idRegion (FK)</text>
-          <text x="65" y="245" fill="#94a3b8" font-size="9">Comuna, Codigo</text>
-
-          <!-- Sucursal -->
-          <rect x="250" y="200" width="160" height="80" rx="8" fill="#1e2d3d" stroke="#3b82f6" stroke-width="2"/>
-          <text x="330" y="222" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Sucursal</text>
-          <line x1="255" y1="228" x2="405" y2="228" stroke="#3b82f6" stroke-width="1"/>
-          <text x="265" y="242" fill="#fde68a" font-size="9">🔑 idSucursal (PK)</text>
-          <text x="265" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
-          <text x="265" y="270" fill="#94a3b8" font-size="9">Nombre, Matriz, ...</text>
-
-          <!-- Cliente -->
-          <rect x="435" y="200" width="165" height="110" rx="8" fill="#1e2d3d" stroke="#22d3ee" stroke-width="2"/>
-          <text x="517" y="222" fill="#a5f3fc" text-anchor="middle" font-size="11" font-weight="700">OPT_Cliente</text>
-          <line x1="440" y1="228" x2="595" y2="228" stroke="#22d3ee" stroke-width="1"/>
-          <text x="450" y="242" fill="#fde68a" font-size="9">🔑 ClienteId (PK)</text>
-          <text x="450" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
-          <text x="450" y="270" fill="#60a5fa" font-size="9">🔗 idComuna (FK, opt)</text>
-          <text x="450" y="284" fill="#94a3b8" font-size="9">TipoCliente, RUT, Nombre</text>
-          <text x="450" y="298" fill="#94a3b8" font-size="9">FechaNac, Prevision, Giro</text>
-
-          <!-- Contacto -->
-          <rect x="435" y="340" width="165" height="90" rx="8" fill="#1e2d3d" stroke="#22d3ee" stroke-width="1.5"/>
-          <text x="517" y="362" fill="#a5f3fc" text-anchor="middle" font-size="11" font-weight="700">OPT_Contacto</text>
-          <line x1="440" y1="368" x2="595" y2="368" stroke="#22d3ee" stroke-width="1"/>
-          <text x="450" y="382" fill="#fde68a" font-size="9">🔑 ContactoId (PK)</text>
-          <text x="450" y="396" fill="#60a5fa" font-size="9">🔗 TenantId (FK-noaction)</text>
-          <text x="450" y="410" fill="#60a5fa" font-size="9">🔗 ClienteId (FK-cascade)</text>
-
-          <!-- Usuario -->
-          <rect x="625" y="200" width="160" height="100" rx="8" fill="#1e2d3d" stroke="#3b82f6" stroke-width="2"/>
-          <text x="705" y="222" fill="#93c5fd" text-anchor="middle" font-size="11" font-weight="700">OPT_Usuario</text>
-          <line x1="630" y1="228" x2="780" y2="228" stroke="#3b82f6" stroke-width="1"/>
-          <text x="640" y="242" fill="#fde68a" font-size="9">🔑 UsuarioId (PK)</text>
-          <text x="640" y="256" fill="#60a5fa" font-size="9">🔗 TenantId (FK)</text>
-          <text x="640" y="270" fill="#94a3b8" font-size="9">RutUsuario, Email</text>
-          <text x="640" y="284" fill="#94a3b8" font-size="9">PasswordHash, Rol</text>
-
-          <!-- Legend -->
-          <rect x="50" y="390" width="220" height="40" rx="6" fill="#0f172a" stroke="#334155"/>
-          <line x1="65" y1="407" x2="90" y2="407" stroke="#3b82f6" stroke-width="2"/>
-          <text x="95" y="411" fill="#94a3b8" font-size="9">FK con TenantId</text>
-          <line x1="65" y1="422" x2="90" y2="422" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3,2"/>
-          <text x="95" y="426" fill="#94a3b8" font-size="9">Catálogo (sin TenantId)</text>
-        </svg>
-      </div>
-
-      <!-- TABLAS -->
-      <h2 id="tenant">OPT_Tenant</h2>
-
+      <!-- ══════════════════════ CATÁLOGOS GLOBALES ══════════════════════ -->
+      <h2 id="region">OPT_Region</h2>
       <div class="table-card">
         <div class="table-card-header">
-          <span class="table-name">OPT_Tenant</span>
-          <span class="table-desc">Empresas clientes del SaaS (raíz multi-tenant)</span>
-          <span class="global-badge">Global</span>
+          <span class="table-name">OPT_Region</span>
+          <span class="table-desc">16 regiones de Chile (catálogo solo lectura)</span>
+          <span class="global-badge">Global — INT PK</span>
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">TenantId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
+          <tr><td><span class="pk">idRegion</span></td><td>INT IDENTITY(1,1)</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td>Region</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>—</td><td>Nombre completo</td></tr>
+          <tr><td>Codigo</td><td>NVARCHAR(10)</td><td>NULL</td><td>—</td><td>UNIQUE filtrado (IsDeleted=0)</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_Region_Codigo (UNIQUE, filtered). <strong>Datos semilla:</strong> 16 regiones de Chile cargadas en script 007.</div>
+      </div>
+
+      <h2 id="comuna">OPT_Comuna</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Comuna</span>
+          <span class="table-desc">346 comunas de Chile agrupadas por región</span>
+          <span class="global-badge">Global — INT PK</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">idComuna</span></td><td>INT IDENTITY(1,1)</td><td class="nn">NOT NULL</td><td>—</td><td>PK</td></tr>
+          <tr><td><span class="fk">idRegion</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Region (ON UPDATE CASCADE, ON DELETE NO ACTION)</td></tr>
+          <tr><td>Comuna</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Codigo</td><td>NVARCHAR(10)</td><td>NULL</td><td>—</td><td>UNIQUE filtrado</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> IX_OPT_Comuna_idRegion, IX_OPT_Comuna_Codigo (UNIQUE, filtered). <strong>Datos semilla:</strong> 346 comunas cargadas en script 009.</div>
+      </div>
+
+      <h2 id="rol">OPT_Rol</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Rol</span>
+          <span class="table-desc">Catálogo de roles del sistema (script 013)</span>
+          <span class="global-badge">Global — INT PK</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">RolId</span></td><td>INT IDENTITY(1,1)</td><td class="nn">NOT NULL</td><td>PK</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td></td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Datos semilla:</strong> 1-Administrador, 2-Jefe Sucursal, 3-Vendedor, 4-Técnico Médico, 5-Control Calidad, 6-Externo. Sin TenantId — compartido entre todos los tenants.</div>
+      </div>
+
+      <h2 id="formapago">OPT_FormaPago</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_FormaPago</span>
+          <span class="table-desc">Catálogo de formas de pago (script 021)</span>
+          <span class="global-badge">Global — INT PK</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Notas</th></tr>
+          <tr><td><span class="pk">FormaPagoId</span></td><td>INT IDENTITY(1,1)</td><td class="nn">NOT NULL</td><td>PK</td></tr>
+          <tr><td>Descripcion</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>UNIQUE</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Datos semilla:</strong> 1-Efectivo, 2-Débito, 3-Crédito, 4-Cheque, 5-Transferencia.</div>
+      </div>
+
+      <!-- ══════════════════════ SAAS / TENANCY ══════════════════════ -->
+      <h2 id="tenant">OPT_Tenant</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Tenant</span>
+          <span class="table-desc">Empresas clientes del SaaS — raíz de la jerarquía multi-tenant</span>
+          <span class="global-badge">Raíz SaaS</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK — GUID</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
-          <tr><td>RutEmpresa</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE (filtrado IsDeleted=0)</td></tr>
+          <tr><td>RutEmpresa</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE filtrado (IsDeleted=0)</td></tr>
           <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
           <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
           <tr><td>Telefono</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
           <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">1</td><td></td></tr>
-          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ FechaRegistro, CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          <tr><td>FechaRegistro</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>SYSUTCDATETIME()</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
         </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_Tenant_RutEmpresa (UNIQUE, filtered WHERE IsDeleted=0).</div>
       </div>
 
-      <h2 id="cliente">OPT_Cliente</h2>
+      <h2 id="sucursal">OPT_Sucursal</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Sucursal</span>
+          <span class="table-desc">Sucursales de la óptica por tenant</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK — en BD la columna se llama <code>idSucursal</code>, en C# <code>SucursalId</code></td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Telefono</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Matriz</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>1 = sucursal principal del tenant</td></tr>
+          <tr><td>FechaRegistro</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>SYSUTCDATETIME()</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber"><strong>Gotcha:</strong> La columna PK se llama <code>idSucursal</code> en la BD (legacy). EF Core la mapea con <code>HasColumnName("idSucursal")</code>. En scripts SQL siempre usar <code>idSucursal</code>, nunca <code>SucursalId</code>.</div>
+      </div>
 
+      <h2 id="usuario">OPT_Usuario</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Usuario</span>
+          <span class="table-desc">Usuarios del sistema — autenticación JWT + BCrypt</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">UsuarioId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK — GUID</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
+          <tr><td>RutUsuario</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por tenant (filtrado)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td>IX_OPT_Usuario_Email</td></tr>
+          <tr><td>PasswordHash</td><td>NVARCHAR(256)</td><td class="nn">NOT NULL</td><td>—</td><td>Hash BCrypt — nunca texto plano</td></tr>
+          <tr><td>Rol</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td class="def">'Operador'</td><td>Admin | Operador | Lectura</td></tr>
+          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>SYSUTCDATETIME()</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> IX_OPT_Usuario_Tenant_Rut (UNIQUE filtrado), IX_OPT_Usuario_TenantId, IX_OPT_Usuario_Email.</div>
+      </div>
+
+      <h2 id="usuariosucursal">OPT_UsuarioSucursal</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_UsuarioSucursal</span>
+          <span class="table-desc">Relación M:N — asignación de usuarios a sucursales (script 012)</span>
+          <span class="pivot-badge">Pivote M:N</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk"><span class="fk">UsuarioId</span></span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>PK (compuesta) · FK → OPT_Usuario</td></tr>
+          <tr><td><span class="pk"><span class="fk">SucursalId</span></span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>PK (compuesta) · FK → OPT_Sucursal(idSucursal)</td></tr>
+          <tr><td>AssignedAt</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>SYSUTCDATETIME()</td><td></td></tr>
+          <tr><td>AssignedBy</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td></td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_UsuarioSucursal_SucursalId. Sin IsDeleted — la relación se elimina directamente.</div>
+      </div>
+
+      <!-- ══════════════════════ CLIENTES ══════════════════════ -->
+      <h2 id="cliente">OPT_Cliente</h2>
       <div class="table-card">
         <div class="table-card-header">
           <span class="table-name">OPT_Cliente</span>
@@ -324,151 +442,622 @@
         </div>
         <table>
           <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">ClienteId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
+          <tr><td><span class="pk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK — GUID</td></tr>
           <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
           <tr><td>TipoCliente</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK: 'Persona' | 'Empresa'</td></tr>
           <tr><td>NumeroDocumento</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
           <tr><td>Nombre</td><td>NVARCHAR(200)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
           <tr><td>Direccion</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td></td></tr>
-          <tr><td><span class="fk">idComuna</span></td><td>INT</td><td>NULL</td><td>—</td><td>FK → OPT_Comuna (opcional)</td></tr>
+          <tr><td><span class="fk">idComuna</span></td><td>INT</td><td>NULL</td><td>—</td><td>FK → OPT_Comuna (NO ACTION)</td></tr>
           <tr><td>Celular</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
           <tr><td>Mail</td><td>NVARCHAR(150)</td><td>NULL</td><td>—</td><td></td></tr>
-          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td class="def">SYSUTCDATETIME()</td><td></td></tr>
+          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>SYSUTCDATETIME()</td><td></td></tr>
           <tr><td>FechaNacimiento</td><td>DATE</td><td>NULL</td><td>—</td><td><em>Solo Persona</em></td></tr>
           <tr><td>TipoPrevision</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td><em>Solo Persona:</em> Fonasa, Isapre, Particular</td></tr>
           <tr><td>Giro</td><td>NVARCHAR(150)</td><td>NULL</td><td>—</td><td><em>Solo Empresa</em></td></tr>
-          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
         </table>
-        <div style="padding:12px 20px;background:#fffbeb;border-top:1px solid #fde68a;">
-          <p style="font-size:0.82rem;color:#78350f;margin:0;"><strong>Decisión de diseño:</strong> Persona y Empresa están unificadas en una sola tabla para simplificar el modelo. Los campos <em>FechaNacimiento</em> y <em>TipoPrevision</em> son NULL para Empresa; <em>Giro</em> es NULL para Persona.</p>
-        </div>
-      </div>
-
-      <h2 id="usuario">OPT_Usuario</h2>
-
-      <div class="table-card">
-        <div class="table-card-header">
-          <span class="table-name">OPT_Usuario</span>
-          <span class="table-desc">Usuarios del sistema para autenticación JWT</span>
-          <span class="tenant-badge">TenantId</span>
-        </div>
-        <table>
-          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
-          <tr><td><span class="pk">UsuarioId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>—</td><td>PK — GUID</td></tr>
-          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (CASCADE)</td></tr>
-          <tr><td>RutUsuario</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por (TenantId, IsDeleted=0)</td></tr>
-          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
-          <tr><td>Email</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td>Tiene índice IX_Email</td></tr>
-          <tr><td>PasswordHash</td><td>NVARCHAR(256)</td><td class="nn">NOT NULL</td><td>—</td><td>Hash BCrypt (nunca texto plano)</td></tr>
-          <tr><td>Rol</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td class="def">'Operador'</td><td>Admin | Operador | Lectura</td></tr>
-          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td class="def">SYSUTCDATETIME()</td><td></td></tr>
-          <tr><td colspan="5" style="background:#f9fafb;color:#6b7280;font-style:italic;font-size:0.8rem;">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
-        </table>
+        <div class="fk-note fk-note-amber"><strong>Diseño:</strong> Persona y Empresa en una tabla. FechaNacimiento/TipoPrevision son NULL para Empresa; Giro es NULL para Persona.</div>
       </div>
 
       <h2 id="contacto">OPT_Contacto</h2>
       <div class="table-card">
         <div class="table-card-header">
           <span class="table-name">OPT_Contacto</span>
-          <span class="table-desc">Contactos de clientes Empresa (múltiples por empresa)</span>
+          <span class="table-desc">Contactos de clientes tipo Empresa (múltiples por empresa)</span>
           <span class="tenant-badge">TenantId</span>
         </div>
         <table>
-          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Notas</th></tr>
-          <tr><td><span class="pk">ContactoId</span></td><td>UNIQUEIDENTIFIER<br><small>(NEWSEQUENTIALID())</small></td><td class="nn">NOT NULL</td><td>PK — GUID</td></tr>
-          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK → OPT_Tenant (<strong>NO ACTION</strong>)</td></tr>
-          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>FK → OPT_Cliente (<strong>CASCADE</strong>)</td></tr>
-          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td></td></tr>
-          <tr><td>Email, Telefono, Cargo</td><td>NVARCHAR</td><td>NULL</td><td></td></tr>
-          <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td>Default 1</td></tr>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">ContactoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK — GUID</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant (<strong>NO ACTION</strong>)</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (<strong>CASCADE</strong>)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(150)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Email</td><td>NVARCHAR(150)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Telefono</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Cargo</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Activo</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">1</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
         </table>
-        <div style="padding:12px 20px;background:#fff7ed;border-top:1px solid #fdba74;">
-          <p style="font-size:0.82rem;color:#7c2d12;margin:0;"><strong>FK importante:</strong> TenantId usa <code>NO ACTION</code> (no CASCADE) para evitar múltiples rutas de cascada. La cascada llega por la ruta: Tenant → Cliente → Contacto.</p>
-        </div>
+        <div class="fk-note fk-note-amber"><strong>FK TenantId = NO ACTION:</strong> Evita múltiples rutas de cascada. La cascada llega por: Tenant → Cliente → Contacto.</div>
       </div>
 
-      <!-- ÍNDICES -->
+      <!-- ══════════════════════ CLÍNICA ══════════════════════ -->
+      <h2 id="agenda">OPT_Agenda</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Agenda</span>
+          <span class="table-desc">Citas agendadas — scoped por sucursal vía header X-Sucursal-Id (scripts 014 + 025)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">AgendaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (NO ACTION)</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (NO ACTION)</td></tr>
+          <tr><td><span class="fk">UsuarioId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Usuario (NO ACTION) — profesional asignado</td></tr>
+          <tr><td>FechaHora</td><td>DATETIME2(0)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>DuracionMinutos</td><td>SMALLINT</td><td class="nn">NOT NULL</td><td class="def">30</td><td>CHECK &gt; 0</td></tr>
+          <tr><td>Motivo</td><td>NVARCHAR(200)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Estado</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Ingresado'</td><td>CHECK: 'Ingresado' | 'Confirmada' | 'Atendida' | 'Cancelada' | 'NoShow'</td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices filtrados:</strong> IX_OPT_Agenda_TenantId_SucursalId_FechaHora (composite), IX_OPT_Agenda_ClienteId, IX_OPT_Agenda_UsuarioId (WHERE UsuarioId IS NOT NULL). Script 025 migró 'Pendiente' → 'Ingresado'.</div>
+      </div>
+
+      <h2 id="anamnesis">OPT_Anamnesis</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Anamnesis</span>
+          <span class="table-desc">Antecedentes médicos del cliente (scripts 010 + 024)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">AnamnesisId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (NO ACTION)</td></tr>
+          <tr><td><span class="fk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Atencion (NO ACTION) — agregada en script 024</td></tr>
+          <tr><td>Hipertension</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>Diabetes</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>Alergias</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>UsaLentes</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(1000)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>FechaRegistro</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> IX_OPT_Anamnesis_TenantId_ClienteId (filtered), IX_OPT_Anamnesis_ClienteId (filtered).</div>
+      </div>
+
+      <h2 id="receta">OPT_RecetaCristales</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_RecetaCristales</span>
+          <span class="table-desc">Receta óptica por cliente (scripts 011 + 024)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">RecetaCristalesId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (NO ACTION)</td></tr>
+          <tr><td><span class="fk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Atencion (NO ACTION) — script 024</td></tr>
+          <tr><td>Fuente</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Consulta'</td><td>CHECK: 'Consulta' | 'Tercero' — script 024</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Lejos — OD:</strong> LejosODEsferico, LejosODCilindro, LejosODEje, LejosODObservacion (todos NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Lejos — OI:</strong> LejosOIEsferico, LejosOICilindro, LejosOIEje, LejosOIObservacion (todos NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Lejos — DP:</strong> LejosDPEsferico, LejosDPObservacion (NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Cerca — OD:</strong> CercaODEsferico, CercaODCilindro, CercaODEje, CercaODObservacion (NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Cerca — OI:</strong> CercaOIEsferico, CercaOICilindro, CercaOIEje, CercaOIObservacion (NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Cerca — DP:</strong> CercaDPEsferico, CercaDPObservacion (NVARCHAR, NULL)</td></tr>
+          <tr><td colspan="5" style="background:#f8fafc;color:#475569;font-size:0.82rem;padding:8px 12px;"><strong>Adición:</strong> LejosADDEsfera (NVARCHAR, NULL) — bifocales/progresivos</td></tr>
+          <tr><td>CheckLejos</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>CheckCerca</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>CheckCristalesLaboratorio</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>CheckUrgente</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td></td></tr>
+          <tr><td>FechaIngreso</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> IX_OPT_RecetaCristales_TenantId_ClienteId (composite + FechaIngreso DESC, filtered), IX_OPT_RecetaCristales_ClienteId (filtered).</div>
+      </div>
+
+      <h2 id="atencion">OPT_Atencion</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Atencion</span>
+          <span class="table-desc">Visita clínica — vincula agenda, anamnesis, receta y cobro (script 022)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (NO ACTION)</td></tr>
+          <tr><td><span class="fk">AgendaId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Agenda (NO ACTION) — nullable: atenciones directas sin cita</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (NO ACTION)</td></tr>
+          <tr><td><span class="fk">UsuarioAtencionId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Usuario (NO ACTION) — profesional que atendió</td></tr>
+          <tr><td><span class="fk">AnamnesisId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Anamnesis (NO ACTION)</td></tr>
+          <tr><td><span class="fk">RecetaCristalesId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_RecetaCristales (NO ACTION)</td></tr>
+          <tr><td>FechaHoraAtencion</td><td>DATETIME2(0)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Motivo</td><td>NVARCHAR(300)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(2000)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Estado</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Abierta'</td><td>CHECK: 'Abierta' | 'TerminadaServicio' | 'DerivoOT'</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> IX_OPT_Atencion_TenantId_idSucursal_FechaHora (composite, filtered), IX_OPT_Atencion_ClienteId (filtered), IX_OPT_Atencion_AgendaId (filtered, WHERE AgendaId IS NOT NULL).</div>
+      </div>
+
+      <h2 id="cobro">OPT_CobroServicio</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_CobroServicio</span>
+          <span class="table-desc">Cobro de una atención — relación 1:1 con OPT_Atencion (script 023)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">CobroServicioId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (NO ACTION)</td></tr>
+          <tr><td><span class="fk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Atencion (NO ACTION) — UNIQUE (1:1)</td></tr>
+          <tr><td><span class="fk">FormaPagoId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_FormaPago (NO ACTION)</td></tr>
+          <tr><td>Monto</td><td>DECIMAL(12,2)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK &gt; 0</td></tr>
+          <tr><td>FechaCobro</td><td>DATETIME2(0)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td>N° boleta, notas</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber"><strong>Constraint:</strong> UQ_OPT_CobroServicio_AtencionId — garantiza que una atención tenga como máximo un cobro.</div>
+      </div>
+
+      <!-- ══════════════════════ INVENTARIO ══════════════════════ -->
+      <h2 id="categoria">OPT_Categoria</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Categoria</span>
+          <span class="table-desc">Catálogo plano de categorías de productos por tenant (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">CategoriaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Descripcion</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>IsActivo</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">1</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_Categoria_Tenant (filtered). Reemplaza OPT_ProductoCategoria de scripts 015–020.</div>
+      </div>
+
+      <h2 id="producto">OPT_Producto</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Producto</span>
+          <span class="table-desc">Jerarquía self-reference: raíz = familia / hijo = SKU con stock (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">ProductoPadreId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Producto (self-ref). NULL = nodo raíz (familia)</td></tr>
+          <tr><td><span class="fk">CategoriaId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Categoria</td></tr>
+          <tr><td>CodigoInterno</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE por tenant (filtered)</td></tr>
+          <tr><td>Nombre</td><td>NVARCHAR(200)</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Descripcion</td><td>NVARCHAR(2000)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Tipo</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Producto'</td><td>CHECK: 'Producto' | 'Servicio'. Los servicios no tienen hijos ni stock</td></tr>
+          <tr><td>UnidadMedida</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td>'unidad', 'par', 'caja', etc.</td></tr>
+          <tr><td>IsActivo</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">1</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber"><strong>Diseño jerarquía:</strong> <code>ProductoPadreId NULL</code> = familia de producto (sin stock directo). Hijos = SKUs concretos que sí tienen stock. No existe tabla de variantes — los hijos son las variantes. Los servicios (<code>Tipo='Servicio'</code>) no tienen hijos ni stock. <br/><strong>Índices:</strong> UQ_OPT_Producto_Codigo (UNIQUE composite TenantId+CodigoInterno, filtered), IX_OPT_Producto_Padre, IX_OPT_Producto_Categoria.</div>
+      </div>
+
+      <h2 id="precio">OPT_PrecioProducto</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_PrecioProducto</span>
+          <span class="table-desc">Historial de precios con vigencia temporal — global por producto (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">PrecioId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto</td></tr>
+          <tr><td>PrecioCosto</td><td>DECIMAL(18,2)</td><td>NULL</td><td>—</td><td>Opcional</td></tr>
+          <tr><td>PrecioVenta</td><td>DECIMAL(18,2)</td><td>NULL</td><td>—</td><td>Opcional</td></tr>
+          <tr><td>VigenciaDesde</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr><td>VigenciaHasta</td><td>DATETIME2</td><td>NULL</td><td>—</td><td><strong>NULL = precio vigente.</strong> Al actualizar precio: cierra este registro y crea uno nuevo</td></tr>
+          <tr><td>CreatedAt</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr><td>CreatedBy</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td></td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Sin IsDeleted:</strong> La expiración se maneja con VigenciaHasta. <strong>Índice:</strong> IX_OPT_PrecioProducto_Vigente (composite TenantId+ProductoId+VigenciaDesde DESC, WHERE VigenciaHasta IS NULL). <strong>Sin SucursalId</strong> — precio global por tenant.</div>
+      </div>
+
+      <h2 id="stock">OPT_Stock</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Stock</span>
+          <span class="table-desc">Stock materializado por (Tenant, Producto, Sucursal) (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">StockId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto</td></tr>
+          <tr><td><span class="fk">SucursalId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal(idSucursal)</td></tr>
+          <tr><td>CantidadDisponible</td><td>INT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>Puede ser negativa (stock en descubierto)</td></tr>
+          <tr><td>StockMinimo</td><td>INT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>CHECK &gt;= 0 — para alertas de reposición</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>UNIQUE:</strong> UQ_OPT_Stock_Producto_Sucursal (TenantId + ProductoId + SucursalId). Un registro por combinación producto-sucursal. <strong>Índices:</strong> IX_OPT_Stock_Sucursal (TenantId+SucursalId, filtered), IX_OPT_Stock_Producto (TenantId+ProductoId, filtered).</div>
+      </div>
+
+      <h2 id="docent">OPT_DocumentoEntrada</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_DocumentoEntrada</span>
+          <span class="table-desc">Cabecera de documento de ingreso de mercadería (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">DocumentoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">SucursalId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal</td></tr>
+          <tr><td>TipoDocumento</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK: 'FacturaCompra' | 'BoletaCompra' | 'GuiaDespacho' | 'OtroIngreso'</td></tr>
+          <tr><td>NumeroDocumento</td><td>NVARCHAR(50)</td><td>NULL</td><td>—</td><td>N° factura o boleta del proveedor</td></tr>
+          <tr><td>FechaDocumento</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>ProveedorNombre</td><td>NVARCHAR(200)</td><td>NULL</td><td>—</td><td>Texto libre</td></tr>
+          <tr><td>ProveedorRut</td><td>NVARCHAR(20)</td><td>NULL</td><td>—</td><td>Texto libre</td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(2000)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Estado</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Borrador'</td><td>CHECK: 'Borrador' → 'Confirmado' | 'Anulado'</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Flujo:</strong> Al Confirmar → genera OPT_MovimientoStock(Entrada) por cada línea y actualiza OPT_PrecioProducto. Al Anular → genera OPT_MovimientoStock(Ajuste, Cantidad negativa). <strong>Índices:</strong> IX_OPT_DocumentoEntrada_Sucursal_Fecha, IX_OPT_DocumentoEntrada_Estado.</div>
+      </div>
+
+      <h2 id="docentlinea">OPT_DocumentoEntradaLinea</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_DocumentoEntradaLinea</span>
+          <span class="table-desc">Líneas del documento de entrada (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">LineaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td><span class="fk">DocumentoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_DocumentoEntrada (<strong>CASCADE</strong>)</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto</td></tr>
+          <tr><td>Cantidad</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK &gt; 0</td></tr>
+          <tr><td>PrecioCosto</td><td>DECIMAL(18,2)</td><td>NULL</td><td>—</td><td>Opcional — para actualizar OPT_PrecioProducto al confirmar</td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td></td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_DocumentoEntradaLinea_Documento. ON DELETE CASCADE: al eliminar o anular el documento, se eliminan sus líneas.</div>
+      </div>
+
+      <h2 id="transferencia">OPT_Transferencia</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_Transferencia</span>
+          <span class="table-desc">Cabecera de transferencia de stock entre sucursales (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">TransferenciaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">SucursalOrigenId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (NO ACTION)</td></tr>
+          <tr><td><span class="fk">SucursalDestinoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (NO ACTION). CHECK: Origen ≠ Destino</td></tr>
+          <tr><td>FechaTransferencia</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td></td></tr>
+          <tr><td>Estado</td><td>NVARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Pendiente'</td><td>CHECK: 'Pendiente' → 'Confirmada' | 'Anulada'</td></tr>
+          <tr><td>Observaciones</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Flujo:</strong> Al Confirmar → genera TransferenciaSalida en sucursal origen y TransferenciaEntrada en destino. <strong>Índices:</strong> IX_OPT_Transferencia_Origen (TenantId+SucursalOrigenId+Fecha DESC, filtered), IX_OPT_Transferencia_Destino. <strong>Constraint:</strong> CK_OPT_Transferencia_Sucursales (Origen ≠ Destino).</div>
+      </div>
+
+      <h2 id="translinea">OPT_TransferenciaLinea</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_TransferenciaLinea</span>
+          <span class="table-desc">Líneas de transferencia de stock (script 028)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">LineaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">TransferenciaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Transferencia (<strong>CASCADE</strong>)</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto</td></tr>
+          <tr><td>Cantidad</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK &gt; 0</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_TransferenciaLinea_Transferencia. ON DELETE CASCADE desde OPT_Transferencia.</div>
+      </div>
+
+      <h2 id="movimiento">OPT_MovimientoStock</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_MovimientoStock</span>
+          <span class="table-desc">Registro inmutable de todos los movimientos de stock — trazabilidad completa (script 027)</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">MovimientoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">TenantId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Tenant</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto</td></tr>
+          <tr><td><span class="fk">SucursalId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal</td></tr>
+          <tr><td><span class="fk">UsuarioId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Usuario</td></tr>
+          <tr><td>TipoMovimiento</td><td>NVARCHAR(30)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK: 'Entrada' | 'Salida' | 'Ajuste' | 'Merma' | 'DevolucionProveedor' | 'TransferenciaEntrada' | 'TransferenciaSalida'</td></tr>
+          <tr><td>Cantidad</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>Ajuste puede ser negativo; resto &gt; 0</td></tr>
+          <tr><td>CantidadAntes</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>Stock antes del movimiento</td></tr>
+          <tr><td>CantidadDespues</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>Stock después del movimiento</td></tr>
+          <tr><td><span class="fk">DocumentoId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_DocumentoEntrada (nullable — solo para tipo Entrada)</td></tr>
+          <tr><td><span class="fk">TransferenciaId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Transferencia (nullable — solo para tipos Transferencia*)</td></tr>
+          <tr><td>Referencia</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td></td></tr>
+          <tr><td>FechaMovimiento</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr><td>CreatedAt</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td></td></tr>
+          <tr><td>CreatedBy</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td></td></tr>
+        </table>
+        <div class="fk-note fk-note-amber"><strong>Inmutable:</strong> No tiene UpdatedAt ni IsDeleted — los movimientos no se borran ni modifican. <strong>Índices:</strong> IX_OPT_Movimiento_Producto_Sucursal_Fecha (composite TenantId+ProductoId+SucursalId+Fecha DESC), IX_OPT_Movimiento_Sucursal_Fecha, IX_OPT_Movimiento_Usuario (UsuarioId+Fecha DESC).</div>
+      </div>
+
+      <!-- ══════════════════════ ÓRDENES DE TRABAJO ══════════════════════ -->
+      <h2 id="ordentrabajo">OPT_OrdenTrabajo</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajo</span>
+          <span class="table-desc">Cabecera de la OT — script 029</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK lógico al tenant</td></tr>
+          <tr><td><span class="fk">idSucursal</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Sucursal (header X-Sucursal-Id al crear)</td></tr>
+          <tr><td>NumeroOT</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>UNIQUE (TenantId, NumeroOT) filtrado IsDeleted=0</td></tr>
+          <tr><td><span class="fk">ClienteId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Cliente (paciente, tipo Persona)</td></tr>
+          <tr><td>TipoFacturacion</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td class="def">'Particular'</td><td>CHECK IN ('Particular','Empresa')</td></tr>
+          <tr><td><span class="fk">EmpresaClienteId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Cliente (Empresa). Req. si TipoFacturacion='Empresa'</td></tr>
+          <tr><td>Beneficiario</td><td>NVARCHAR(100)</td><td>NULL</td><td>—</td><td>Nombre libre del receptor si difiere del paciente</td></tr>
+          <tr><td><span class="fk">AtencionId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_Atencion (nullable)</td></tr>
+          <tr><td><span class="fk">RecetaCristalesId</span></td><td>UNIQUEIDENTIFIER</td><td>NULL</td><td>—</td><td>FK → OPT_RecetaCristales (nullable)</td></tr>
+          <tr><td>FechaIngreso</td><td>DATE</td><td class="nn">NOT NULL</td><td>CAST(GETDATE() AS DATE)</td><td>—</td></tr>
+          <tr><td>FechaEntrega</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>HoraEntrega</td><td>TIME(0)</td><td>NULL</td><td>'12:00:00'</td><td>—</td></tr>
+          <tr><td>SubTotal</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td class="def">0</td><td>Suma de (Cantidad × ValorUnitario)</td></tr>
+          <tr><td>Descuento</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td class="def">0</td><td>CHECK >= 0</td></tr>
+          <tr><td>MontoTotal</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td class="def">0</td><td>SubTotal - Descuento</td></tr>
+          <tr><td>TotalAbonado</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td class="def">0</td><td>Suma de pagos</td></tr>
+          <tr><td>Saldo</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td class="def">0</td><td>MontoTotal - TotalAbonado</td></tr>
+          <tr><td>NumeroCuotas</td><td>INT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>0 = sin cuotas; CHECK >= 0</td></tr>
+          <tr><td>FechaInicioCuotas</td><td>DATE</td><td>NULL</td><td>—</td><td>Vencimiento 1ra cuota</td></tr>
+          <tr><td>EstadoPago</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td class="def">'Pendiente'</td><td>CHECK IN ('Pendiente','Pagado')</td></tr>
+          <tr><td>EtapaOT</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td class="def">'Ingresado'</td><td>CHECK IN ('Ingresado','EnProceso','Montaje','Laboratorio','Calidad','Despacho','Entregado')</td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td>—</td></tr>
+          <tr class="audit-row"><td colspan="5">+ CreatedAt (DATETIME2), CreatedBy, UpdatedAt, UpdatedBy, IsDeleted (BIT DEFAULT 0)</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índices:</strong> UQ_OPT_OT_NumeroOT (TenantId, NumeroOT) WHERE IsDeleted=0 · IX_OPT_OT_TenantSucursal · IX_OPT_OT_Cliente · IX_OPT_OT_Atencion (WHERE AtencionId IS NOT NULL).</div>
+      </div>
+
+      <h2 id="otlinea">OPT_OrdenTrabajoLinea</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoLinea</span>
+          <span class="table-desc">Productos / servicios de la OT — script 029</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">LineaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_OrdenTrabajo (<strong>CASCADE</strong>)</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>Desnormalizado</td></tr>
+          <tr><td><span class="fk">ProductoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_Producto (Producto o Servicio del catálogo)</td></tr>
+          <tr><td>Cantidad</td><td>INT</td><td class="nn">NOT NULL</td><td class="def">1</td><td>CHECK > 0</td></tr>
+          <tr><td>ValorUnitario</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>—</td><td>Precio libre (no toma el precio del catálogo). CHECK >= 0</td></tr>
+          <tr><td>Comentario</td><td>NVARCHAR(250)</td><td>NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>—</td></tr>
+        </table>
+      </div>
+
+      <h2 id="otpago">OPT_OrdenTrabajoPago</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoPago</span>
+          <span class="table-desc">Abonos iniciales y pagos posteriores — script 029</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">PagoId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_OrdenTrabajo (<strong>CASCADE</strong>)</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>—</td></tr>
+          <tr><td><span class="fk">FormaPagoId</span></td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_FormaPago (catálogo INT)</td></tr>
+          <tr><td>Monto</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK > 0</td></tr>
+          <tr><td>FechaPago</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>EsAbono</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>1 = al crear la OT · 0 = pago posterior via POST /{id}/pagos</td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(200)</td><td>NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>CreatedAt</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td>—</td></tr>
+          <tr><td>CreatedBy</td><td>NVARCHAR(50)</td><td class="nn">NOT NULL</td><td>—</td><td>RUT del operador</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>—</td></tr>
+        </table>
+      </div>
+
+      <h2 id="otcuota">OPT_OrdenTrabajoCuota</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoCuota</span>
+          <span class="table-desc">Plan de cuotas generado sobre el saldo — script 029</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">CuotaId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_OrdenTrabajo (<strong>CASCADE</strong>)</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>Numero</td><td>INT</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK > 0. Secuencia: 1, 2, 3…</td></tr>
+          <tr><td>ValorCuota</td><td>DECIMAL(18,2)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK > 0. Última cuota absorbe residuo del redondeo</td></tr>
+          <tr><td>FechaVencimiento</td><td>DATE</td><td class="nn">NOT NULL</td><td>—</td><td>FechaInicioCuotas + (Numero-1) meses</td></tr>
+          <tr><td>FechaPago</td><td>DATE</td><td>NULL</td><td>—</td><td>Completado desde módulo Caja (futuro)</td></tr>
+          <tr><td>Estado</td><td>VARCHAR(15)</td><td class="nn">NOT NULL</td><td class="def">'Pendiente'</td><td>CHECK IN ('Pendiente','Pagada')</td></tr>
+          <tr><td>IsDeleted</td><td>BIT</td><td class="nn">NOT NULL</td><td class="def">0</td><td>—</td></tr>
+        </table>
+        <div class="fk-note fk-note-blue"><strong>Índice:</strong> IX_OPT_OTCuota_OT_Numero (OTId, Numero) WHERE IsDeleted=0.</div>
+      </div>
+
+      <h2 id="otbitacora">OPT_OrdenTrabajoBitacora</h2>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_OrdenTrabajoBitacora</span>
+          <span class="table-desc">Historial inmutable de cambios de etapa — script 029</span>
+          <span class="tenant-badge">TenantId</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo</th><th>Null</th><th>Default</th><th>Notas</th></tr>
+          <tr><td><span class="pk">BitacoraId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>NEWSEQUENTIALID()</td><td>PK</td></tr>
+          <tr><td><span class="fk">OTId</span></td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>FK → OPT_OrdenTrabajo — <strong>sin CASCADE</strong> (histórico)</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td class="nn">NOT NULL</td><td>—</td><td>—</td></tr>
+          <tr><td>Etapa</td><td>VARCHAR(20)</td><td class="nn">NOT NULL</td><td>—</td><td>CHECK IN (7 etapas). Etapa a la que se transicionó</td></tr>
+          <tr><td>Fecha</td><td>DATETIME2</td><td class="nn">NOT NULL</td><td>GETUTCDATE()</td><td>Momento exacto del cambio</td></tr>
+          <tr><td>Responsable</td><td>NVARCHAR(100)</td><td class="nn">NOT NULL</td><td>—</td><td>RUT del usuario que cambió la etapa</td></tr>
+          <tr><td>Observacion</td><td>NVARCHAR(500)</td><td>NULL</td><td>—</td><td>—</td></tr>
+        </table>
+        <div class="fk-note fk-note-amber"><strong>Sin IsDeleted:</strong> la bitácora es permanente y no se puede borrar. <strong>Índice:</strong> IX_OPT_OTBitacora_OT_Fecha (OTId, Fecha DESC).</div>
+      </div>
+
+      <!-- ══════════════════════ ÍNDICES ══════════════════════ -->
       <h2 id="indices">Índices</h2>
+      <div class="alert alert-blue">
+        <strong>Índices filtrados:</strong> Los UNIQUE usan <code>WHERE [IsDeleted] = 0</code> para que registros eliminados (soft-delete) no bloqueen la creación de nuevos con el mismo valor.
+      </div>
       <table>
         <tr><th>Tabla</th><th>Índice</th><th>Tipo</th><th>Propósito</th></tr>
-        <tr><td>OPT_Tenant</td><td>IX_Tenant_RutEmpresa</td><td>UNIQUE filtrado</td><td>RUT único por tenants activos</td></tr>
-        <tr><td>OPT_Region</td><td>IX_Region_Codigo</td><td>UNIQUE filtrado</td><td>Código de región único</td></tr>
-        <tr><td>OPT_Cliente</td><td>IX_Cliente_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
-        <tr><td>OPT_Cliente</td><td>IX_Cliente_TipoCliente</td><td>NON-UNIQUE</td><td>Filtro por tipo</td></tr>
-        <tr><td>OPT_Cliente</td><td>IX_Cliente_Tenant_Documento</td><td>UNIQUE filtrado</td><td>RUT único por tenant (activos)</td></tr>
-        <tr><td>OPT_Usuario</td><td>IX_Usuario_Tenant_Rut</td><td>UNIQUE filtrado</td><td>RUT único por tenant (activos)</td></tr>
-        <tr><td>OPT_Usuario</td><td>IX_Usuario_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
-        <tr><td>OPT_Usuario</td><td>IX_Usuario_Email</td><td>NON-UNIQUE</td><td>Búsqueda por email</td></tr>
-        <tr><td>OPT_Contacto</td><td>IX_Contacto_TenantId</td><td>NON-UNIQUE</td><td>Consultas por tenant</td></tr>
-        <tr><td>OPT_Contacto</td><td>IX_Contacto_ClienteId</td><td>NON-UNIQUE</td><td>Contactos de un cliente</td></tr>
+        <tr><td>OPT_Tenant</td><td>IX_OPT_Tenant_RutEmpresa</td><td>UNIQUE filtrado</td><td>RUT único por tenants activos</td></tr>
+        <tr><td>OPT_Region</td><td>IX_OPT_Region_Codigo</td><td>UNIQUE filtrado</td><td>Código de región único</td></tr>
+        <tr><td>OPT_Comuna</td><td>IX_OPT_Comuna_idRegion</td><td>NON-UNIQUE</td><td>Comunas por región</td></tr>
+        <tr><td>OPT_Comuna</td><td>IX_OPT_Comuna_Codigo</td><td>UNIQUE filtrado</td><td>Código de comuna único</td></tr>
+        <tr><td>OPT_Sucursal</td><td>IX_OPT_Sucursal_TenantId</td><td>NON-UNIQUE</td><td>Sucursales del tenant</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_OPT_Cliente_TenantId</td><td>NON-UNIQUE</td><td>Clientes del tenant</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_OPT_Cliente_TipoCliente</td><td>NON-UNIQUE</td><td>Filtro por tipo</td></tr>
+        <tr><td>OPT_Cliente</td><td>IX_OPT_Cliente_Tenant_Documento</td><td>UNIQUE filtrado</td><td>Documento único por tenant (activos)</td></tr>
+        <tr><td>OPT_Contacto</td><td>IX_OPT_Contacto_TenantId</td><td>NON-UNIQUE</td><td>Contactos del tenant</td></tr>
+        <tr><td>OPT_Contacto</td><td>IX_OPT_Contacto_ClienteId</td><td>NON-UNIQUE</td><td>Contactos de un cliente</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_OPT_Usuario_Tenant_Rut</td><td>UNIQUE filtrado</td><td>RUT único por tenant (activos)</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_OPT_Usuario_TenantId</td><td>NON-UNIQUE</td><td>Usuarios del tenant</td></tr>
+        <tr><td>OPT_Usuario</td><td>IX_OPT_Usuario_Email</td><td>NON-UNIQUE</td><td>Búsqueda por email</td></tr>
+        <tr><td>OPT_UsuarioSucursal</td><td>IX_OPT_UsuarioSucursal_SucursalId</td><td>NON-UNIQUE</td><td>Usuarios de una sucursal</td></tr>
+        <tr><td>OPT_Agenda</td><td>IX_OPT_Agenda_TenantId_SucursalId_FechaHora</td><td>COMPOSITE filtrado</td><td>Citas por sucursal y fecha</td></tr>
+        <tr><td>OPT_Agenda</td><td>IX_OPT_Agenda_ClienteId</td><td>NON-UNIQUE filtrado</td><td>Citas del cliente</td></tr>
+        <tr><td>OPT_Agenda</td><td>IX_OPT_Agenda_UsuarioId</td><td>NON-UNIQUE filtrado</td><td>Citas del profesional (WHERE UsuarioId IS NOT NULL)</td></tr>
+        <tr><td>OPT_Anamnesis</td><td>IX_OPT_Anamnesis_TenantId_ClienteId</td><td>COMPOSITE filtrado</td><td>Anamnesis del cliente en el tenant</td></tr>
+        <tr><td>OPT_RecetaCristales</td><td>IX_OPT_RecetaCristales_TenantId_ClienteId</td><td>COMPOSITE + FechaIngreso DESC</td><td>Recetas del cliente, las más recientes primero</td></tr>
+        <tr><td>OPT_Atencion</td><td>IX_OPT_Atencion_TenantId_idSucursal_FechaHora</td><td>COMPOSITE filtrado</td><td>Atenciones por sucursal y fecha</td></tr>
+        <tr><td>OPT_Atencion</td><td>IX_OPT_Atencion_AgendaId</td><td>NON-UNIQUE filtrado</td><td>WHERE AgendaId IS NOT NULL</td></tr>
+        <tr><td>OPT_Categoria</td><td>IX_OPT_Categoria_Tenant</td><td>NON-UNIQUE filtrado</td><td>Categorías del tenant</td></tr>
+        <tr><td>OPT_Producto</td><td>UQ_OPT_Producto_Codigo</td><td>UNIQUE composite filtrado</td><td>CodigoInterno único por tenant</td></tr>
+        <tr><td>OPT_Producto</td><td>IX_OPT_Producto_Padre</td><td>COMPOSITE filtrado</td><td>Hijos de un producto (jerarquía)</td></tr>
+        <tr><td>OPT_Producto</td><td>IX_OPT_Producto_Categoria</td><td>COMPOSITE filtrado</td><td>Productos de una categoría</td></tr>
+        <tr><td>OPT_PrecioProducto</td><td>IX_OPT_PrecioProducto_Vigente</td><td>COMPOSITE filtrado</td><td>Precio vigente (WHERE VigenciaHasta IS NULL)</td></tr>
+        <tr><td>OPT_Stock</td><td>UQ_OPT_Stock_Producto_Sucursal</td><td>UNIQUE composite</td><td>1 fila por (Tenant, Producto, Sucursal)</td></tr>
+        <tr><td>OPT_Stock</td><td>IX_OPT_Stock_Sucursal</td><td>COMPOSITE filtrado</td><td>Stock de una sucursal</td></tr>
+        <tr><td>OPT_Stock</td><td>IX_OPT_Stock_Producto</td><td>COMPOSITE filtrado</td><td>Stock de un producto en todos los locales</td></tr>
+        <tr><td>OPT_DocumentoEntrada</td><td>IX_OPT_DocumentoEntrada_Sucursal_Fecha</td><td>COMPOSITE filtrado</td><td>Documentos de la sucursal por fecha</td></tr>
+        <tr><td>OPT_DocumentoEntrada</td><td>IX_OPT_DocumentoEntrada_Estado</td><td>COMPOSITE filtrado</td><td>Documentos por estado</td></tr>
+        <tr><td>OPT_DocumentoEntradaLinea</td><td>IX_OPT_DocumentoEntradaLinea_Documento</td><td>NON-UNIQUE</td><td>Líneas del documento</td></tr>
+        <tr><td>OPT_Transferencia</td><td>IX_OPT_Transferencia_Origen</td><td>COMPOSITE filtrado</td><td>Transferencias originadas en la sucursal</td></tr>
+        <tr><td>OPT_Transferencia</td><td>IX_OPT_Transferencia_Destino</td><td>COMPOSITE filtrado</td><td>Transferencias recibidas en la sucursal</td></tr>
+        <tr><td>OPT_TransferenciaLinea</td><td>IX_OPT_TransferenciaLinea_Transferencia</td><td>NON-UNIQUE</td><td>Líneas de una transferencia</td></tr>
+        <tr><td>OPT_MovimientoStock</td><td>IX_OPT_Movimiento_Producto_Sucursal_Fecha</td><td>COMPOSITE</td><td>Historial de un producto en una sucursal</td></tr>
+        <tr><td>OPT_MovimientoStock</td><td>IX_OPT_Movimiento_Sucursal_Fecha</td><td>COMPOSITE</td><td>Todos los movimientos de una sucursal</td></tr>
+        <tr><td>OPT_MovimientoStock</td><td>IX_OPT_Movimiento_Usuario</td><td>COMPOSITE</td><td>Movimientos por usuario (auditoría)</td></tr>
+        <tr><td>OPT_OrdenTrabajo</td><td>UQ_OPT_OT_NumeroOT</td><td>UNIQUE filtrado</td><td>NumeroOT único por tenant (WHERE IsDeleted=0)</td></tr>
+        <tr><td>OPT_OrdenTrabajo</td><td>IX_OPT_OT_TenantSucursal</td><td>COMPOSITE filtrado</td><td>OTs de la sucursal activa</td></tr>
+        <tr><td>OPT_OrdenTrabajo</td><td>IX_OPT_OT_Cliente</td><td>COMPOSITE filtrado</td><td>OTs de un cliente</td></tr>
+        <tr><td>OPT_OrdenTrabajo</td><td>IX_OPT_OT_Atencion</td><td>NON-UNIQUE filtrado</td><td>WHERE AtencionId IS NOT NULL</td></tr>
+        <tr><td>OPT_OrdenTrabajoLinea</td><td>IX_OPT_OTLinea_OT</td><td>NON-UNIQUE filtrado</td><td>Líneas de una OT</td></tr>
+        <tr><td>OPT_OrdenTrabajoPago</td><td>IX_OPT_OTPago_OT</td><td>NON-UNIQUE filtrado</td><td>Pagos de una OT</td></tr>
+        <tr><td>OPT_OrdenTrabajoCuota</td><td>IX_OPT_OTCuota_OT_Numero</td><td>COMPOSITE filtrado</td><td>Plan de cuotas ordenado por número</td></tr>
+        <tr><td>OPT_OrdenTrabajoBitacora</td><td>IX_OPT_OTBitacora_OT_Fecha</td><td>COMPOSITE</td><td>Bitácora de la OT ordenada por fecha DESC</td></tr>
       </table>
 
-      <div class="alert alert-blue">
-        <strong>Índices filtrados:</strong> Los índices UNIQUE usan <code>WHERE [IsDeleted] = 0</code>. Esto permite que registros eliminados (soft-delete) no bloqueen la creación de nuevos con el mismo documento.
-      </div>
-
-      <!-- CASCADAS -->
+      <!-- ══════════════════════ CASCADAS ══════════════════════ -->
       <h2 id="cascadas">Comportamiento de Cascadas FK</h2>
       <table>
-        <tr><th>Tabla hija</th><th>FK hacia</th><th>ON DELETE</th><th>ON UPDATE</th><th>Razón</th></tr>
-        <tr><td>OPT_Sucursal</td><td>OPT_Tenant</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina tenant, sus sucursales se eliminan</td></tr>
-        <tr><td>OPT_Cliente</td><td>OPT_Tenant</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina tenant, sus clientes se eliminan</td></tr>
-        <tr><td>OPT_Cliente</td><td>OPT_Comuna</td><td>NO ACTION</td><td>NO ACTION</td><td>La comuna es un catálogo, no se elimina</td></tr>
-        <tr><td>OPT_Contacto</td><td>OPT_Tenant</td><td><strong>NO ACTION</strong></td><td>NO ACTION</td><td>Evita ruta múltiple (ya llega vía Cliente)</td></tr>
-        <tr><td>OPT_Contacto</td><td>OPT_Cliente</td><td>CASCADE</td><td>CASCADE</td><td>Si elimina cliente, sus contactos se eliminan</td></tr>
-        <tr><td>OPT_Usuario</td><td>OPT_Tenant</td><td>CASCADE</td><td>—</td><td>Si elimina tenant, sus usuarios se eliminan</td></tr>
-        <tr><td>OPT_Comuna</td><td>OPT_Region</td><td>NO ACTION</td><td>CASCADE</td><td>No se elimina región con comunas</td></tr>
+        <tr><th>Tabla hija</th><th>FK hacia</th><th>ON DELETE</th><th>Razón</th></tr>
+        <tr><td>OPT_Sucursal</td><td>OPT_Tenant</td><td>CASCADE</td><td>Si elimina tenant, sus sucursales se eliminan</td></tr>
+        <tr><td>OPT_Cliente</td><td>OPT_Tenant</td><td>CASCADE</td><td>Si elimina tenant, sus clientes se eliminan</td></tr>
+        <tr><td>OPT_Cliente</td><td>OPT_Comuna</td><td>NO ACTION</td><td>La comuna es catálogo; no se elimina</td></tr>
+        <tr><td>OPT_Contacto</td><td>OPT_Tenant</td><td><strong>NO ACTION</strong></td><td>Evita ruta múltiple (ya llega vía Cliente)</td></tr>
+        <tr><td>OPT_Contacto</td><td>OPT_Cliente</td><td>CASCADE</td><td>Al eliminar cliente, sus contactos se eliminan</td></tr>
+        <tr><td>OPT_Usuario</td><td>OPT_Tenant</td><td>CASCADE</td><td>Si elimina tenant, sus usuarios se eliminan</td></tr>
+        <tr><td>OPT_Comuna</td><td>OPT_Region</td><td>NO ACTION</td><td>No se elimina región con comunas</td></tr>
+        <tr><td>OPT_Agenda</td><td>OPT_Sucursal / Cliente / Usuario</td><td>NO ACTION</td><td>No borrado en cascada desde datos operativos</td></tr>
+        <tr><td>OPT_Atencion</td><td>OPT_Agenda / Cliente / Sucursal / Usuario</td><td>NO ACTION</td><td>Ídem — datos clínicos no se borran en cascada</td></tr>
+        <tr><td>OPT_Anamnesis / RecetaCristales</td><td>OPT_Cliente / OPT_Atencion</td><td>NO ACTION</td><td>Datos clínicos protegidos</td></tr>
+        <tr><td>OPT_CobroServicio</td><td>OPT_Atencion / FormaPago</td><td>NO ACTION</td><td>Datos financieros protegidos</td></tr>
+        <tr><td>OPT_DocumentoEntradaLinea</td><td>OPT_DocumentoEntrada</td><td><strong>CASCADE</strong></td><td>Líneas son parte del documento — se eliminan juntas</td></tr>
+        <tr><td>OPT_TransferenciaLinea</td><td>OPT_Transferencia</td><td><strong>CASCADE</strong></td><td>Líneas son parte de la transferencia</td></tr>
+        <tr><td>OPT_TransferenciaLinea</td><td>OPT_Producto</td><td>NO ACTION</td><td>No se elimina producto con líneas históricas</td></tr>
+        <tr><td>OPT_MovimientoStock</td><td>OPT_DocumentoEntrada / OPT_Transferencia</td><td>NO ACTION</td><td>Registro inmutable — no se borra aunque se anule el origen</td></tr>
+        <tr><td>OPT_Categoria / Producto / Stock / etc.</td><td>OPT_Tenant</td><td>NO ACTION (salvo explícito)</td><td>Inventario protegido de borrados accidentales</td></tr>
+        <tr><td>OPT_OrdenTrabajo</td><td>OPT_Sucursal / Cliente / Atencion / RecetaCristales</td><td>NO ACTION</td><td>OTs protegidas de borrados en cascada desde datos clínicos</td></tr>
+        <tr><td>OPT_OrdenTrabajoLinea</td><td>OPT_OrdenTrabajo</td><td><strong>CASCADE</strong></td><td>Líneas son parte de la OT — se eliminan con ella (físicamente)</td></tr>
+        <tr><td>OPT_OrdenTrabajoPago</td><td>OPT_OrdenTrabajo</td><td><strong>CASCADE</strong></td><td>Pagos son parte de la OT</td></tr>
+        <tr><td>OPT_OrdenTrabajoCuota</td><td>OPT_OrdenTrabajo</td><td><strong>CASCADE</strong></td><td>Cuotas son parte de la OT</td></tr>
+        <tr><td>OPT_OrdenTrabajoBitacora</td><td>OPT_OrdenTrabajo</td><td>NO ACTION</td><td>Histórico — sobrevive aunque se elimine la OT físicamente</td></tr>
       </table>
 
-      <!-- NUEVO SCRIPT -->
+      <!-- ══════════════════════ NUEVO SCRIPT ══════════════════════ -->
       <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
-      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>028_</code></strong>.</p>
-      <pre>-- Nombrar: 028_descripcion.sql
+      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>030_</code></strong>.</p>
+      <pre>-- Nombrar: 030_descripcion.sql
 -- Siempre: USE [dbOPT]; GO
 
--- Para tablas nuevas: verificar existencia
-IF OBJECT_ID('[dbo].[OPT_NuevaTabla]', 'U') IS NOT NULL
-    DROP TABLE [dbo].[OPT_NuevaTabla];
+-- Para tablas nuevas: verificar existencia antes de crear
+IF OBJECT_ID('[dbo].[OPT_NuevaTabla]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[OPT_NuevaTabla]
+    (
+        [NuevaTablaId] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(),
+        [TenantId]     UNIQUEIDENTIFIER NOT NULL,
+        -- ... columnas de negocio ...
+        [CreatedAt]    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        [UpdatedAt]    DATETIME2 NULL,
+        [CreatedBy]    NVARCHAR(100) NULL,
+        [UpdatedBy]    NVARCHAR(100) NULL,
+        [IsDeleted]    BIT NOT NULL DEFAULT 0,
+
+        CONSTRAINT PK_OPT_NuevaTabla PRIMARY KEY CLUSTERED ([NuevaTablaId]),
+        CONSTRAINT FK_OPT_NuevaTabla_Tenant
+            FOREIGN KEY ([TenantId]) REFERENCES [dbo].[OPT_Tenant] ([TenantId])
+    );
+END
 GO
 
--- Para ALTER TABLE (incrementales): verificar columna
+-- Para ALTER TABLE (incremental): verificar columna antes de agregar
 IF NOT EXISTS (
     SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID('OPT_Cliente')
-    AND name = 'NuevaCampo'
+    WHERE object_id = OBJECT_ID('OPT_TablaExistente')
+    AND name = 'NuevoCampo'
 )
 BEGIN
-    ALTER TABLE [dbo].[OPT_Cliente]
-    ADD [NuevaCampo] NVARCHAR(100) NULL;
+    ALTER TABLE [dbo].[OPT_TablaExistente]
+    ADD [NuevoCampo] NVARCHAR(100) NULL;
 END
 GO</pre>
 
       <div class="alert alert-green">
-        <strong>Buenas prácticas:</strong> Usar <code>SYSUTCDATETIME()</code> para timestamps (UTC, alta precisión). Incluir siempre los campos de auditoría. Datos de catálogos con guards <code>IF NOT EXISTS</code>.
+        <strong>Buenas prácticas:</strong> Usar <code>SYSUTCDATETIME()</code> para timestamps. PKs de negocio siempre <code>UNIQUEIDENTIFIER DEFAULT NEWSEQUENTIALID()</code>. Catálogos compartidos con <code>INT IDENTITY</code>. Índices filtrados con <code>WHERE IsDeleted = 0</code>. Datos semilla con guards <code>IF NOT EXISTS</code>.
       </div>
-
-      <!-- ROLES -->
-      <h2 id="roles">Roles de Usuario</h2>
-      <p>Los roles están almacenados como string en <code>OPT_Usuario.Rol</code>. Nunca hardcodear en el código.</p>
-      <table>
-        <tr><th>Rol</th><th>Descripción</th><th>Puede eliminar</th></tr>
-        <tr><td><code>Admin</code></td><td>Acceso completo, gestión de usuarios y configuración</td><td>Sí</td></tr>
-        <tr><td><code>Operador</code></td><td>CRUD de clientes y contactos (default al crear usuario)</td><td>Sí</td></tr>
-        <tr><td><code>Lectura</code></td><td>Solo consultas, sin modificaciones</td><td>No</td></tr>
-      </table>
-
-      <h3>Crear primer usuario (PowerShell)</h3>
-      <pre># Generar hash BCrypt para insertar directamente en BD
-# Instalar: Install-Module -Name bcryptnet
-# O usar este hash de "Opt2026!" para testing:
-# $2a$11$example... (generar con BCrypt.Net-Next)
-
-INSERT INTO [dbo].[OPT_Usuario]
-  (TenantId, RutUsuario, Nombre, Email, PasswordHash, Rol, CreatedBy)
-VALUES
-  (1, '12345678-9', 'Admin Demo', 'admin@optica.cl',
-   '&lt;hash_bcrypt_aqui&gt;', 'Admin', 'SYSTEM');
-GO</pre>
+      <div class="alert alert-red">
+        <strong>Nunca:</strong> Usar <code>NEWID()</code> como DEFAULT (fragmenta el índice clustered). Nunca modificar scripts ya ejecutados en producción. Nunca hacer DELETE físico de datos OPT_ — usar soft delete (<code>IsDeleted = 1</code>).
+      </div>
 
     </main>
   </div>

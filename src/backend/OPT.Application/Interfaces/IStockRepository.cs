@@ -19,6 +19,12 @@ public interface IStockRepository
         CancellationToken ct = default);
 
     /// <summary>
+    /// Devuelve el stock del producto en todas las sucursales del tenant.
+    /// </summary>
+    Task<IReadOnlyList<StockEntity>> GetStockPorProductoAsync(
+        Guid tenantId, Guid productoId, CancellationToken ct = default);
+
+    /// <summary>
     /// Registra un movimiento directo: Salida, Ajuste, Merma o DevolucionProveedor.
     /// Entrada solo se permite desde DocumentoEntrada.
     /// </summary>

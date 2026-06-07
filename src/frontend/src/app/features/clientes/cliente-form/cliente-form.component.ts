@@ -6,6 +6,7 @@ import { RegionWithComunas } from '../../../core/models/region.model';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { RegionService } from '../../../core/services/region.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PrevisionService, TipoPrevisionDto } from '../../../core/services/prevision.service';
 import { rutValidator, formatRut } from '../../../core/validators/rut.validator';
 import Swal from 'sweetalert2';
 
@@ -222,8 +223,8 @@ import Swal from 'sweetalert2';
                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Seleccionar</option>
-                  @for (prev of previsionOptions; track prev) {
-                    <option [value]="prev">{{ prev }}</option>
+                  @for (tp of tiposPrevisiones(); track tp.idTipoPrevision) {
+                    <option [value]="tp.descripcion">{{ tp.descripcion }}</option>
                   }
                 </select>
               </div>
@@ -259,8 +260,8 @@ import Swal from 'sweetalert2';
                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Seleccionar</option>
-                  @for (prev of previsionOptions; track prev) {
-                    <option [value]="prev">{{ prev }}</option>
+                  @for (tp of tiposPrevisiones(); track tp.idTipoPrevision) {
+                    <option [value]="tp.descripcion">{{ tp.descripcion }}</option>
                   }
                 </select>
               </div>
@@ -437,6 +438,7 @@ export class ClienteFormComponent implements OnInit {
   private readonly clienteService = inject(ClienteService);
   private readonly regionService = inject(RegionService);
   private readonly authService = inject(AuthService);
+  private readonly previsionService = inject(PrevisionService);
   private readonly destroyRef = inject(DestroyRef);
 
   // ── Inputs / Outputs ──────────────────────────────────────────────────────
@@ -449,12 +451,13 @@ export class ClienteFormComponent implements OnInit {
   // ── Catálogo de Regiones/Comunas (cargado desde la API) ───────────────────
   readonly regionesConComunas = signal<RegionWithComunas[]>([]);
 
+  // ── Catálogo de Previsiones (cargado desde la API) ────────────────────────
+  readonly tiposPrevisiones = signal<TipoPrevisionDto[]>([]);
+
   readonly tiposCliente = [
     { value: 'Persona', label: 'Persona natural' },
     { value: 'Empresa', label: 'Empresa' },
   ];
-
-  readonly previsionOptions = ['FONASA', 'ISAPRE', 'DIPRECA', 'CAPREDENA', 'Sin previsión'];
 
   // ── Formulario ────────────────────────────────────────────────────────────
   readonly form = this.fb.group({
@@ -481,6 +484,11 @@ export class ClienteFormComponent implements OnInit {
     this.regionService.getRegionesWithComunas()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(regiones => this.regionesConComunas.set(regiones));
+
+    // Cargar catálogo de previsiones desde la API
+    this.previsionService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ps => this.tiposPrevisiones.set(ps));
 
     const c = this.cliente();
     if (!c) return;
