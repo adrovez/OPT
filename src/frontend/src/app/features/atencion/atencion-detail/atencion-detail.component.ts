@@ -15,13 +15,14 @@ import Swal from 'sweetalert2';
 type TabType = 'informacion' | 'anamnesis' | 'receta' | 'cobro';
 
 const ESTADO_BADGE: Record<EstadoAtencion, string> = {
-  Abierta:           'bg-blue-50 text-blue-700 border border-blue-200',
-  TerminadaServicio: 'bg-green-50 text-green-700 border border-green-200',
-  DerivoOT:          'bg-purple-50 text-purple-700 border border-purple-200',
+  Abierta:   'bg-blue-50 text-blue-700 border border-blue-200',
+  Terminada: 'bg-amber-50 text-amber-700 border border-amber-200',
+  Pagada:    'bg-green-50 text-green-700 border border-green-200',
+  DerivoOT:  'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
 const ESTADO_LABEL: Record<EstadoAtencion, string> = {
-  Abierta: 'Abierta', TerminadaServicio: 'Terminada', DerivoOT: 'Derivó a OT',
+  Abierta: 'Abierta', Terminada: 'Terminada', Pagada: 'Pagada', DerivoOT: 'Derivó a OT',
 };
 
 function pad(n: number): string { return String(n).padStart(2, '0'); }
@@ -95,11 +96,11 @@ function formatFecha(iso: string): string {
             Receta Cristales
           </button>
           <button type="button" (click)="switchTab('cobro')"
-                  [disabled]="atencion()?.estado !== 'TerminadaServicio'"
+                  [disabled]="atencion()?.estado !== 'Terminada' && atencion()?.estado !== 'Pagada'"
                   [class]="tabClass('cobro')">
             Cobro
-            @if (atencion()?.estado !== 'TerminadaServicio') {
-              <span class="ml-1.5 text-[10px] opacity-60">(requiere Terminada)</span>
+            @if (atencion()?.estado === 'Abierta') {
+              <span class="ml-1.5 text-[10px] opacity-60">(requiere terminar)</span>
             }
           </button>
         </div>
@@ -191,7 +192,7 @@ function formatFecha(iso: string): string {
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
                   <div class="flex items-center justify-between">
                     <p class="text-sm font-medium text-gray-700">Antecedentes del paciente</p>
-                    @if (esTerminada()) {
+                    @if (esNoEditable()) {
                       <span class="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0-6v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -203,38 +204,38 @@ function formatFecha(iso: string): string {
 
                   <div class="grid grid-cols-2 gap-3">
                     <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
-                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
+                           [class.cursor-pointer]="!esNoEditable()" [class.cursor-default]="esNoEditable()"
                            [class.border-blue-300]="anaHipertension()" [class.bg-blue-50]="anaHipertension()"
                            [class.border-gray-200]="!anaHipertension()">
                       <input type="checkbox" [checked]="anaHipertension()" (change)="anaHipertension.set($any($event.target).checked)"
-                             [disabled]="esTerminada()"
+                             [disabled]="esNoEditable()"
                              class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Hipertensión</span>
                     </label>
                     <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
-                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
+                           [class.cursor-pointer]="!esNoEditable()" [class.cursor-default]="esNoEditable()"
                            [class.border-blue-300]="anaDiabetes()" [class.bg-blue-50]="anaDiabetes()"
                            [class.border-gray-200]="!anaDiabetes()">
                       <input type="checkbox" [checked]="anaDiabetes()" (change)="anaDiabetes.set($any($event.target).checked)"
-                             [disabled]="esTerminada()"
+                             [disabled]="esNoEditable()"
                              class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Diabetes</span>
                     </label>
                     <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
-                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
+                           [class.cursor-pointer]="!esNoEditable()" [class.cursor-default]="esNoEditable()"
                            [class.border-blue-300]="anaAlergias()" [class.bg-blue-50]="anaAlergias()"
                            [class.border-gray-200]="!anaAlergias()">
                       <input type="checkbox" [checked]="anaAlergias()" (change)="anaAlergias.set($any($event.target).checked)"
-                             [disabled]="esTerminada()"
+                             [disabled]="esNoEditable()"
                              class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Alergias</span>
                     </label>
                     <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
-                           [class.cursor-pointer]="!esTerminada()" [class.cursor-default]="esTerminada()"
+                           [class.cursor-pointer]="!esNoEditable()" [class.cursor-default]="esNoEditable()"
                            [class.border-blue-300]="anaUsaLentes()" [class.bg-blue-50]="anaUsaLentes()"
                            [class.border-gray-200]="!anaUsaLentes()">
                       <input type="checkbox" [checked]="anaUsaLentes()" (change)="anaUsaLentes.set($any($event.target).checked)"
-                             [disabled]="esTerminada()"
+                             [disabled]="esNoEditable()"
                              class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-default"/>
                       <span class="text-sm text-gray-700">Usa lentes</span>
                     </label>
@@ -246,14 +247,14 @@ function formatFecha(iso: string): string {
                     </label>
                     <textarea id="det-ana-obs" rows="3" maxlength="2000"
                               [value]="anaObservacion()" (input)="anaObservacion.set($any($event.target).value)"
-                              [disabled]="esTerminada()"
+                              [disabled]="esNoEditable()"
                               class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-200
                                      bg-white transition-colors resize-none focus:outline-none focus:ring-2
                                      focus:ring-blue-500 focus:border-transparent
                                      disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-default"></textarea>
                   </div>
 
-                  @if (!esTerminada()) {
+                  @if (!esNoEditable()) {
                     <div class="flex justify-end pt-1">
                       <button type="button" (click)="guardarAnamnesis()" [disabled]="anamnesisSaving()"
                         class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
@@ -290,10 +291,10 @@ function formatFecha(iso: string): string {
                 </div>
               } @else if (recetaData()) {
 
-                <app-receta-cristales-form [(value)]="recetaEdit" [disabled]="esTerminada()" />
+                <app-receta-cristales-form [(value)]="recetaEdit" [disabled]="esNoEditable()" />
 
                 <!-- Guardar receta -->
-                @if (!esTerminada()) {
+                @if (!esNoEditable()) {
                   <div class="flex justify-end">
                     <button type="button" (click)="guardarReceta()" [disabled]="recetaSaving()"
                       class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white
@@ -461,7 +462,7 @@ export class AtencionDetailComponent implements OnInit {
   readonly cobroFormValid = computed(() =>
     !!this.formaPagoId() && !!this.monto() && parseFloat(this.monto()) > 0
   );
-  readonly esTerminada = computed(() => this.atencion()?.estado !== 'Abierta');
+  readonly esNoEditable = computed(() => this.atencion()?.estado !== 'Abierta');
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -489,7 +490,7 @@ export class AtencionDetailComponent implements OnInit {
   }
 
   switchTab(tab: TabType): void {
-    if (tab === 'cobro' && this.atencion()?.estado !== 'TerminadaServicio') return;
+    if (tab === 'cobro' && this.atencion()?.estado !== 'Terminada' && this.atencion()?.estado !== 'Pagada') return;
     this.activeTab.set(tab);
     if (tab === 'anamnesis' && !this.anamnesisData() && this.atencion()?.anamnesisId) {
       this.loadAnamnesis();
@@ -559,7 +560,7 @@ export class AtencionDetailComponent implements OnInit {
 
   tabClass(tab: TabType): string {
     const base = 'px-4 py-3 text-sm font-medium border-b-2 transition-colors focus:outline-none -mb-px whitespace-nowrap';
-    if (tab === 'cobro' && this.atencion()?.estado !== 'TerminadaServicio') {
+    if (tab === 'cobro' && this.atencion()?.estado !== 'Terminada' && this.atencion()?.estado !== 'Pagada') {
       return `${base} border-transparent text-gray-300 cursor-not-allowed`;
     }
     return this.activeTab() === tab
@@ -678,7 +679,17 @@ export class AtencionDetailComponent implements OnInit {
     this.atencionService.derivarAOT(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => { this.actionLoading.set(false); this.loadAtencion(id); },
+        next: () => {
+          this.actionLoading.set(false);
+          const at = this.atencion()!;
+          this.router.navigate(['/ordenes-trabajo/nueva'], {
+            state: {
+              clienteId: at.clienteId,
+              clienteNombre: at.clienteNombre,
+              recetaCristalesId: at.recetaCristalesId,
+            },
+          });
+        },
         error: (err: { error?: { detail?: string } }) => {
           this.actionLoading.set(false);
           Swal.fire({ icon: 'error', title: 'Error',

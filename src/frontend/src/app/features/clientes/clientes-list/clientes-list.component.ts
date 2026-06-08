@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -252,6 +253,7 @@ import Swal from 'sweetalert2';
 export class ClientesListComponent implements OnInit {
   private readonly clienteService = inject(ClienteService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly clientes = signal<Cliente[]>([]);
   readonly loading = signal(false);
@@ -263,7 +265,7 @@ export class ClientesListComponent implements OnInit {
   readonly clienteSeleccionado = signal<Cliente | null>(null);
 
   searchQuery = '';
-  readonly tipoFiltro = signal<'' | 'Persona' | 'Empresa'>('');
+  readonly tipoFiltro = signal<'' | 'Persona' | 'Empresa'>('Persona');
   readonly tipoOpciones = [
     { value: '' as const, label: 'Todos' },
     { value: 'Persona' as const, label: 'Persona' },
@@ -288,6 +290,7 @@ export class ClientesListComponent implements OnInit {
 
     this.clienteService
       .getClientes(this.currentPage(), this.pageSize, this.searchQuery || undefined, this.tipoFiltro() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           this.clientes.set(response.items);
@@ -334,20 +337,22 @@ export class ClientesListComponent implements OnInit {
     }
 
     // Editar: cargar el detalle completo desde la API (incluye contactos)
-    this.clienteService.getCliente(cliente.clienteId).subscribe({
-      next: (detalle) => {
-        this.clienteSeleccionado.set(detalle);
-        this.showForm.set(true);
-      },
-      error: () =>
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo cargar el detalle del cliente.',
-          confirmButtonColor: '#2563eb',
-          confirmButtonText: 'Cerrar',
-        }),
-    });
+    this.clienteService.getCliente(cliente.clienteId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (detalle) => {
+          this.clienteSeleccionado.set(detalle);
+          this.showForm.set(true);
+        },
+        error: () =>
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo cargar el detalle del cliente.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Cerrar',
+          }),
+      });
   }
 
   cerrarFormulario(): void {
@@ -375,28 +380,30 @@ export class ClientesListComponent implements OnInit {
     }).then((result) => {
       if (!result.isConfirmed) return;
 
-      this.clienteService.deleteCliente(cliente.clienteId).subscribe({
-        next: () => {
-          this.cargarClientes();
-          Swal.fire({
-            icon: 'success',
-            title: 'Cliente eliminado',
-            text: `"${cliente.nombre}" fue eliminado correctamente.`,
-            confirmButtonColor: '#2563eb',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false,
-          });
-        },
-        error: () =>
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al eliminar',
-            text: 'No se pudo eliminar el cliente. Intente nuevamente.',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Cerrar',
-          }),
-      });
+      this.clienteService.deleteCliente(cliente.clienteId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.cargarClientes();
+            Swal.fire({
+              icon: 'success',
+              title: 'Cliente eliminado',
+              text: `"${cliente.nombre}" fue eliminado correctamente.`,
+              confirmButtonColor: '#2563eb',
+              timer: 2000,
+              timerProgressBar: true,
+              showConfirmButton: false,
+            });
+          },
+          error: () =>
+            Swal.fire({
+              icon: 'error',
+              title: 'Error al eliminar',
+              text: 'No se pudo eliminar el cliente. Intente nuevamente.',
+              confirmButtonColor: '#2563eb',
+              confirmButtonText: 'Cerrar',
+            }),
+        });
     });
   }
 

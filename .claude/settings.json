@@ -22,7 +22,8 @@
       "Bash(Out-Null)",
       "Bash(New-Item -ItemType Directory -Force -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\frontend\\\\src\\\\app\\\\features\\\\ordenes-trabajo\\\\orden-trabajo-form\")",
       "Bash(New-Item -ItemType Directory -Force -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\frontend\\\\src\\\\app\\\\features\\\\ordenes-trabajo\\\\orden-trabajo-detail\")",
-      "Bash(Write-Host \"Directorios creados\")"
+      "Bash(Write-Host \"Directorios creados\")",
+      "Bash(python3 -c ' *)"
     ],
     "deny": [
       "Edit(old/**)",

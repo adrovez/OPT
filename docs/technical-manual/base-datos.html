@@ -136,6 +136,9 @@
       <li><a href="#otcuota">OPT_OrdenTrabajoCuota</a></li>
       <li><a href="#otbitacora">OPT_OrdenTrabajoBitacora</a></li>
 
+      <li><a class="section-label">Auth</a></li>
+      <li><a href="#refresh-token">OPT_RefreshToken</a></li>
+
       <li><a class="section-label">Guías</a></li>
       <li><a href="#indices">Índices</a></li>
       <li><a href="#cascadas">Cascadas FK</a></li>
@@ -149,8 +152,8 @@
       <p>OPT SaaS · SQL Server 2022 · Azure SQL Compatible · Multi-Tenant</p>
       <div class="chips">
         <span class="chip chip-cyan">Base de datos: dbOPT</span>
-        <span class="chip chip-cyan">29 tablas</span>
-        <span class="chip chip-cyan">Scripts 000–029</span>
+        <span class="chip chip-cyan">31 tablas</span>
+        <span class="chip chip-cyan">Scripts 000–033</span>
         <span class="chip chip-cyan">Soft-delete universal</span>
         <span class="chip chip-cyan">Multi-tenant GUID</span>
       </div>
@@ -200,6 +203,7 @@
         <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoPago</td><td>Sí</td><td>Abonos iniciales y pagos posteriores unificados. EsAbono distingue el origen. ON DELETE CASCADE</td></tr>
         <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoCuota</td><td>Sí</td><td>Plan de cuotas generado sobre el saldo. ON DELETE CASCADE</td></tr>
         <tr><td>Orden de Trabajo</td><td>OPT_OrdenTrabajoBitacora</td><td>Sí</td><td>Historial inmutable de cambios de etapa. Sin IsDeleted, sin CASCADE</td></tr>
+        <tr><td>Auth</td><td>OPT_RefreshToken</td><td>Sí (TenantId)</td><td>Refresh tokens para rotación JWT. Almacena hash SHA-256 (no el valor raw). Sin IsDeleted — revocación por FechaRevocacion nullable</td></tr>
       </table>
 
       <!-- ══════════════════════ SCRIPTS ══════════════════════ -->
@@ -233,10 +237,14 @@
         <tr><td><span class="script-num">027</span> inventario_redesign.sql</td><td>DROP 8 tablas antiguas (015–020) + CREATE: OPT_Categoria, OPT_Producto (self-ref), OPT_PrecioProducto, OPT_Stock, OPT_DocumentoEntrada, OPT_DocumentoEntradaLinea, OPT_Transferencia, OPT_MovimientoStock</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">028</span> OPT_TransferenciaLinea.sql</td><td>CREATE OPT_TransferenciaLinea — líneas de transferencia (FK CASCADE a OPT_Transferencia)</td><td><span class="status-ok">✓</span></td></tr>
         <tr><td><span class="script-num">029</span> OPT_OrdenTrabajo.sql</td><td>CREATE: OPT_OrdenTrabajo + OPT_OrdenTrabajoLinea + OPT_OrdenTrabajoPago + OPT_OrdenTrabajoCuota + OPT_OrdenTrabajoBitacora. Índice UNIQUE (TenantId, NumeroOT)</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">030</span> OPT_TipoPrevision.sql</td><td>CREATE OPT_TipoPrevision — catálogo compartido (INT PK, sin TenantId), 7 tipos de previsión iniciales: Particular, FONASA, ISAPRE, DIPRECA, CAPREDENA, FF.AA./Carabineros, Sin previsión</td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">031</span> alter_atencion_estados.sql</td><td>ALTER OPT_Atencion — rediseño estados: drop CK antiguo; migra <code>TerminadaServicio</code> con cobro → <code>Pagada</code>; sin cobro → <code>Terminada</code>; nuevo CHECK con 4 estados válidos: <code>Abierta | Terminada | Pagada | DerivoOT</code></td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">032</span> fix_ix_atencion.sql</td><td>FIX índice <code>OPT_Atencion</code> — reemplaza índice filtrado (<code>WHERE IsDeleted=0</code>) incompatible con EF Core por compuesto no filtrado <code>(TenantId, idSucursal, FechaHoraAtencion DESC)</code> con INCLUDE(<code>IsDeleted</code>, <code>Estado</code>); <code>UPDATE STATISTICS FULLSCAN</code></td><td><span class="status-ok">✓</span></td></tr>
+        <tr><td><span class="script-num">033</span> refresh_tokens.sql</td><td>CREATE <code>OPT_RefreshToken</code>: <code>TokenHash</code> (SHA-256 hex, 64 chars), <code>FechaExpiracion</code> (7 días), <code>FechaRevocacion</code> nullable. Sin IsDeleted — revocación por fecha. Índices filtrados sobre <code>FechaRevocacion IS NULL</code>.</td><td><span class="status-ok">✓</span></td></tr>
       </table>
 
       <div class="alert alert-amber">
-        <strong>Próximo script:</strong> <code>030_</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
+        <strong>Próximo script:</strong> <code>034_</code>. Para nuevas tablas o cambios de esquema, crear con ese número. Nunca modificar scripts anteriores ya ejecutados en producción.
       </div>
 
       <!-- ══════════════════════ DIAGRAMA ══════════════════════ -->
@@ -931,6 +939,36 @@
         <div class="fk-note fk-note-amber"><strong>Sin IsDeleted:</strong> la bitácora es permanente y no se puede borrar. <strong>Índice:</strong> IX_OPT_OTBitacora_OT_Fecha (OTId, Fecha DESC).</div>
       </div>
 
+      <!-- ══════════════════════ OPT_RefreshToken ══════════════════════ -->
+      <h2 id="refresh-token">OPT_RefreshToken</h2>
+      <p>Tabla de refresh tokens para rotación de JWT. Permite revocar sesiones activas sin esperar la expiración del access token. <strong>Sin soft delete</strong> — la revocación se registra con <code>FechaRevocacion</code> (nullable). El valor raw del token nunca se almacena; solo su hash SHA-256 en hexadecimal (64 chars).</p>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <span class="table-name">OPT_RefreshToken</span>
+          <span class="table-desc">Refresh tokens para rotación JWT — hash SHA-256, sin soft delete</span>
+          <span class="tenant-badge">Tenant-aware</span>
+        </div>
+        <table>
+          <tr><th>Columna</th><th>Tipo SQL</th><th>Restricciones</th><th>Descripción</th></tr>
+          <tr><td><span class="pk">RefreshTokenId</span></td><td>UNIQUEIDENTIFIER</td><td>PK, DEFAULT NEWSEQUENTIALID()</td><td>Identificador único del token</td></tr>
+          <tr><td><span class="fk">UsuarioId</span></td><td>UNIQUEIDENTIFIER</td><td>NOT NULL, FK → OPT_Usuario</td><td>Usuario al que pertenece el token</td></tr>
+          <tr><td>TenantId</td><td>UNIQUEIDENTIFIER</td><td>NOT NULL</td><td>Tenant del usuario (para validación cross-tenant)</td></tr>
+          <tr><td>TokenHash</td><td>NVARCHAR(64)</td><td>NOT NULL</td><td>SHA-256 hex del token raw. El token real nunca se persiste.</td></tr>
+          <tr><td>FechaExpiracion</td><td>DATETIME2</td><td>NOT NULL</td><td>Expiración del token (7 días desde creación)</td></tr>
+          <tr><td>FechaRevocacion</td><td>DATETIME2</td><td>NULL</td><td>Fecha de revocación. NULL = token activo. Revocado en logout o al rotar.</td></tr>
+          <tr><td>CreatedAt</td><td>DATETIME2</td><td>NOT NULL, DEFAULT GETUTCDATE()</td><td>Fecha de creación</td></tr>
+        </table>
+      </div>
+
+      <h3>Índices de OPT_RefreshToken</h3>
+      <table>
+        <tr><th>Índice</th><th>Columnas</th><th>Tipo</th><th>Observación</th></tr>
+        <tr><td>PK_OPT_RefreshToken</td><td>RefreshTokenId</td><td>Clustered</td><td>PK principal</td></tr>
+        <tr><td>IX_OPT_RefreshToken_TokenHash</td><td>TokenHash WHERE FechaRevocacion IS NULL</td><td>Filtrado</td><td>Búsqueda rápida en <code>POST /refresh</code></td></tr>
+        <tr><td>IX_OPT_RefreshToken_Usuario</td><td>(UsuarioId, TenantId) WHERE FechaRevocacion IS NULL</td><td>Filtrado</td><td>Revocación masiva en logout total</td></tr>
+      </table>
+
       <!-- ══════════════════════ ÍNDICES ══════════════════════ -->
       <h2 id="indices">Índices</h2>
       <div class="alert alert-blue">
@@ -1015,8 +1053,8 @@
 
       <!-- ══════════════════════ NUEVO SCRIPT ══════════════════════ -->
       <h2 id="nuevo-script">Guía: Agregar un Nuevo Script</h2>
-      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>030_</code></strong>.</p>
-      <pre>-- Nombrar: 030_descripcion.sql
+      <p>Pasos para agregar cambios de esquema. <strong>Próximo número disponible: <code>034_</code></strong>.</p>
+      <pre>-- Nombrar: 034_descripcion.sql
 -- Siempre: USE [dbOPT]; GO
 
 -- Para tablas nuevas: verificar existencia antes de crear

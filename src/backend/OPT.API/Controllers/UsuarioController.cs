@@ -128,6 +128,9 @@ public class UsuarioController(IMediator mediator, ICurrentTenantService tenantS
         [FromBody] ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
+        if (id != tenantService.UsuarioId && !User.IsInRole("Admin"))
+            return Forbid();
+
         var updatedBy = User.Identity?.Name ?? "system";
 
         var command = new ChangePasswordCommand(

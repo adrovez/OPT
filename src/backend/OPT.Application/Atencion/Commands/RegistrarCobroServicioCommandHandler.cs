@@ -15,10 +15,10 @@ public class RegistrarCobroServicioCommandHandler(
             request.AtencionId, request.TenantId, cancellationToken)
             ?? throw new KeyNotFoundException($"Atención {request.AtencionId} no encontrada.");
 
-        // RN-CS-01: solo se cobra en TerminadaServicio
-        if (atencion.Estado != "TerminadaServicio")
+        // RN-CS-01: solo se cobra en Terminada
+        if (atencion.Estado != "Terminada")
             throw new InvalidOperationException(
-                $"Solo se puede registrar cobro en una Atención en estado 'TerminadaServicio'. Estado actual: '{atencion.Estado}'.");
+                $"Solo se puede registrar cobro en una Atención en estado 'Terminada'. Estado actual: '{atencion.Estado}'.");
 
         // RN-CS-01: exactamente un cobro por atención
         var existente = await cobroRepository.GetByAtencionIdAsync(
@@ -40,6 +40,12 @@ public class RegistrarCobroServicioCommandHandler(
         };
 
         await cobroRepository.AddAsync(cobro, cancellationToken);
+
+        atencion.Estado    = "Pagada";
+        atencion.UpdatedAt = DateTime.UtcNow;
+        atencion.UpdatedBy = request.CreatedBy;
+        await atencionRepository.UpdateAsync(atencion, cancellationToken);
+
         return cobro.CobroServicioId;
     }
 }

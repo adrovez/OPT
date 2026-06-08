@@ -3,13 +3,13 @@
 Track work sessions and current state for continuity between AI agent sessions.
 
 ## Current Status
-> Updated: 2026-06-06 (Sesión 26 — Mejoras módulo OT frontend)
+> Updated: 2026-06-08 (Sesión 29 — Seguridad: Refresh Token + Rate Limiting + JWT Secret env var)
 
 ### Completado hasta ahora
-- [x] Base de datos: scripts `000–029` ejecutados — script 029 crea 5 tablas del módulo Órdenes de Trabajo (ver CLAUDE.md para tabla completa)
+- [x] Base de datos: scripts `000–033` ejecutados — script 031 rediseña estados de `OPT_Atencion`; script 032 fix índice; script 033 `OPT_RefreshToken` (ver CLAUDE.md para tabla completa)
 - [x] Backend API completo: Tenant, Auth, Clientes+Contactos, Regiones, Anamnesis, RecetaCristales, Sucursales, Usuarios, Roles, Agenda, FormaPago, Categorías, Productos (jerarquía self-ref), Stock, DocumentosEntrada, Precios (interno), Transferencias, Atenciones+CobroServicio, OrdenTrabajo
-- [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation
-- [x] Frontend Angular 21 completo: Login, Layout, AuthGuard, Interceptor JWT, RUT Validator
+- [x] Backend Middleware: CorrelationId, ExceptionHandling (RFC 7807), TenantValidation; Rate Limiting en `/api/Auth/login` (5 req/min)
+- [x] Frontend Angular 21 completo: Login, Layout, AuthGuard, Interceptor JWT, RUT Validator; interceptor con retry automático en 401 (refresh token)
 - [x] Frontend: Clientes (lista + form + detalle), Anamnesis, Sucursales, Usuarios, Productos (jerarquía padre/hijos + categorías), Stock (4 tabs: Stock actual + Entradas + Historial + Transferencias), Agenda (calendario semanal), Atenciones (lista 2 tabs + wizard 3 pasos + detalle 4 tabs con solo lectura en estado terminado), Órdenes de Trabajo (lista + form + detalle)
 - [x] Módulo Inventario/Stock frontend completamente sincronizado con nuevo esquema (ProductoId, no VarianteId; jerarquía padre/hijos; DocumentoEntrada en lugar de DocumentoStock; PATCH estado para anular)
 - [x] Migración PKs INT → GUID en todas las entidades de negocio
@@ -31,6 +31,49 @@ Track work sessions and current state for continuity between AI agent sessions.
   - `app.routes.ts` — rutas `/ordenes-trabajo`, `/ordenes-trabajo/nueva`, `/ordenes-trabajo/:id`, `/ordenes-trabajo/:id/editar`
   - `layout/main-layout/main-layout.component.ts` — "Órdenes de Trabajo" en dropdown Clínica; activeGroup actualizado
 - **Estado módulo Orden de Trabajo post-sesión**: BD ✅ | Backend ✅ | Frontend ✅
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
+
+### Completed This Session (Sesión 29)
+- **Seguridad Backend — 5 mejoras implementadas:**
+  - **VULN-01 JWT Secret**: eliminado de `appsettings.json`; validación en startup (lanza si vacío o < 32 chars); configurar via `Jwt__Secret=<min-32>` env var o User Secrets
+  - **VULN-02 ChangePassword**: `PUT /api/usuarios/{id}/password` retorna 403 si el llamante no es dueño ni Admin; guarda antes la aserción `if (id != tenantService.UsuarioId && !User.IsInRole("Admin")) return Forbid()`
+  - **VULN-03 Expiracion**: `IJwtService.GenerateToken` devuelve `JwtTokenResult(Token, ExpiresAt)`; `LoginCommandHandler` usa `jwt.ExpiresAt` (no `AddHours(1)`)
+  - **Propuesta 1 — Refresh Token**: script `033_refresh_tokens.sql` (`OPT_RefreshToken`: hash SHA-256, expira 7 días, sin soft delete); entidad `RefreshToken` Domain; `IRefreshTokenRepository` Application; `RefreshTokenCommandHandler` (rotación one-use) + `LogoutCommandHandler` (revocación idempotente); endpoints `POST /api/Auth/refresh` y `POST /api/Auth/logout [Authorize]`; `LoginResponse` incluye `RefreshToken`; `LoginCommandHandler` persiste hash en BD
+  - **Propuesta 2 — Rate Limiting**: `AddRateLimiter` en `Program.cs`; `[EnableRateLimiting("login")]` en `AuthController.Login`; 5 req/min, HTTP 429
+  - **ClockSkew = TimeSpan.Zero** en `TokenValidationParameters`
+- **Seguridad Frontend — 5 archivos actualizados:**
+  - `auth.model.ts`: `refreshToken: string` en `LoginResponse`
+  - `auth.service.ts`: `refresh()` + `logout()` server-side (fire-and-forget revocación) + `REFRESH_TOKEN_KEY`
+  - `auth.interceptor.ts`: catch 401 → `refresh()` → retry; skip `/Auth/login` y `/Auth/refresh`
+  - `login.component.ts`: error 429 → mensaje "Demasiados intentos. Espere un momento..."
+  - `usuario-password.component.ts`: error 403 → mensaje "No tienes permiso para cambiar esta contraseña."
+- **Nuevos archivos** (backend): `OPT.Domain/Entities/RefreshToken.cs`, `OPT.Application/Interfaces/IRefreshTokenRepository.cs`, `OPT.Application/Auth/RefreshTokenCommand.cs`, `RefreshTokenCommandHandler.cs`, `LogoutCommand.cs`, `LogoutCommandHandler.cs`, `OPT.Infrastructure/Persistence/Repositories/RefreshTokenRepository.cs`, `src/basedatos/033_refresh_tokens.sql`
+- **Archivos modificados** (backend): `appsettings.json`, `appsettings.Development.json`, `DependencyInjection.cs`, `IJwtService.cs`, `JwtService.cs`, `JwtSettings.cs`, `LoginCommand.cs`, `LoginCommandHandler.cs`, `OPTDbContext.cs`, `AuthController.cs`, `UsuarioController.cs`, `Program.cs`
+- **Próximos pasos**: Ejecutar `033_refresh_tokens.sql` en BD; configurar `Jwt__Secret` env var antes de deploy; RBAC completo por rol (deuda técnica); Dashboard / Home screen; unit tests backend
+
+### Completed This Session (Sesión 28)
+- **Rediseño estados `OPT_Atencion` — máquina de estados simplificada:**
+  - **Script 031** `031_alter_atencion_estados.sql`: DROP constraint antiguo → migra `TerminadaServicio` con cobro → `Pagada`, sin cobro → `Terminada` → nuevo CHECK con 4 estados: `Abierta | Terminada | Pagada | DerivoOT`
+  - **Backend `TerminarAtencionCommandHandler`**: transición `Abierta → Terminada` (antes usaba `TerminadaServicio`); valida que estado sea `Abierta`
+  - **Backend `RegistrarCobroServicioCommandHandler`**: requiere estado `Terminada` (RN-CS-01); al cobrar pasa a `Pagada`; valida que no exista cobro previo (exactamente 1 cobro por atención)
+  - **Frontend `atencion.model.ts`**: `EstadoAtencion = 'Abierta' | 'Terminada' | 'Pagada' | 'DerivoOT'`
+  - **Frontend `atenciones-list.component.ts`**: `ESTADO_BADGE` actualizado (Terminada=amber, Pagada=green, DerivoOT=purple)
+  - **Frontend `atencion-detail.component.ts`**: `ESTADO_BADGE` y `ESTADO_LABEL` actualizados con los 4 estados
+- **Documentación actualizada:** `CLAUDE.md`, `docs/api/README.md`, `docs/technical-manual/base-datos.html`, `progress.md`
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
+
+### Completed This Session (Sesión 27)
+- **Auditoría Clean Architecture + SOLID frontend** → informe ejecutivo HTML en `docs/informe-frontend-arquitectura.html`
+- **P-01 DIP corregido — StorageService creado** (`core/services/storage.service.ts`):
+  - `auth.service.ts`: reemplazados 5 accesos directos a `localStorage` → `this.storage.*`
+  - `sucursal-context.service.ts`: reemplazados 3 accesos directos a `localStorage` → `this.storage.*`
+  - `auth.interceptor.ts`: reemplazado `localStorage.getItem('opt_token')` → `inject(StorageService).get('opt_token')`
+- **P-04 Memory-safety completado — takeUntilDestroyed en suscripciones faltantes:**
+  - `clientes-list.component.ts`: añadido `DestroyRef` + import `takeUntilDestroyed`; protegidas 3 suscripciones (`cargarClientes`, `getCliente`, `deleteCliente`)
+  - `productos-list.component.ts`: protegidas 2 suscripciones (`cargarProductos`, `cargarCategorias`)
+- **Documentación actualizada:**
+  - `CLAUDE.md`: nueva sección "SOLID en el Frontend" con reglas SRP, OCP, DIP, ISP y Memory Safety
+  - `.claude/rules/frontend.md`: reglas DIP (StorageService) y takeUntilDestroyed obligatorio reforzadas
 - **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
 
 ### Completed This Session (Sesión 26)
@@ -104,6 +147,56 @@ Track work sessions and current state for continuity between AI agent sessions.
 ---
 
 ## Session History
+
+### 2026-06-08 - Sesión 29: Seguridad — Refresh Token + Rate Limiting + JWT hardening
+
+- **Trabajo**: Corrección de 3 vulnerabilidades confirmadas (JWT secret en repo, ChangePassword sin ownership check, Expiracion hardcodeada) + 2 propuestas de mejora (Refresh Token, Rate Limiting).
+
+- **Archivos nuevos** (8):
+  - `src/basedatos/033_refresh_tokens.sql`
+  - `src/backend/OPT.Domain/Entities/RefreshToken.cs`
+  - `src/backend/OPT.Application/Interfaces/IRefreshTokenRepository.cs`
+  - `src/backend/OPT.Application/Auth/RefreshTokenCommand.cs` + `RefreshTokenCommandHandler.cs`
+  - `src/backend/OPT.Application/Auth/LogoutCommand.cs` + `LogoutCommandHandler.cs`
+  - `src/backend/OPT.Infrastructure/Persistence/Repositories/RefreshTokenRepository.cs`
+
+- **Decisiones de diseño**:
+  - Refresh token almacenado como SHA-256 hex (64 chars) — el valor raw nunca persiste
+  - Rotación one-use: cada `/refresh` revoca el token anterior y emite un par nuevo
+  - `/logout` extrae TenantId del JWT (no del body) para evitar revocación cross-tenant
+  - `ClockSkew = TimeSpan.Zero` para que los tokens expiren exactamente en `ExpirationMinutes`
+  - `OPT_RefreshToken` sin `IsDeleted` — la revocación usa `FechaRevocacion` nullable
+  - Frontend: interceptor con retry automático + fire-and-forget logout server-side
+
+- **Estado seguridad post-sesión**: JWT secret ✅ | Refresh Token ✅ | Rate Limiting ✅ | RBAC ⏳ (deuda técnica)
+
+---
+
+### 2026-06-08 - Sesión 28: Rediseño estados Atención + script 031
+
+- **Trabajo**: Simplificación de la máquina de estados de `OPT_Atencion`. El estado `TerminadaServicio` fue reemplazado por dos estados semánticamente distintos: `Terminada` (examen terminado, sin cobro aún) y `Pagada` (cobro registrado). Esto alinea el backend, la BD y el frontend.
+
+- **Archivos nuevos** (1):
+  - `src/basedatos/031_alter_atencion_estados.sql`
+
+- **Archivos modificados** (5):
+  - `src/backend/OPT.Application/Atencion/Commands/TerminarAtencionCommandHandler.cs` — estado destino `Terminada`
+  - `src/backend/OPT.Application/Atencion/Commands/RegistrarCobroServicioCommandHandler.cs` — verifica `Terminada`, pasa a `Pagada`
+  - `src/backend/OPT.Infrastructure/Persistence/Repositories/AtencionRepository.cs` — sin cambios de lógica, refactoring menor
+  - `src/frontend/src/app/core/models/atencion.model.ts` — `EstadoAtencion` actualizado
+  - `src/frontend/src/app/features/atencion/atenciones-list/atenciones-list.component.ts` — badges 4 estados
+  - `src/frontend/src/app/features/atencion/atencion-detail/atencion-detail.component.ts` — badges y labels 4 estados
+
+- **Decisión de diseño**:
+  - Antes: `TerminadaServicio` era el único estado terminal con/sin cobro. Ambiguo desde UI.
+  - Ahora: `Terminada` = examen finalizado (puede cobrar), `Pagada` = cobrado (solo lectura total). Flujo: `Abierta → Terminada → Pagada` o `Abierta → DerivoOT`
+  - El cobro crea la entidad `CobroServicio` y atomicamente transiciona la atención a `Pagada`
+
+- **Estado módulo Atención post-sesión**: BD ✅ | Backend ✅ | Frontend ✅
+
+- **Próximos pasos**: Dashboard / Home screen; autorización por rol; unit tests backend
+
+---
 
 ### 2026-06-05 - Sesión 24: Frontend Órdenes de Trabajo completo
 

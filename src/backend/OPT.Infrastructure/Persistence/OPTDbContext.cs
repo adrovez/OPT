@@ -39,6 +39,9 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
     public DbSet<Transferencia> Transferencias => Set<Transferencia>();
     public DbSet<TransferenciaLinea> TransferenciasLineas => Set<TransferenciaLinea>();
 
+    // ── Auth (script 033) ─────────────────────────────────────────────────
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     // ── Órdenes de Trabajo (script 029) ───────────────────────────────────
     public DbSet<OrdenTrabajo> OrdenesTrabajo => Set<OrdenTrabajo>();
     public DbSet<OrdenTrabajoLinea> OrdenesTrabajoLineas => Set<OrdenTrabajoLinea>();
@@ -676,6 +679,27 @@ public class OPTDbContext(DbContextOptions<OPTDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Restrict);
 
             // Sin HasQueryFilter: la bitácora es inmutable, no tiene IsDeleted
+        });
+
+        // ── RefreshToken (script 033) ─────────────────────────────────────
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.ToTable("OPT_RefreshToken");
+            e.HasKey(t => t.RefreshTokenId);
+            e.Property(t => t.RefreshTokenId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            e.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
+            e.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // Índice filtrado para búsquedas rápidas de tokens activos
+            e.HasIndex(t => t.TokenHash)
+             .HasFilter("[FechaRevocacion] IS NULL");
+
+            e.HasOne(t => t.Usuario)
+             .WithMany()
+             .HasForeignKey(t => t.UsuarioId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Sin HasQueryFilter: no usa soft delete, usa FechaRevocacion para expirar
         });
     }
 }

@@ -11,6 +11,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   nombre: string;
   rol: string;
   usuarioId: string;

@@ -10,7 +10,19 @@
       "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; $result = dotnet build OPT.Application/OPT.Application.csproj -v quiet 2>&1; $result | Select-String \"succeeded|FAILED\"; Write-Host \"Exit: $LASTEXITCODE\")",
       "PowerShell(cd \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\"; $result = dotnet build OPT.Domain/OPT.Domain.csproj -v quiet 2>&1; Write-Host \"Exit: $LASTEXITCODE\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\GitHub\\\\OPT\" -Directory)",
-      "Bash(Select-Object -ExpandProperty Name)"
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\\\\OPT.API\\\\appsettings.json'\")",
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\\\\OPT.API\\\\appsettings.Development.json'\")",
+      "Bash(python3 -c ' *)",
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\\\\\Adrovez\\\\\\\\GitHub\\\\\\\\OPT\\\\\\\\src\\\\\\\\backend\\\\\\\\OPT.API\\\\\\\\appsettings.json'\")",
+      "Bash(Get-Content \"c:\\\\Adrovez\\\\GitHub\\\\OPT\\\\src\\\\backend\\\\OPT.API\\\\appsettings.json\")",
+      "Bash(ls /mnt/c/Adrovez/GitHub/OPT/src/backend/OPT.API/)",
+      "Read(//mnt/c/Adrovez/GitHub/OPT/src/backend/**)",
+      "Bash(find / -name \"appsettings.json\" -path \"*/OPT.API/*\" 2>/dev/null | head -5)",
+      "Read(//c//**)",
+      "Bash(python3)",
+      "Bash(less /c/Adrovez/GitHub/OPT/src/backend/OPT.API/appsettings.json)",
+      "Bash(less /c/Adrovez/GitHub/OPT/src/backend/OPT.API/appsettings.Development.json)"
     ]
   }
 }

@@ -1,4 +1,5 @@
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.RateLimiting;
 using OPT.Application;
 using OPT.Infrastructure;
 using OPT.API.Middleware;
@@ -21,6 +22,19 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:4200")
               .AllowAnyHeader()
               .AllowAnyMethod());
+});
+
+// Rate limiting: protege el endpoint de login contra fuerza bruta
+builder.Services.AddRateLimiter(opts =>
+{
+    opts.AddFixedWindowLimiter("login", o =>
+    {
+        o.PermitLimit          = 5;
+        o.Window               = TimeSpan.FromMinutes(1);
+        o.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        o.QueueLimit           = 0;
+    });
+    opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 var app = builder.Build();
@@ -51,6 +65,7 @@ app.UseCors("FrontendDev");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseTenantValidation();
 
 app.MapControllers();

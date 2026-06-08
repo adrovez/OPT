@@ -1,6 +1,6 @@
 # OPT SaaS — API Documentation
 
-> **Última actualización:** 2026-06-05 (Sesión 24 — Módulo Órdenes de Trabajo completo: backend + frontend)
+> **Última actualización:** 2026-06-08 (Sesión 29 — Seguridad: Refresh Token + Rate Limiting + JWT hardening)
 
 ## Overview
 
@@ -16,7 +16,7 @@
 | Módulo | Base Path | Auth requerida | Estado |
 |--------|-----------|---------------|--------|
 | Tenant | `/api/tenants` | No | ✅ Completo — CRUD |
-| Auth | `/api/auth` | No (login/register) | ✅ Completo |
+| Auth | `/api/auth` | No (login/refresh) · JWT (logout) | ✅ Login + Refresh Token (rotación) + Logout server-side + Rate Limiting 5/min |
 | Clientes | `/api/clientes` | JWT | ✅ Completo — CRUD + paginado + búsqueda |
 | Contactos | `/api/contactos` | JWT | ✅ Completo — CRUD por cliente |
 | Regiones | `/api/Regiones` | JWT | ✅ GET /WithComunas (catálogo Chile) |
@@ -32,7 +32,7 @@
 | Stock / Inventario | `/api/stock` | JWT + `X-Sucursal-Id` | ✅ Completo — CRUD + movimientos directos; script `018_OPT_Stock.sql` |
 | Documentos de Entrada | `/api/documentos-stock` | JWT + `X-Sucursal-Id` | ✅ POST crear+confirmar / POST anular; script `020_OPT_DocumentoStock.sql` |
 | Precios | (interno) | — | ✅ Historial de precios actualizado al confirmar documento; script `019_OPT_Precio.sql` — sin pantalla dedicada aún |
-| Atenciones | `/api/atenciones` | JWT | ✅ POST /iniciar (atómico), GET lista/detalle, PATCH /estado; scripts `022–024` |
+| Atenciones | `/api/atenciones` | JWT | ✅ POST /iniciar (atómico), GET lista/detalle, PATCH /terminar, POST /cobro; scripts `022–024`+`031`; estados: `Abierta → Terminada → Pagada` \| `DerivoOT` |
 | CobroServicio | (interno a Atención) | — | ✅ Asociado a Atención; script `023_OPT_CobroServicio.sql` |
 | Órdenes de Trabajo | `/api/ordenes-trabajo` | JWT + `X-Sucursal-Id` (POST) | ✅ Completo — 8 endpoints; script `029_OPT_OrdenTrabajo.sql` |
 | Salida (documentos) | — | — | 🔮 Futuro — Devoluciones, OtroEgreso |
@@ -171,14 +171,15 @@ Soft-delete de tenant.
 
 ### POST /api/auth/login
 
-**Auth:** No requerida
+**Auth:** No requerida  
+**Rate Limit:** 5 requests/minuto por IP → `429 Too Many Requests`
 
 **Request:**
 ```json
 {
-  "rutUsuario": "12345678-9",
-  "password": "MiClaveSegura123!",
-  "tenantId": "550e8400-e29b-41d4-a716-446655440000"
+  "tenantId": "550e8400-e29b-41d4-a716-446655440000",
+  "rut": "12345678-9",
+  "password": "MiClaveSegura123!"
 }
 ```
 
@@ -186,44 +187,68 @@ Soft-delete de tenant.
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "refreshToken": "base64-random-64-bytes...",
+  "nombre": "Juan Pérez",
+  "rol": "Operador",
+  "usuarioId": "b3785e25-9c3f-4aa6-9e2b-a4a6f13e6c27",
   "tenantId": "550e8400-e29b-41d4-a716-446655440000",
-  "nombre": "Admin Demo",
-  "email": "admin@opticademo.cl",
-  "rol": "TenantAdmin",
-  "expiresAt": "2026-05-05T14:00:00Z"
+  "expiracion": "2026-06-08T11:00:00Z",
+  "sucursales": [
+    { "sucursalId": "4e9f1a2b-...", "nombre": "Sucursal Centro" }
+  ]
 }
 ```
 
-**Response 401:** `"Credenciales invalidas"` o `"Usuario desactivado"`
+**Response 401:** Credenciales inválidas  
+**Response 429:** Demasiados intentos — esperar 1 minuto
 
 **Notas:**
-- `tenantId` es opcional. Si se omite, busca en todos los tenants.
-- Las passwords se comparan usando BCrypt.
+- `token`: JWT de acceso válido según `ExpirationMinutes` (configuración del servidor, defecto 60 min).
+- `refreshToken`: token opaco de 7 días para obtener nuevos pares sin re-autenticar. Guardar de forma segura (no en `localStorage` expuesto).
+- Las contraseñas se comparan con BCrypt.
+- El `TenantId` es obligatorio — identifica la óptica.
 
-### POST /api/auth/register
+---
 
-**Auth:** Requiere JWT
+### POST /api/auth/refresh
+
+**Auth:** No requerida (el refresh token autentica la operación)
+
+Rota el par de tokens. El refresh token anterior queda revocado inmediatamente (one-use).
 
 **Request:**
 ```json
 {
-  "tenantId": "550e8400-e29b-41d4-a716-446655440000",
-  "rutUsuario": "98765432-1",
-  "nombre": "Nuevo Usuario",
-  "email": "usuario@opticademo.cl",
-  "password": "ClaseSegura456!",
-  "rol": "Usuario"
+  "refreshToken": "base64-random-64-bytes...",
+  "tenantId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-**Response 200:** LoginResponse con token nuevo
-**Response 400:** `"Ya existe un usuario con ese RUT en este tenant"` o `"Tenant no encontrado o inactivo"`
+**Response 200:** Mismo schema que `LoginResponse` (nuevo `token` + nuevo `refreshToken`)  
+**Response 401:** Refresh token inválido, expirado, revocado o no corresponde al tenant
 
-**Roles disponibles:**
-- `PlatformAdmin` - Acceso global
-- `TenantAdmin` - Admin del tenant
-- `Usuario` - Usuario estandar (default)
+**Notas:**
+- El token anterior queda inutilizable tras el refresh.
+- Si el refresh falla, el cliente debe redirigir a `/login`.
+- El `TenantId` se valida contra el tenant almacenado en el refresh token para prevenir uso cross-tenant.
+
+---
+
+### POST /api/auth/logout
+
+**Auth:** JWT requerido (`Authorization: Bearer <token>`)
+
+Revoca el refresh token en el servidor. El TenantId se extrae del JWT autenticado.
+
+**Request:**
+```json
+{
+  "refreshToken": "base64-random-64-bytes..."
+}
+```
+
+**Response 204:** No Content (idempotente — no falla si el token ya fue revocado)  
+**Response 401:** JWT ausente o inválido
 
 ---
 
@@ -737,6 +762,7 @@ Cambia la contraseña (nueva contraseña en texto plano, hasheada internamente).
 
 **Request:** `{ "newPassword": "NuevaClave456" }`
 **Response 204:** No Content
+**Response 403:** El usuario autenticado no es el dueño de la cuenta ni tiene rol `Admin`.
 
 ### POST /api/usuarios/{id}/sucursales
 
@@ -1053,64 +1079,61 @@ Anula un documento confirmado. Genera movimientos compensatorios de Ajuste negat
 
 ## 16. Atenciones API
 
-**Auth:** Requiere JWT
+**Auth:** Requiere JWT  
+**Header adicional:** `X-Sucursal-Id: {guid}` — requerido en POST, GET/iniciar; opcional en GET lista
+
+**Flujo de estados:** `Abierta → Terminada → Pagada` | `Abierta → DerivoOT`
 
 ### GET /api/atenciones
 
 Lista atenciones del tenant. Filtros: `sucursalId`, `estado`, `desde`, `hasta`.
 
-**Query:** `?estado=EnEspera&sucursalId=uuid`  
-**Response 200:** `PagedResult<AtencionDto>`
+**Query:** `?estado=Abierta&sucursalId=uuid`  
+**Response 200:** `IReadOnlyList<AtencionDto>` (incluye `cobroServicio: CobroServicioDto | null`)
 
-**Estados válidos:** `EnEspera` · `EnAtencion` · `Finalizada`
+**Estados válidos:** `Abierta` · `Terminada` · `Pagada` · `DerivoOT`
 
 ### GET /api/atenciones/{id}
 
-Detalle completo con Anamnesis y RecetaCristales anidadas.
+Detalle completo con Anamnesis, RecetaCristales y CobroServicio anidados.
+
+### POST /api/atenciones
+
+Crea una atención directa sin cita previa. Estado inicial: `Abierta`.
+
+**Request:** `{ "agendaId"?, "clienteId", "usuarioAtencionId", "fechaHoraAtencion", "motivo", "observaciones"? }`  
+**Response 201:** `Location: /api/atenciones/{id}`
 
 ### POST /api/atenciones/iniciar
 
 **Crea atómicamente:** Atención + Anamnesis + RecetaCristales en un solo request.  
-Acepta `agendaId` opcional para vincular con la cita previa.
+Acepta `agendaId` opcional para vincular con la cita previa. Estado inicial: `Abierta`.
 
-**Request:**
-```json
-{
-  "agendaId": "uuid-opcional",
-  "sucursalId": "uuid",
-  "clienteId": "uuid",
-  "motivoConsulta": "Control anual",
-  "anamnesis": {
-    "hipertension": false,
-    "diabetes": false,
-    "alergias": true,
-    "usaLentes": true,
-    "observacion": "Alergia estacional"
-  },
-  "receta": {
-    "lejosODEsferico": "-1.50",
-    "lejosODCilindro": "-0.50",
-    "lejosODEje": "90",
-    "checkLejos": true,
-    "checkCerca": false,
-    "checkCristalesLaboratorio": false,
-    "checkUrgente": false
-  }
-}
-```
+**Response 201:** `{ "atencionId": "uuid", "anamnesisId": "uuid", "recetaCristalesId": "uuid" }`
 
-**Response 201:** `{ "atencionId": "uuid", "anamnesisId": "uuid", "recetaId": "uuid" }`
+### PUT /api/atenciones/{id}/terminar
 
-### POST /api/atenciones/nueva
+Termina la atención clínica. Transición: `Abierta → Terminada`. Requisito para registrar cobro.
 
-Crea una atención directa sin cita previa (sin Anamnesis/Receta iniciales).
+**Response 204:** No Content  
+**Response 409:** Estado no es `Abierta`
 
-### PATCH /api/atenciones/{id}/estado
+### PUT /api/atenciones/{id}/derivar-ot
 
-Cambia el estado de la atención.
+Deriva la atención a Orden de Trabajo. Transición: `Abierta → DerivoOT`.
 
-**Request:** `{ "estado": "EnAtencion" }`  
-**Response 204:** No Content
+**Response 204:** No Content  
+**Response 409:** Estado no es `Abierta`
+
+### POST /api/atenciones/{id}/cobro-servicio
+
+Registra el cobro. Transición: `Terminada → Pagada`. Crea `CobroServicio` (exactamente uno por atención).
+
+**Headers requeridos:** `X-Sucursal-Id: {guid}`
+
+**Request:** `{ "formaPagoId": 1, "monto": 25000, "observaciones"? }`  
+**Response 201:** `{ "cobroServicioId": "uuid" }`  
+**Response 409:** Estado no es `Terminada` | Cobro ya existe
 
 ---
 
@@ -1131,7 +1154,9 @@ Todos los errores retornan un string descriptivo en el body:
 | 204 | No Content | Delete exitoso |
 | 400 | Bad Request | Validacion fallida, datos invalidos |
 | 401 | Unauthorized | Token ausente, invalido o expirado |
+| 403 | Forbidden | Operación no permitida al rol/usuario actual (ej. cambiar contraseña ajena) |
 | 404 | Not Found | Recurso no encontrado o no pertenece al tenant |
+| 429 | Too Many Requests | Rate limit alcanzado (login: 5 req/min) |
 
 ---
 

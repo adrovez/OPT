@@ -16,6 +16,7 @@ public class AtencionRepository(OPTDbContext context) : IAtencionRepository
             .Include(a => a.Cliente)
             .Include(a => a.Sucursal)
             .Include(a => a.UsuarioAtencion)
+            .Include(a => a.CobroServicio)
             .Where(a => a.TenantId == tenantId && a.SucursalId == sucursalId);
 
         if (desde.HasValue) query = query.Where(a => a.FechaHoraAtencion >= desde.Value);

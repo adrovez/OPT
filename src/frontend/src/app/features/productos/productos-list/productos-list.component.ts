@@ -478,6 +478,7 @@ export class ProductosListComponent implements OnInit {
         tipo: this.tipoFiltro() || undefined,
         categoriaId: this.categoriaFiltro() || undefined,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
           this.productos.set(result.items);
@@ -495,9 +496,11 @@ export class ProductosListComponent implements OnInit {
   }
 
   cargarCategorias(): void {
-    this.categoriaService.getAll().subscribe({
-      next: (lista) => this.categorias.set(lista),
-    });
+    this.categoriaService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (lista) => this.categorias.set(lista),
+      });
   }
 
   onBusquedaInput(value: string): void {

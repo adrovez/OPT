@@ -4,7 +4,8 @@ import {
   signal,
   computed,
   DestroyRef,
-  OnInit,
+  effect,
+  untracked,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -12,6 +13,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import Swal from 'sweetalert2';
 
 import { OrdenTrabajoService } from '../../../core/services/orden-trabajo.service';
+import { SucursalContextService } from '../../../core/services/sucursal-context.service';
 import {
   OrdenTrabajoDto,
   ETAPAS_OT,
@@ -257,10 +259,11 @@ import {
     </div>
   `,
 })
-export class OrdenesTrabajoListComponent implements OnInit {
-  private readonly service   = inject(OrdenTrabajoService);
-  private readonly router    = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+export class OrdenesTrabajoListComponent {
+  private readonly service         = inject(OrdenTrabajoService);
+  private readonly sucursalContext = inject(SucursalContextService);
+  private readonly router          = inject(Router);
+  private readonly destroyRef      = inject(DestroyRef);
 
   readonly etapas      = ETAPAS_OT;
   readonly estadosPago = ESTADOS_PAGO_OT;
@@ -278,8 +281,15 @@ export class OrdenesTrabajoListComponent implements OnInit {
   readonly filtroEtapa      = signal('');
   readonly filtroEstadoPago = signal('');
 
-  ngOnInit(): void {
-    this.cargar();
+  constructor() {
+    effect(() => {
+      const sucursal = this.sucursalContext.sucursalActual();
+      if (!sucursal) return;
+      untracked(() => {
+        this.page.set(1);
+        this.cargar();
+      });
+    });
   }
 
   private cargar(): void {

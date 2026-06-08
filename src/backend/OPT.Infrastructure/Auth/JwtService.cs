@@ -17,10 +17,12 @@ public class JwtService(IOptions<JwtSettings> options) : IJwtService
 {
     private readonly JwtSettings _settings = options.Value;
 
-    public string GenerateToken(Usuario usuario)
+    public JwtTokenResult GenerateToken(Usuario usuario)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes);
 
         var claims = new[]
         {
@@ -36,9 +38,17 @@ public class JwtService(IOptions<JwtSettings> options) : IJwtService
             issuer: _settings.Issuer,
             audience: _settings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
+            expires: expiresAt,
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new JwtTokenResult(new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var bytes = new byte[64];
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        return Convert.ToBase64String(bytes);
     }
 }

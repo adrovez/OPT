@@ -16,7 +16,7 @@ public class TerminarAtencionCommandHandler(IAtencionRepository repository)
             throw new InvalidOperationException(
                 $"Solo se puede terminar una Atención en estado 'Abierta'. Estado actual: '{atencion.Estado}'.");
 
-        atencion.Estado    = "TerminadaServicio";
+        atencion.Estado    = "Terminada";
         atencion.UpdatedAt = DateTime.UtcNow;
         atencion.UpdatedBy = request.UpdatedBy;
 

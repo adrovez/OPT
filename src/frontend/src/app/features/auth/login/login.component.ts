@@ -269,7 +269,9 @@ export class LoginComponent {
         this.errorMessage.set(
           err.status === 401
             ? 'RUT o contraseña incorrectos.'
-            : (err.error?.message as string | undefined) ?? 'Error al iniciar sesión. Intente nuevamente.',
+            : err.status === 429
+              ? 'Demasiados intentos. Espere un momento antes de volver a intentar.'
+              : (err.error?.message as string | undefined) ?? 'Error al iniciar sesión. Intente nuevamente.',
         );
       },
     });

@@ -1,7 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, DestroyRef, effect, untracked } from '@angular/core';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AgendaDto, EstadoAgenda } from '../../../core/models/agenda.model';
 import { AgendaService } from '../../../core/services/agenda.service';
+import { SucursalContextService } from '../../../core/services/sucursal-context.service';
 import { AgendaFormComponent } from '../agenda-form/agenda-form.component';
 import Swal from 'sweetalert2';
 
@@ -239,8 +241,10 @@ function getMondayOf(date: Date): Date {
   `,
 })
 export class AgendaCalendarComponent {
-  private readonly agendaService = inject(AgendaService);
-  private readonly router = inject(Router);
+  private readonly agendaService   = inject(AgendaService);
+  private readonly sucursalContext = inject(SucursalContextService);
+  private readonly destroyRef      = inject(DestroyRef);
+  private readonly router          = inject(Router);
 
   readonly diasSemana = DIAS_SEMANA;
   readonly SLOT_HEIGHT = SLOT_HEIGHT;
@@ -288,7 +292,11 @@ export class AgendaCalendarComponent {
   });
 
   constructor() {
-    this.loadCitas();
+    effect(() => {
+      const sucursal = this.sucursalContext.sucursalActual();
+      if (!sucursal) return;
+      untracked(() => this.loadCitas());
+    });
   }
 
   loadCitas(): void {
@@ -299,13 +307,15 @@ export class AgendaCalendarComponent {
     const hasta = toLocalISO(hastaDay);
 
     this.loading.set(true);
-    this.agendaService.getAll({ desde, hasta }).subscribe({
-      next: citas => {
-        this.citas.set(citas);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.agendaService.getAll({ desde, hasta })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: citas => {
+          this.citas.set(citas);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   prevWeek(): void {

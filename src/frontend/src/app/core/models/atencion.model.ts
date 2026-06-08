@@ -1,4 +1,4 @@
-export type EstadoAtencion = 'Abierta' | 'TerminadaServicio' | 'DerivoOT';
+export type EstadoAtencion = 'Abierta' | 'Terminada' | 'Pagada' | 'DerivoOT';
 
 export interface CobroServicioDto {
   cobroServicioId: string;

@@ -174,7 +174,7 @@ public class AtencionesController(IMediator mediator, ICurrentTenantService tena
     // ── PUT /api/atenciones/{id}/terminar ────────────────────────────────────
 
     /// <summary>
-    /// Cambia el estado de la atención a 'TerminadaServicio'. Prerequisito para RegistrarCobro.
+    /// Cambia el estado de la atención a 'Terminada'. Prerequisito para RegistrarCobro.
     /// </summary>
     [HttpPut("{id:guid}/terminar")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -212,7 +212,7 @@ public class AtencionesController(IMediator mediator, ICurrentTenantService tena
     // ── POST /api/atenciones/{id}/cobro-servicio ─────────────────────────────
 
     /// <summary>
-    /// Registra el cobro de una atención en estado 'TerminadaServicio'.
+    /// Registra el cobro de una atención en estado 'Terminada'.
     /// </summary>
     [HttpPost("{id:guid}/cobro-servicio")]
     [ProducesResponseType(StatusCodes.Status201Created)]

@@ -3,11 +3,15 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IniciarAtencionRequest } from '../../../core/models/atencion.model';
 import { UsuarioDto } from '../../../core/models/usuario.model';
+import { Cliente } from '../../../core/models/cliente.model';
 import { AtencionService } from '../../../core/services/atencion.service';
 import { AgendaService } from '../../../core/services/agenda.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { ClienteService } from '../../../core/services/cliente.service';
 import { RecetaCristalesFormComponent, RecetaState, RECETA_EMPTY } from '../receta-cristales-form/receta-cristales-form.component';
 import Swal from 'sweetalert2';
+
+function pad(n: number): string { return String(n).padStart(2, '0'); }
 
 @Component({
   selector: 'app-atencion-iniciar',
@@ -26,7 +30,7 @@ import Swal from 'sweetalert2';
           </svg>
         </button>
         <div class="flex-1">
-          <h1 class="text-lg font-semibold text-gray-900">Iniciar atención</h1>
+          <h1 class="text-lg font-semibold text-gray-900">{{ walkIn() ? 'Nueva atención' : 'Iniciar atención' }}</h1>
           @if (clienteNombre()) {
             <p class="text-xs text-gray-400 mt-0.5">{{ clienteNombre() }}</p>
           }
@@ -86,14 +90,53 @@ import Swal from 'sweetalert2';
           <div class="max-w-xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Cliente</label>
-              <div class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                {{ clienteNombre() }}
-              </div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                Cliente <span class="text-red-500">*</span>
+              </label>
+              @if (!walkIn()) {
+                <div class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                  <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  {{ clienteNombre() }}
+                </div>
+              } @else {
+                <div class="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o RUT..."
+                    autocomplete="off"
+                    [value]="clienteSearch()"
+                    (input)="onClienteSearchInput($any($event.target).value)"
+                    (blur)="onClienteBlur()"
+                    (focus)="showClienteDropdown.set(clienteResults().length > 0)"
+                    class="w-full px-3.5 py-2.5 text-sm rounded-lg border hover:border-gray-300 bg-white
+                           transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    [class.border-red-300]="!!clienteError()"
+                    [class.border-gray-200]="!clienteError()"
+                  />
+                  @if (showClienteDropdown() && clienteResults().length > 0) {
+                    <div class="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200
+                                rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      @for (c of clienteResults(); track c.clienteId) {
+                        <button
+                          type="button"
+                          (mousedown)="selectCliente(c)"
+                          class="w-full px-4 py-2.5 text-left text-sm flex items-center justify-between
+                                 hover:bg-blue-50 transition-colors"
+                        >
+                          <span class="font-medium text-gray-900">{{ c.nombre }}</span>
+                          <span class="text-gray-400 text-xs ml-3 shrink-0">{{ c.numeroDocumento }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                  @if (clienteError()) {
+                    <p class="mt-1 text-xs text-red-600">{{ clienteError() }}</p>
+                  }
+                </div>
+              }
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -261,7 +304,7 @@ import Swal from 'sweetalert2';
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
               }
-              Iniciar atención
+              Terminar
             </button>
           }
         </div>
@@ -274,6 +317,7 @@ export class AtencionIniciarComponent implements OnInit {
   private readonly atencionService = inject(AtencionService);
   private readonly agendaService = inject(AgendaService);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly clienteService = inject(ClienteService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -284,8 +328,14 @@ export class AtencionIniciarComponent implements OnInit {
   readonly step1Touched = signal(false);
 
   readonly agendaId = signal<string | null>(null);
+  readonly walkIn = signal(false);
   readonly clienteId = signal('');
   readonly clienteNombre = signal('');
+  readonly clienteSearch = signal('');
+  readonly clienteResults = signal<Cliente[]>([]);
+  readonly showClienteDropdown = signal(false);
+  private clienteSearchTimeout: ReturnType<typeof setTimeout> | null = null;
+
   readonly usuarios = signal<UsuarioDto[]>([]);
   readonly fecha = signal('');
   readonly hora = signal('');
@@ -301,6 +351,9 @@ export class AtencionIniciarComponent implements OnInit {
 
   readonly receta = signal<RecetaState>({ ...RECETA_EMPTY });
 
+  readonly clienteError = computed(() =>
+    this.step1Touched() && this.walkIn() && !this.clienteId() ? 'Seleccione un cliente' : ''
+  );
   readonly fechaError = computed(() =>
     this.step1Touched() && !this.fecha() ? 'Seleccione una fecha' : ''
   );
@@ -310,22 +363,26 @@ export class AtencionIniciarComponent implements OnInit {
   readonly usuarioError = computed(() =>
     this.step1Touched() && !this.selectedUsuarioId() ? 'Seleccione un profesional' : ''
   );
-  readonly step1Valid = computed(() =>
-    !!this.fecha() && !!this.hora() && !!this.motivo().trim() && !!this.selectedUsuarioId()
-  );
+  readonly step1Valid = computed(() => {
+    const clienteOk = !this.walkIn() || !!this.clienteId();
+    return clienteOk && !!this.fecha() && !!this.hora() && !!this.motivo().trim() && !!this.selectedUsuarioId();
+  });
 
   ngOnInit(): void {
+    this.usuarioService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: us => this.usuarios.set(us) });
+
     const agendaId = this.route.snapshot.queryParamMap.get('agendaId');
     if (!agendaId) {
-      this.router.navigate(['/atenciones']);
+      this.walkIn.set(true);
+      const now = new Date();
+      this.fecha.set(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`);
+      this.hora.set(`${pad(now.getHours())}:00`);
       return;
     }
     this.agendaId.set(agendaId);
     this.pageLoading.set(true);
-
-    this.usuarioService.getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: us => this.usuarios.set(us) });
 
     this.agendaService.getById(agendaId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -346,6 +403,44 @@ export class AtencionIniciarComponent implements OnInit {
           this.router.navigate(['/atenciones']);
         },
       });
+  }
+
+  onClienteSearchInput(term: string): void {
+    this.clienteSearch.set(term);
+    this.clienteId.set('');
+    this.clienteNombre.set('');
+    if (this.clienteSearchTimeout) clearTimeout(this.clienteSearchTimeout);
+    if (!term.trim()) {
+      this.clienteResults.set([]);
+      this.showClienteDropdown.set(false);
+      return;
+    }
+    this.clienteSearchTimeout = setTimeout(() => {
+      this.clienteService.getClientes(1, 8, term, 'Persona')
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: res => {
+            this.clienteResults.set(res.items);
+            this.showClienteDropdown.set(res.items.length > 0);
+          },
+          error: () => {
+            this.clienteResults.set([]);
+            this.showClienteDropdown.set(false);
+          },
+        });
+    }, 300);
+  }
+
+  selectCliente(c: Cliente): void {
+    this.clienteId.set(c.clienteId);
+    this.clienteNombre.set(c.nombre);
+    this.clienteSearch.set(c.nombre);
+    this.clienteResults.set([]);
+    this.showClienteDropdown.set(false);
+  }
+
+  onClienteBlur(): void {
+    setTimeout(() => this.showClienteDropdown.set(false), 200);
   }
 
   siguiente(): void {
@@ -405,9 +500,9 @@ export class AtencionIniciarComponent implements OnInit {
     this.atencionService.iniciar(request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: result => {
+        next: () => {
           this.loading.set(false);
-          this.router.navigate(['/atenciones', result.atencionId]);
+          this.router.navigate(['/atenciones']);
         },
         error: (err: { error?: { detail?: string } }) => {
           this.loading.set(false);

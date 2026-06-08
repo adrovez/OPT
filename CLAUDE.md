@@ -40,7 +40,7 @@ ng generate component features/<modulo>/<nombre> --standalone
 
 ### Base de datos
 
-Scripts SQL en `src/basedatos/` numerados `000–029`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `031_`**.
+Scripts SQL en `src/basedatos/` numerados `000–033`. Ejecutar en orden sobre SQL Server (base de datos `dbOPT`). **Próximo script incremental: `034_`**.
 
 ```bash
 sqlcmd -S localhost -d dbOPT -E -i src/basedatos/<script>.sql
@@ -77,6 +77,9 @@ sqlcmd -S localhost -d dbOPT -E -i src/basedatos/<script>.sql
 | `028` | `OPT_TransferenciaLinea` — líneas de transferencia de stock (ON DELETE CASCADE desde `OPT_Transferencia`) |
 | `029` | `OPT_OrdenTrabajo` + `OPT_OrdenTrabajoLinea` + `OPT_OrdenTrabajoPago` + `OPT_OrdenTrabajoCuota` + `OPT_OrdenTrabajoBitacora` |
 | `030` | `OPT_TipoPrevision` (catálogo compartido, INT PK, 7 filas iniciales) |
+| `031` | ALTER `OPT_Atencion` — rediseño estados: `TerminadaServicio` → `Terminada` (sin cobro) y `Pagada` (con cobro); nuevo CHECK constraint con 4 estados válidos |
+| `032` | FIX índice `OPT_Atencion` — reemplaza índice filtrado (`WHERE IsDeleted=0`) incompatible con EF Core por compuesto no filtrado `(TenantId, idSucursal, FechaHoraAtencion DESC)` con INCLUDE(`IsDeleted`, `Estado`); `UPDATE STATISTICS FULLSCAN` |
+| `033` | `OPT_RefreshToken` — tabla de refresh tokens con rotación one-use: `TokenHash` (SHA-256 hex 64 chars), `FechaExpiracion` (7 días), `FechaRevocacion` nullable; índices filtrados sobre `FechaRevocacion IS NULL` |
 
 ---
 
@@ -314,8 +317,61 @@ if (!Guid.TryParse(Request.Headers["X-Sucursal-Id"], out var sucursalId))
     return BadRequest(new ProblemDetails { Title = "X-Sucursal-Id requerido" });
 ```
 
+### SOLID en el Frontend
+
+Principios activos en el proyecto (auditados Junio 2026):
+
+#### SRP — Single Responsibility
+Cada componente tiene una sola responsabilidad de presentación. Si un componente supera ~400 líneas o gestiona más de un tab/sección independiente, extraer sub-componentes por tab:
+```
+stock-list.component.ts  →  stock-actual-tab.component.ts
+                             entradas-tab.component.ts
+                             historial-tab.component.ts
+                             transferencias-tab.component.ts
+```
+Los helpers de presentación (formateo de fechas, clases CSS dinámicas) van en Angular Pipes standalone en `core/pipes/`, no en los componentes.
+
+#### OCP — Open/Closed
+No hay interfaces formales para servicios (deuda técnica aceptada). Al crear un servicio que requiera testabilidad, definirlo como clase abstracta:
+```typescript
+export abstract class ClienteService {
+  abstract getClientes(...): Observable<PagedResult<Cliente>>;
+}
+@Injectable({ providedIn: 'root' })
+export class ClienteServiceImpl extends ClienteService { ... }
+```
+
+#### DIP — Dependency Inversion (regla activa)
+**Nunca acceder a `localStorage` directamente.** Siempre usar `StorageService` de `core/services/storage.service.ts`. Aplica a servicios, guards e interceptors:
+
+```typescript
+// ❌ NUNCA
+localStorage.getItem('opt_token');
+
+// ✅ SIEMPRE
+inject(StorageService).get('opt_token');
+```
+
+El interceptor `auth.interceptor.ts` ya usa `StorageService`. Los nuevos interceptors o guards deben seguir el mismo patrón.
+
+#### ISP — Interface Segregation
+Los servicios exponen solo los métodos que su módulo necesita. No agregar métodos genéricos a un servicio para que otro módulo los use — crear un servicio separado.
+
+#### Memory Safety (RxJS)
+`takeUntilDestroyed(this.destroyRef)` es **obligatorio** en **toda** suscripción dentro de un componente, sin excepción — incluyendo llamadas en métodos de carga, edición y eliminación:
+
+```typescript
+// ❌ INCORRECTO — memory leak potencial
+this.miService.getData().subscribe({ ... });
+
+// ✅ CORRECTO
+this.miService.getData()
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe({ ... });
+```
+
 ### Checklist para nuevo módulo
-**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`030_...`)
+**Backend:** Entidad Domain → Interfaz Application → Handlers+DTOs Application → Repositorio Infrastructure → Config DbContext (`HasQueryFilter`) → Controller API → Script SQL (`032_...`)
 
 **Frontend:** `core/models/<mod>.model.ts` → `core/services/<mod>.service.ts` → componentes en `features/<mod>/` → ruta en `app.routes.ts`
 
@@ -325,7 +381,7 @@ if (!Guid.TryParse(Request.Headers["X-Sucursal-Id"], out var sucursalId))
 
 | Módulo | Backend | Frontend |
 |--------|---------|----------|
-| Auth | ✅ (login devuelve `sucursales[]`) | ✅ |
+| Auth | ✅ Login + **Refresh Token** (rotación one-use, revocación en BD) + Rate Limiting (5 req/min) + Logout server-side; `Jwt:Secret` vía env var | ✅ interceptor con retry automático en 401 |
 | Clientes + Contactos | ✅ | ✅ |
 | Regiones/Comunas | ✅ (catálogo) | ✅ (shareReplay cache) |
 | Anamnesis | ✅ | ✅ |
@@ -335,7 +391,7 @@ if (!Guid.TryParse(Request.Headers["X-Sucursal-Id"], out var sucursalId))
 | Roles (catálogo) | ✅ (`013_OPT_Rol.sql` + `GET /api/roles`) | ✅ `rol.service.ts` + combobox dinámico en `usuario-form` |
 | Agenda | ✅ (`014_OPT_Agenda.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ Calendario semanal en `/agenda`. Botón "Atender" en citas Confirmadas → navega a `/atenciones/iniciar?agendaId=xxx` |
 | FormaPago (catálogo) | ✅ (`021_OPT_FormaPago.sql` + `GET /api/forma-pagos`) | ✅ `forma-pago.service.ts` con `shareReplay(1)` |
-| Atención + CobroServicio | ✅ (`022–024` scripts; `POST /api/atenciones/iniciar` crea Atención+Anamnesis+RecetaCristales atómicamente) | ✅ Lista `/atenciones` (2 tabs: Sala de espera/Historial), wizard `/atenciones/iniciar` (3 pasos: Atención→Anamnesis→RecetaCristales), detalle `/atenciones/:id` (4 tabs: Información, Anamnesis, Receta Cristales, Cobro con lazy load) |
+| Atención + CobroServicio | ✅ (scripts `022–024`+`031`; estados: `Abierta → Terminada → Pagada` o `DerivoOT`; cobro requiere estado `Terminada`, pasa a `Pagada` al cobrar) | ✅ Lista `/atenciones` (2 tabs: Sala de espera/Historial), wizard `/atenciones/iniciar` (3 pasos: Atención→Anamnesis→RecetaCristales), detalle `/atenciones/:id` (4 tabs: Información, Anamnesis, Receta Cristales, Cobro con lazy load) |
 | Productos (catálogo) | ✅ (`015-017` scripts + API CRUD + Categorías + Variantes — **sin precios ni stock**) | ✅ `/productos` con lista + formulario + gestión de categorías |
 | Stock / Inventario | ✅ (`018_OPT_Stock.sql` + API CRUD + `X-Sucursal-Id` header) | ✅ (4 tabs: Stock actual, Entradas, Historial de movimientos, Transferencias) |
 | Precios | ✅ (`027` — `OPT_PrecioProducto` global por producto; `GET/POST /api/precios`) | ✅ `/precios` — lista con filtros, edición inline, historial por producto |
@@ -367,6 +423,32 @@ if (!Guid.TryParse(Request.Headers["X-Sucursal-Id"], out var sucursalId))
 Los módulos asociados a sucursal (Agenda, Stock) reciben el `SucursalId` via header HTTP `X-Sucursal-Id`. El frontend lo envía desde `SucursalContextService.sucursalActual().sucursalId`. Los datos generales (Clientes, Anamnesis, RecetaCristales) NO requieren este header — son datos del tenant completo.
 
 **Excepción — stock cross-sucursal:** `GET /api/stock/por-producto/{productoId}` devuelve el stock del producto en *todas* las sucursales del tenant y no requiere `X-Sucursal-Id`. Retorna `IReadOnlyList<StockPorSucursalDto>` (SucursalId, SucursalNombre, CantidadDisponible, StockMinimo, BajoMinimo).
+
+---
+
+## Seguridad Auth
+
+### JWT Secret — obligatorio en variable de entorno
+`appsettings.json` tiene `"Secret": ""`. El startup lanza si está vacío o < 32 chars.
+```bash
+# Desarrollo (User Secrets)
+dotnet user-secrets set "Jwt:Secret" "<min-32-chars-random>"
+# Producción (variable de entorno — double underscore = sección)
+$env:Jwt__Secret = "<min-32-chars-random>"
+```
+
+### Refresh Token
+- Login devuelve `{ token, refreshToken }` — access token válido según `ExpirationMinutes` (config), refresh token 7 días
+- `POST /api/Auth/refresh` → body `{ refreshToken, tenantId }` → rota ambos tokens (el anterior queda revocado)
+- `POST /api/Auth/logout` `[Authorize]` → body `{ refreshToken }` → revoca en BD (TenantId del JWT, no del body)
+- En BD: solo el hash SHA-256 del token raw, nunca el valor real
+- Frontend: interceptor detecta 401 → llama refresh → reintenta automáticamente → si refresh falla → logout
+
+### ChangePassword — ownership check
+`PUT /api/usuarios/{id}/password` requiere ser el propio usuario **O** tener rol `Admin`. Retorna 403 en caso contrario.
+
+### Rate Limiting
+`POST /api/Auth/login` tiene `[EnableRateLimiting("login")]`: 5 intentos/minuto, HTTP 429 al superar.
 
 ---
 

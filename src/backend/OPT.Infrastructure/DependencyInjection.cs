@@ -31,6 +31,11 @@ public static class DependencyInjection
         var jwtSettings = jwtSection.Get<JwtSettings>()
             ?? throw new InvalidOperationException("Falta configuración JWT en appsettings.");
 
+        if (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret.Length < 32)
+            throw new InvalidOperationException(
+                "JWT Secret no configurado o demasiado corto. " +
+                "Configura 'Jwt:Secret' vía variable de entorno: Jwt__Secret=<min 32 chars>.");
+
         // ── Autenticación JWT ──────────────────────────────────────────────
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -44,7 +49,8 @@ public static class DependencyInjection
                     ValidIssuer               = jwtSettings.Issuer,
                     ValidAudience             = jwtSettings.Audience,
                     IssuerSigningKey          = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                        Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+                    ClockSkew                 = TimeSpan.Zero
                 };
             });
 
@@ -76,6 +82,7 @@ public static class DependencyInjection
         services.AddScoped<ITipoPrevisionRepository, TipoPrevisionRepository>();
 
         // ── Servicios de Auth ──────────────────────────────────────────────
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddHttpContextAccessor();

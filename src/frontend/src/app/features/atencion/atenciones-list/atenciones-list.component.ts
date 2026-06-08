@@ -1,17 +1,22 @@
-import { Component, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, inject, signal, DestroyRef, effect, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AtencionDto, EstadoAtencion } from '../../../core/models/atencion.model';
+import { AtencionDto, EstadoAtencion, RegistrarCobroRequest } from '../../../core/models/atencion.model';
 import { AgendaDto } from '../../../core/models/agenda.model';
+import { FormaPagoDto } from '../../../core/models/forma-pago.model';
 import { AtencionService } from '../../../core/services/atencion.service';
 import { AgendaService } from '../../../core/services/agenda.service';
+import { FormaPagoService } from '../../../core/services/forma-pago.service';
+import { SucursalContextService } from '../../../core/services/sucursal-context.service';
+import Swal from 'sweetalert2';
 
 type Tab = 'sala' | 'historial';
 
 const ESTADO_BADGE: Record<EstadoAtencion, string> = {
-  Abierta:           'bg-blue-50 text-blue-700 border border-blue-200',
-  TerminadaServicio: 'bg-green-50 text-green-700 border border-green-200',
-  DerivoOT:          'bg-purple-50 text-purple-700 border border-purple-200',
+  Abierta:   'bg-blue-50 text-blue-700 border border-blue-200',
+  Terminada: 'bg-amber-50 text-amber-700 border border-amber-200',
+  Pagada:    'bg-green-50 text-green-700 border border-green-200',
+  DerivoOT:  'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
 function pad(n: number): string { return String(n).padStart(2, '0'); }
@@ -198,7 +203,8 @@ function formatDate(d: Date): string {
           >
             <option value="">Todos los estados</option>
             <option value="Abierta">Abierta</option>
-            <option value="TerminadaServicio">Terminada Servicio</option>
+            <option value="Terminada">Terminada</option>
+            <option value="Pagada">Pagada</option>
             <option value="DerivoOT">Derivó a OT</option>
           </select>
           <button
@@ -230,14 +236,12 @@ function formatDate(d: Date): string {
                   <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Motivo</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Profesional</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
+                  <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
                 @for (at of historial(); track at.atencionId) {
-                  <tr
-                    class="hover:bg-gray-50 cursor-pointer transition-colors"
-                    (click)="verDetalle(at.atencionId)"
-                  >
+                  <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-6 py-3.5 font-medium text-gray-900 whitespace-nowrap">
                       {{ formatFecha(at.fechaHoraAtencion) }}
                     </td>
@@ -250,6 +254,66 @@ function formatDate(d: Date): string {
                         {{ estadoLabel(at.estado) }}
                       </span>
                     </td>
+                    <td class="px-6 py-3.5">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <!-- Ver -->
+                        <button
+                          type="button"
+                          (click)="verDetalle(at.atencionId)"
+                          class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium
+                                 text-gray-600 bg-white border border-gray-200 rounded-lg
+                                 hover:bg-gray-50 hover:text-gray-800 transition-colors
+                                 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                          title="Ver detalle"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7
+                                 -1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                          </svg>
+                          Ver
+                        </button>
+
+                        <!-- Pagar: Abierta o Terminada (sin cobro por definición) -->
+                        @if (at.estado === 'Abierta' || at.estado === 'Terminada') {
+                          <button
+                            type="button"
+                            (click)="abrirModalCobro(at)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium
+                                   text-white bg-blue-600 rounded-lg hover:bg-blue-700
+                                   transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            title="Registrar cobro"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            Pagar
+                          </button>
+                        }
+
+                        <!-- Derivar OT: solo Abierta -->
+                        @if (at.estado === 'Abierta') {
+                          <button
+                            type="button"
+                            (click)="derivarOT(at)"
+                            [disabled]="derivandoId() === at.atencionId"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium
+                                   text-white bg-purple-600 rounded-lg hover:bg-purple-700
+                                   disabled:bg-purple-400 disabled:cursor-not-allowed
+                                   transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            title="Derivar a Orden de Trabajo"
+                          >
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                            OT
+                          </button>
+                        }
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -259,13 +323,113 @@ function formatDate(d: Date): string {
       }
 
     </div>
+
+    <!-- Modal: Registrar Cobro -->
+    @if (modalCobroAbierto() && modalAtencion()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+           style="background: rgba(0,0,0,0.45)">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5">
+
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-base font-semibold text-gray-900">Registrar cobro</h2>
+              <p class="text-xs text-gray-500 mt-0.5">{{ modalAtencion()!.clienteNombre }}</p>
+            </div>
+            <button type="button" (click)="cerrarModalCobro()"
+              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Cerrar">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          @if (modalAtencion()!.estado === 'Abierta') {
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-xs text-amber-700">La atención se terminará y se registrará el cobro.</p>
+            </div>
+          }
+
+          <div>
+            <label for="cobro-fp" class="block text-sm font-medium text-gray-700 mb-1.5">
+              Forma de pago <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="cobro-fp"
+              [value]="cobroFormaPagoId()"
+              (change)="cobroFormaPagoId.set(+$any($event.target).value)"
+              class="w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white
+                     transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [class.border-red-300]="cobroTouched() && !cobroFormaPagoId()"
+              [class.border-gray-200]="!(cobroTouched() && !cobroFormaPagoId())"
+            >
+              <option [value]="0">— Seleccionar —</option>
+              @for (fp of formasPago(); track fp.formaPagoId) {
+                <option [value]="fp.formaPagoId">{{ fp.descripcion }}</option>
+              }
+            </select>
+            @if (cobroTouched() && !cobroFormaPagoId()) {
+              <p class="mt-1 text-xs text-red-600">Seleccione una forma de pago</p>
+            }
+          </div>
+
+          <div>
+            <label for="cobro-monto" class="block text-sm font-medium text-gray-700 mb-1.5">
+              Monto <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="cobro-monto"
+              type="number"
+              min="1"
+              placeholder="0"
+              [value]="cobroMonto()"
+              (input)="cobroMonto.set(+$any($event.target).value)"
+              class="w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white
+                     transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [class.border-red-300]="cobroTouched() && cobroMonto() <= 0"
+              [class.border-gray-200]="!(cobroTouched() && cobroMonto() <= 0)"
+            />
+            @if (cobroTouched() && cobroMonto() <= 0) {
+              <p class="mt-1 text-xs text-red-600">Ingrese un monto mayor a 0</p>
+            }
+          </div>
+
+          <div class="flex gap-3 pt-1">
+            <button type="button" (click)="cerrarModalCobro()"
+              class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200
+                     rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300">
+              Cancelar
+            </button>
+            <button type="button" (click)="confirmarCobro()" [disabled]="cobroLoading()"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium
+                     text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
+                     rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              @if (cobroLoading()) {
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              }
+              Confirmar cobro
+            </button>
+          </div>
+
+        </div>
+      </div>
+    }
   `,
 })
 export class AtencionesListComponent {
-  private readonly atencionService = inject(AtencionService);
-  private readonly agendaService = inject(AgendaService);
-  private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly atencionService  = inject(AtencionService);
+  private readonly agendaService    = inject(AgendaService);
+  private readonly formaPagoService = inject(FormaPagoService);
+  private readonly sucursalContext  = inject(SucursalContextService);
+  private readonly router           = inject(Router);
+  private readonly destroyRef       = inject(DestroyRef);
 
   readonly activeTab = signal<Tab>('sala');
   readonly sala = signal<AgendaDto[]>([]);
@@ -277,11 +441,33 @@ export class AtencionesListComponent {
   readonly filtroHasta = signal(formatDate(new Date()));
   readonly filtroEstado = signal('');
 
+  // Modal cobro
+  readonly modalCobroAbierto = signal(false);
+  readonly modalAtencion = signal<AtencionDto | null>(null);
+  readonly formasPago = signal<FormaPagoDto[]>([]);
+  readonly cobroFormaPagoId = signal(0);
+  readonly cobroMonto = signal(0);
+  readonly cobroTouched = signal(false);
+  readonly cobroLoading = signal(false);
+
+  // Derivar OT
+  readonly derivandoId = signal<string | null>(null);
+
   readonly formatFecha = formatFecha;
   readonly formatHora = formatHora;
 
   constructor() {
-    this.cargarSala();
+    effect(() => {
+      const sucursal = this.sucursalContext.sucursalActual();
+      if (!sucursal) return;
+      untracked(() => {
+        this.historial.set([]);
+        this.cargarSala();
+      });
+    });
+    this.formaPagoService.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: fps => this.formasPago.set(fps) });
   }
 
   switchTab(tab: Tab): void {
@@ -328,11 +514,106 @@ export class AtencionesListComponent {
     this.router.navigate(['/atenciones', id]);
   }
 
+  // ─── Cobro modal ─────────────────────────────────────────────────────────────
+
+  abrirModalCobro(at: AtencionDto): void {
+    this.modalAtencion.set(at);
+    this.cobroFormaPagoId.set(0);
+    this.cobroMonto.set(0);
+    this.cobroTouched.set(false);
+    this.modalCobroAbierto.set(true);
+  }
+
+  cerrarModalCobro(): void {
+    if (this.cobroLoading()) return;
+    this.modalCobroAbierto.set(false);
+    this.modalAtencion.set(null);
+  }
+
+  confirmarCobro(): void {
+    this.cobroTouched.set(true);
+    if (!this.cobroFormaPagoId() || this.cobroMonto() <= 0) return;
+
+    const at = this.modalAtencion()!;
+    this.cobroLoading.set(true);
+
+    const registrar = () => {
+      const req: RegistrarCobroRequest = {
+        formaPagoId: this.cobroFormaPagoId(),
+        monto: this.cobroMonto(),
+      };
+      this.atencionService.registrarCobro(at.atencionId, req)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.cobroLoading.set(false);
+            this.cerrarModalCobro();
+            this.buscarHistorial();
+            Swal.fire({ icon: 'success', title: 'Cobro registrado',
+              timer: 1800, timerProgressBar: true, showConfirmButton: false });
+          },
+          error: (err: { error?: { detail?: string } }) => {
+            this.cobroLoading.set(false);
+            Swal.fire({ icon: 'error', title: 'Error',
+              text: err.error?.detail ?? 'No se pudo registrar el cobro.', confirmButtonColor: '#2563eb' });
+          },
+        });
+    };
+
+    if (at.estado === 'Abierta') {
+      this.atencionService.terminar(at.atencionId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => registrar(),
+          error: (err: { error?: { detail?: string } }) => {
+            this.cobroLoading.set(false);
+            Swal.fire({ icon: 'error', title: 'Error',
+              text: err.error?.detail ?? 'No se pudo terminar la atención.', confirmButtonColor: '#2563eb' });
+          },
+        });
+    } else {
+      registrar();
+    }
+  }
+
+  // ─── Derivar OT ──────────────────────────────────────────────────────────────
+
+  derivarOT(at: AtencionDto): void {
+    Swal.fire({
+      title: '¿Derivar a Orden de Trabajo?',
+      text: 'La atención pasará a "Derivó a OT". Esta acción no se puede revertir.',
+      icon: 'warning', showCancelButton: true,
+      confirmButtonColor: '#7c3aed', cancelButtonText: 'Cancelar', confirmButtonText: 'Sí, derivar',
+    }).then(res => {
+      if (!res.isConfirmed) return;
+      this.derivandoId.set(at.atencionId);
+      this.atencionService.derivarAOT(at.atencionId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.derivandoId.set(null);
+            this.router.navigate(['/ordenes-trabajo/nueva'], {
+              state: {
+                clienteId: at.clienteId,
+                clienteNombre: at.clienteNombre,
+                recetaCristalesId: at.recetaCristalesId,
+              },
+            });
+          },
+          error: (err: { error?: { detail?: string } }) => {
+            this.derivandoId.set(null);
+            Swal.fire({ icon: 'error', title: 'Error',
+              text: err.error?.detail ?? 'No se pudo derivar la atención.', confirmButtonColor: '#2563eb' });
+          },
+        });
+    });
+  }
+
   estadoBadge(estado: EstadoAtencion): string { return ESTADO_BADGE[estado]; }
 
   estadoLabel(estado: EstadoAtencion): string {
     const labels: Record<EstadoAtencion, string> = {
-      Abierta: 'Abierta', TerminadaServicio: 'Terminada', DerivoOT: 'Derivó a OT',
+      Abierta: 'Abierta', Terminada: 'Terminada', Pagada: 'Pagada', DerivoOT: 'Derivó a OT',
     };
     return labels[estado];
   }

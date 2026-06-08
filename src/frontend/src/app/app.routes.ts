@@ -105,8 +105,8 @@ export const routes: Routes = [
       {
         path: 'atenciones/nueva',
         loadComponent: () =>
-          import('./features/atencion/atencion-form/atencion-form.component').then(
-            (m) => m.AtencionFormComponent,
+          import('./features/atencion/atencion-iniciar/atencion-iniciar.component').then(
+            (m) => m.AtencionIniciarComponent,
           ),
       },
       {

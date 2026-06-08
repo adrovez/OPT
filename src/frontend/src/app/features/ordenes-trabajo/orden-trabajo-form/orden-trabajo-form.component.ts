@@ -1345,6 +1345,59 @@ export class OrdenTrabajoFormComponent implements OnInit {
       this.modoEdicion.set(true);
       this.otIdEdicion.set(id);
       this.cargarDetalle(id);
+      return;
+    }
+
+    // Pre-populate from Atención derivada (state passed by atencion-detail)
+    const nav = window.history.state as { clienteId?: string; clienteNombre?: string; recetaCristalesId?: string | null };
+    if (nav?.clienteId) {
+      this.clienteSvc.getCliente(nav.clienteId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: c => {
+            this.numeroDocumento.set(c.numeroDocumento ?? '');
+            this.seleccionarClienteEncontrado(c);
+            this.cargarRecetas();
+          },
+          error: () => {},
+        });
+    }
+    if (nav?.recetaCristalesId) {
+      this.recetaSvc.getById(nav.recetaCristalesId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: r => {
+            this.recetaCristalesIdExistente.set(r.recetaCristalesId);
+            this.receta.set({
+              cristalesLaboratorio: r.checkCristalesLaboratorio,
+              urgente: r.checkUrgente,
+              incluirLejos: r.checkLejos,
+              incluirCerca: r.checkCerca,
+              lejosODEsferico: r.lejosODEsferico ?? '',
+              lejosODCilindro: r.lejosODCilindro ?? '',
+              lejosODEje: r.lejosODEje ?? '',
+              lejosODObservacion: r.lejosODObservacion ?? '',
+              lejosOIEsferico: r.lejosOIEsferico ?? '',
+              lejosOICilindro: r.lejosOICilindro ?? '',
+              lejosOIEje: r.lejosOIEje ?? '',
+              lejosOIObservacion: r.lejosOIObservacion ?? '',
+              lejosDPEsferico: r.lejosDPEsferico ?? '',
+              lejosDPObservacion: r.lejosDPObservacion ?? '',
+              lejosADDEsfera: r.lejosADDEsfera ?? '',
+              cercaODEsferico: r.cercaODEsferico ?? '',
+              cercaODCilindro: r.cercaODCilindro ?? '',
+              cercaODEje: r.cercaODEje ?? '',
+              cercaODObservacion: r.cercaODObservacion ?? '',
+              cercaOIEsferico: r.cercaOIEsferico ?? '',
+              cercaOICilindro: r.cercaOICilindro ?? '',
+              cercaOIEje: r.cercaOIEje ?? '',
+              cercaOIObservacion: r.cercaOIObservacion ?? '',
+              cercaDPEsferico: r.cercaDPEsferico ?? '',
+              cercaDPObservacion: r.cercaDPObservacion ?? '',
+            });
+          },
+          error: () => {},
+        });
     }
   }
 

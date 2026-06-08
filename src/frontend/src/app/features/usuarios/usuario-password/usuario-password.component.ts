@@ -143,10 +143,14 @@ export class UsuarioPasswordComponent {
         },
         error: (err: { status?: number; error?: { detail?: string } }) => {
           this.loading.set(false);
+          const text =
+            err.status === 403
+              ? 'No tienes permiso para cambiar esta contraseña.'
+              : err.error?.detail ?? 'No se pudo cambiar la contraseña. Intente nuevamente.';
           Swal.fire({
             icon: 'error',
             title: 'Error al cambiar contraseña',
-            text: err.error?.detail ?? 'No se pudo cambiar la contraseña. Intente nuevamente.',
+            text,
             confirmButtonColor: '#2563eb',
             confirmButtonText: 'Cerrar',
           });

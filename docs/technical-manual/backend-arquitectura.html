@@ -118,6 +118,8 @@
       <li><a href="#nuevo-modulo">Agregar Módulo</a></li>
       <li><a href="#antipatrones">Anti-patrones</a></li>
       <li><a href="#comandos">Comandos</a></li>
+      <li><a class="section">Seguridad</a></li>
+      <li><a href="#seguridad">Seguridad</a></li>
     </ul>
   </nav>
 
@@ -202,8 +204,9 @@
           <tr><td><code>DocumentoEntrada</code></td><td>DocumentoId <small>(Guid)</small></td><td>✓</td><td>Documento de entrada de mercadería (FacturaCompra/BoletaCompra/GuiaDespacho/OtroIngreso). Estado: Borrador → Confirmado|Anulado.</td></tr>
           <tr><td><code>DocumentoEntradaLinea</code></td><td>LineaId <small>(Guid)</small></td><td>—</td><td>Línea del documento de entrada. ProductoId FK, Cantidad > 0, PrecioCosto nullable. ON DELETE CASCADE.</td></tr>
           <tr><td><code>Transferencia</code></td><td>TransferenciaId <small>(Guid)</small></td><td>✓</td><td>Transferencia de stock entre sucursales. Estado: Pendiente → Confirmada|Anulada. Stock se mueve al confirmar.</td></tr>
-          <tr><td><code>Atencion</code></td><td>AtencionId <small>(Guid)</small></td><td>✓</td><td>Atención clínica. Vincula AgendaId (nullable). Estados: EnEspera/EnAtencion/Finalizada.</td></tr>
+          <tr><td><code>Atencion</code></td><td>AtencionId <small>(Guid)</small></td><td>✓</td><td>Atención clínica. Vincula AgendaId (nullable). Estados: <code>Abierta → Terminada → Pagada</code> | <code>DerivoOT</code>. Script 031 rediseñó TerminadaServicio en dos estados semánticos.</td></tr>
           <tr><td><code>CobroServicio</code></td><td>CobroId <small>(Guid)</small></td><td>✓</td><td>Cobro asociado a Atención. FK a FormaPago (int).</td></tr>
+          <tr><td><code>RefreshToken</code></td><td>RefreshTokenId <small>(Guid)</small></td><td>Sí (TenantId)</td><td>Refresh token almacenado como SHA-256 hex. Sin IsDeleted — revocación via FechaRevocacion nullable. Expira en 7 días.</td></tr>
           <tr><td><code>Region</code></td><td>IdRegion <small>(int)</small></td><td>—</td><td>Catálogo compartido. Solo lectura.</td></tr>
           <tr><td><code>Comuna</code></td><td>IdComuna <small>(int)</small></td><td>—</td><td>Catálogo compartido. FK a Region.</td></tr>
         </table>
@@ -217,8 +220,8 @@
         <p>Casos de uso implementados con el patrón CQRS usando MediatR. Los handlers solo usan interfaces de repositorio, nunca DbContext directamente.</p>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IAgendaRepository, ICategoriaRepository, IProductoRepository, IStockRepository, IDocumentoEntradaRepository, ITransferenciaRepository, IPrecioProductoRepository, IAtencionRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
-          <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator</td></tr>
+          <tr><td><code>Interfaces/</code></td><td>IClienteRepository, IContactoRepository, IUsuarioRepository, IAnamnesisRepository, IRecetaCristalesRepository, ISucursalRepository, IRegionRepository, IAgendaRepository, ICategoriaRepository, IProductoRepository, IStockRepository, IDocumentoEntradaRepository, ITransferenciaRepository, IPrecioProductoRepository, IAtencionRepository, IRefreshTokenRepository, IJwtService, ICurrentTenantService, IPasswordHasher</td></tr>
+          <tr><td><code>Auth/</code></td><td>LoginCommand (TenantId: Guid), LoginCommandHandler, LoginCommandValidator, RefreshTokenCommand + Handler, LogoutCommand + Handler</td></tr>
           <tr><td><code>Clientes/Commands/</code></td><td>Create, Update, Delete commands + handlers → retornan <code>Guid</code></td></tr>
           <tr><td><code>Clientes/Queries/</code></td><td>GetClientes (paginado), GetClienteById (Guid) + handlers</td></tr>
           <tr><td><code>Clientes/DTOs/</code></td><td>ClienteDto, ContactoDto, ContactoInputDto, ClienteMappingExtensions</td></tr>
@@ -237,7 +240,7 @@
           <tr><td><code>DocumentoEntrada/</code></td><td>CrearDocumentoEntradaCommand (Borrador), ConfirmarDocumentoCommand (atómico: Stock+Precio), CambiarEstadoDocumentoCommand (Anular via PATCH), GetDocumentosEntradaQuery</td></tr>
           <tr><td><code>Transferencia/</code></td><td>CrearTransferenciaCommand, ConfirmarTransferenciaCommand (genera par TransferenciaSalida+TransferenciaEntrada), GetTransferenciasQuery</td></tr>
           <tr><td><code>Precios/</code></td><td>GetPreciosVigentesQuery, GetHistorialPrecioQuery, SetPrecioCommand (cierra vigente + crea nuevo)</td></tr>
-          <tr><td><code>Atenciones/</code></td><td>IniciarAtencionCommand (atómico: Atención+Anamnesis+Receta), GetAtencionesQuery, GetAtencionByIdQuery, CambiarEstadoAtencionCommand</td></tr>
+          <tr><td><code>Atenciones/</code></td><td>IniciarAtencionCommand (atómico: Atención+Anamnesis+Receta), GetAtencionesQuery, GetAtencionByIdQuery, TerminarAtencionCommand (<code>Abierta→Terminada</code>), RegistrarCobroServicioCommand (<code>Terminada→Pagada</code> + crea CobroServicio)</td></tr>
           <tr><td><code>Common/</code></td><td>PagedResult&lt;T&gt; — propiedades <code>init</code>, usar object initializer</td></tr>
         </table>
 
@@ -245,7 +248,7 @@
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
           <tr><td><code>Persistence/</code></td><td>OPTDbContext con QueryFilters globales (IsDeleted) y <code>HasDefaultValueSql("NEWSEQUENTIALID()")</code></td></tr>
-          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository, RegionRepository, AgendaRepository, CategoriaRepository, ProductoRepository, StockRepository, DocumentoEntradaRepository (ConfirmarAsync atómico, AnularAsync compensatorio), TransferenciaRepository, PrecioProductoRepository, AtencionRepository</td></tr>
+          <tr><td><code>Persistence/Repositories/</code></td><td>ClienteRepository, ContactoRepository, AnamnesisRepository, RecetaCristalesRepository, SucursalRepository, UsuarioRepository, RegionRepository, AgendaRepository, CategoriaRepository, ProductoRepository, StockRepository, DocumentoEntradaRepository (ConfirmarAsync atómico, AnularAsync compensatorio), TransferenciaRepository, PrecioProductoRepository, AtencionRepository, RefreshTokenRepository</td></tr>
           <tr><td><code>Auth/</code></td><td>JwtService, JwtSettings, CurrentTenantService (Guid.TryParse), BcryptPasswordHasher</td></tr>
           <tr><td><code>DependencyInjection.cs</code></td><td>Registra todos los servicios de Infrastructure</td></tr>
         </table>
@@ -253,7 +256,7 @@
         <h3>OPT.API</h3>
         <table>
           <tr><th>Carpeta</th><th>Contenido</th></tr>
-          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController, ClienteController, ContactoController, AnamnesisController, RecetaCristalesController, SucursalController, UsuarioController, RegionController, RolController, AgendaController (X-Sucursal-Id), CategoriaController (<code>/api/categorias</code>), ProductoController, StockController (X-Sucursal-Id), DocumentoEntradaController (<code>/api/documentos-entrada</code>, X-Sucursal-Id), TransferenciaController (<code>/api/transferencias</code>), PrecioController (<code>/api/precios</code>), AtencionController, FormaPagoController</td></tr>
+          <tr><td><code>Controllers/</code></td><td>TenantController, AuthController (login + refresh + logout), ClienteController, ContactoController, AnamnesisController, RecetaCristalesController, SucursalController, UsuarioController, RegionController, RolController, AgendaController (X-Sucursal-Id), CategoriaController (<code>/api/categorias</code>), ProductoController, StockController (X-Sucursal-Id), DocumentoEntradaController (<code>/api/documentos-entrada</code>, X-Sucursal-Id), TransferenciaController (<code>/api/transferencias</code>), PrecioController (<code>/api/precios</code>), AtencionController, FormaPagoController</td></tr>
           <tr><td><code>Middleware/</code></td><td>CorrelationIdMiddleware, ExceptionHandlingMiddleware, TenantValidationMiddleware</td></tr>
           <tr><td><code>Program.cs</code></td><td>Pipeline completo, DI, CORS</td></tr>
         </table>
@@ -421,14 +424,14 @@ context.Clientes.Remove(cliente);</pre>
         <h3>Configuración en appsettings.json</h3>
         <pre>{
   "Jwt": {
-    "Secret":            "OPT-SecretKey-ChangeThis-InProduction-2026-SecureKey!",
+    "Secret":            "",
     "Issuer":            "OPT",
     "Audience":          "OPT",
     "ExpirationMinutes": 60
   }
 }</pre>
-        <div class="alert alert-amber">
-          <strong>Producción:</strong> El <code>Secret</code> debe ser una cadena de al menos 32 caracteres aleatorios, almacenada en variables de entorno o Azure Key Vault, nunca en el repositorio.
+        <div class="alert alert-red">
+          <strong>JWT Secret obligatorio en entorno:</strong> <code>Secret</code> está vacío en el repositorio. El startup lanza <code>InvalidOperationException</code> si no se configura con al menos 32 caracteres. Usar <code>dotnet user-secrets</code> en desarrollo o variable de entorno <code>Jwt__Secret</code> en producción. Ver sección <a href="#seguridad">Seguridad</a> para instrucciones detalladas.
         </div>
       </section>
 
@@ -493,19 +496,20 @@ CREATE TABLE [dbo].[OPT_NuevoModulo] (
 );</pre>
 
         <div class="alert alert-green">
-          <strong>Módulos implementados (sesiones 11–21):</strong> Todos los módulos backend y frontend están completos:
+          <strong>Módulos implementados (sesiones 11–28):</strong> Todos los módulos backend y frontend están completos:
           Sucursales, Usuarios (M:N), Roles (catálogo), Agenda (PATCH /estado, X-Sucursal-Id),
-          FormaPago (catálogo), Categorías+Productos (jerarquía self-ref, CodigoInterno obligatorio),
+          FormaPago (catálogo), TipoPrevision (catálogo), Categorías+Productos (jerarquía self-ref, CodigoInterno obligatorio),
           Stock+MovimientoStock (X-Sucursal-Id, 7 tipos), DocumentoEntrada (crear/confirmar atómico, anular compensatorio),
           Transferencias (entre sucursales), PrecioProducto (historial global, frontend lista+modal edición),
-          Atenciones (POST /iniciar crea Atención+Anamnesis+Receta atómicamente), CobroServicio.
-          Scripts SQL completos: <code>000–027</code>. Próximo: <code>028_</code>.
+          Atenciones (estados: <code>Abierta→Terminada→Pagada|DerivoOT</code>; cobro requiere Terminada, pasa a Pagada),
+          CobroServicio, OrdenTrabajo (7 etapas, script 029).
+          Scripts SQL completos: <code>000–033</code>. Próximo: <code>034_</code>.
         </div>
         <div class="alert alert-amber">
           <strong>Regla crítica — ICurrentTenantService:</strong> Solo se usa en controllers y middleware. Los handlers de Application <strong>NO</strong> inyectan ICurrentTenantService. El controller extrae TenantId/SucursalId/UsuarioId/CreatedBy y los pasa en el command/query. Inyectarlo en handlers viola Clean Architecture.
         </div>
         <div class="alert alert-blue">
-          <strong>Módulos frontend pendientes:</strong> Transferencias (backend implementado, sin pantalla Angular), Salida por documentos (OrdenTrabajo, Devoluciones, OtroEgreso — solo Salida directa disponible), Dashboard/Home screen.
+          <strong>Módulos frontend pendientes:</strong> Salida por documentos (Devoluciones, OtroEgreso — solo Salida directa disponible), Dashboard/Home screen, Autorización por rol en controllers.
         </div>
       </section>
 
@@ -550,6 +554,69 @@ dotnet test
         <h3>Connection String (desarrollo local)</h3>
         <pre>"DefaultConnection": "Server=localhost;Database=dbOPT;
   Trusted_Connection=True;TrustServerCertificate=True;"</pre>
+      </section>
+
+      <!-- SEGURIDAD -->
+      <section id="seguridad">
+        <h2>Seguridad</h2>
+        <p>Mecanismos de seguridad implementados en el backend. Todos los cambios se aplicaron en la sesión 29 (2026-06-08) como parte de una auditoría formal.</p>
+
+        <h3>JWT Secret — Configuración obligatoria</h3>
+        <p><code>appsettings.json</code> tiene <code>"Secret": ""</code>. El startup lanza <code>InvalidOperationException</code> si el secret está vacío o tiene menos de 32 caracteres. Nunca commitear el valor real al repositorio.</p>
+        <pre><code># Desarrollo — User Secrets
+dotnet user-secrets set "Jwt:Secret" "min-32-chars-random-value"
+
+# Producción — variable de entorno (doble underscore = sección)
+Jwt__Secret=min-32-chars-random-value</code></pre>
+        <p>Adicionalmente, <code>ClockSkew = TimeSpan.Zero</code> en <code>TokenValidationParameters</code> para que los tokens expiren exactamente al tiempo configurado sin los 5 minutos de gracia por defecto.</p>
+
+        <h3>Refresh Token — Arquitectura</h3>
+        <p>El sistema de autenticación emite dos tokens en cada login: un <em>access token</em> (JWT, duración configurable via <code>ExpirationMinutes</code>) y un <em>refresh token</em> (opaco, 7 días).</p>
+
+        <table>
+          <tr><th>Endpoint</th><th>Auth</th><th>Descripción</th></tr>
+          <tr><td><code>POST /api/Auth/login</code></td><td>No</td><td>Devuelve par <code>{token, refreshToken}</code>. Rate limited: 5 req/min → 429.</td></tr>
+          <tr><td><code>POST /api/Auth/refresh</code></td><td>No (refresh token autentica)</td><td>Rota el par completo. El token anterior queda revocado (one-use).</td></tr>
+          <tr><td><code>POST /api/Auth/logout</code></td><td>JWT requerido</td><td>Revoca el refresh token en BD. TenantId del JWT, no del body.</td></tr>
+        </table>
+
+        <p><strong>Almacenamiento seguro:</strong> el valor raw del refresh token nunca persiste en base de datos. Se guarda únicamente el hash SHA-256 en hexadecimal (64 chars) en la columna <code>TokenHash</code> de <code>OPT_RefreshToken</code>. Esto evita que una brecha en la BD permita robar tokens activos.</p>
+
+        <p><strong>Rotación one-use:</strong> cada llamada a <code>/refresh</code> revoca el token anterior y emite un par nuevo. Si el mismo token se usa dos veces, la segunda llamada falla con 401.</p>
+
+        <p><strong>Validación cross-tenant:</strong> <code>RefreshTokenCommandHandler</code> verifica que <code>storedToken.TenantId == request.TenantId</code> antes de rotar. El logout extrae el TenantId del JWT autenticado.</p>
+
+        <p>En el frontend, <code>auth.interceptor.ts</code> intercepta respuestas 401 (excepto las de <code>/Auth/login</code> y <code>/Auth/refresh</code>), llama automáticamente a <code>/refresh</code>, y reintenta la request original con el nuevo token. Si el refresh también falla, ejecuta logout local.</p>
+
+        <h3>Rate Limiting en Login</h3>
+        <p>Configurado con el middleware nativo de .NET 8+ (<code>Microsoft.AspNetCore.RateLimiting</code>). Política <code>"login"</code>: ventana fija de 1 minuto, 5 requests máximos por IP. Retorna <code>429 Too Many Requests</code> al superar el límite.</p>
+        <pre>// Program.cs
+builder.Services.AddRateLimiter(opts => {
+    opts.AddFixedWindowLimiter("login", o => {
+        o.PermitLimit = 5;
+        o.Window = TimeSpan.FromMinutes(1);
+    });
+    opts.RejectionStatusCode = 429;
+});
+
+// AuthController
+[HttpPost("login")]
+[EnableRateLimiting("login")]
+public async Task&lt;IActionResult&gt; Login(...)</pre>
+
+        <h3>ChangePassword — Control de acceso</h3>
+        <p><code>PUT /api/usuarios/{id}/password</code> verifica que el llamante sea el propietario de la cuenta o tenga rol <code>Admin</code>. De lo contrario retorna <code>403 Forbidden</code>.</p>
+        <pre>if (id != tenantService.UsuarioId &amp;&amp; !User.IsInRole("Admin"))
+    return Forbid();</pre>
+
+        <h3>RBAC — Estado actual (deuda técnica)</h3>
+        <p>El claim <code>role</code> (<code>Admin | Operador | Lectura</code>) está presente en el JWT pero solo se verifica en endpoints puntuales. Todos los endpoints de escritura tienen <code>[Authorize]</code> (cualquier rol autenticado). La aplicación de roles granulares es una deuda técnica pendiente:</p>
+        <table>
+          <tr><th>Rol</th><th>Acceso actual</th><th>Acceso objetivo</th></tr>
+          <tr><td><code>Admin</code></td><td>Todo</td><td>Todo</td></tr>
+          <tr><td><code>Operador</code></td><td>Todo (no diferenciado)</td><td>Mutations clínicas/financieras; no gestión de usuarios/sucursales</td></tr>
+          <tr><td><code>Lectura</code></td><td>Todo (no diferenciado)</td><td>Solo GET endpoints</td></tr>
+        </table>
       </section>
 
     </main>

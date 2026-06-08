@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Informe Ejecutivo — Frontend Angular OPT</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #F3F6FA;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0D1B3D 0%, #1e3a8a 100%);
+      color: #fff;
+      padding: 48px 64px 40px;
+    }
+    header .tag {
+      display: inline-block;
+      background: rgba(6,182,212,.25);
+      color: #67e8f9;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    header p  { font-size: .95rem; color: #94a3b8; }
+    header .meta { display:flex; gap:32px; margin-top:24px; }
+    header .meta span { font-size: .8rem; color: #94a3b8; }
+    header .meta strong { color: #e2e8f0; display:block; font-size:.95rem; }
+
+    /* ── Layout ── */
+    main { max-width: 1140px; margin: 0 auto; padding: 48px 32px 80px; }
+    section { margin-bottom: 48px; }
+    h2 {
+      font-size: 1.25rem; font-weight: 700; color: #0D1B3D;
+      border-left: 4px solid #2563EB;
+      padding-left: 14px; margin-bottom: 20px;
+    }
+    h3 { font-size: 1rem; font-weight: 600; color: #334155; margin-bottom: 10px; }
+
+    /* ── Scorecard ── */
+    .scorecard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .score-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      border-top: 4px solid var(--accent);
+    }
+    .score-card .value { font-size: 2.4rem; font-weight: 800; color: var(--accent); }
+    .score-card .label { font-size: .8rem; color: #64748b; margin-top: 4px; }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 32px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .verdict {
+      font-size: 1.5rem; font-weight: 800;
+      padding: 8px 24px; border-radius: 8px;
+      white-space: nowrap;
+    }
+    .verdict.bueno   { background:#dcfce7; color:#15803d; }
+    .verdict.regular { background:#fef9c3; color:#a16207; }
+    .verdict.critico { background:#fee2e2; color:#b91c1c; }
+    .summary-bar p { color:#475569; font-size:.92rem; }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; background:#fff;
+            border-radius:12px; overflow:hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06); font-size:.875rem; }
+    th { background:#0D1B3D; color:#fff; padding:12px 16px; text-align:left;
+         font-weight:600; font-size:.8rem; letter-spacing:.04em; text-transform:uppercase; }
+    td { padding:12px 16px; border-bottom: 1px solid #f1f5f9; vertical-align:top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background:#f8fafc; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .75rem; font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-ok     { background:#dcfce7; color:#15803d; }
+    .badge-warn   { background:#fef9c3; color:#a16207; }
+    .badge-danger { background:#fee2e2; color:#b91c1c; }
+    .badge-na     { background:#f1f5f9; color:#64748b; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: #0f172a; color: #e2e8f0;
+      border-radius: 8px; padding: 16px;
+      font-size: .78rem; overflow-x: auto;
+      margin: 8px 0 0;
+      line-height: 1.5;
+    }
+    code { font-family: 'Cascadia Code','Fira Code', monospace; }
+    pre .bad  { color: #fca5a5; }
+    pre .good { color: #86efac; }
+    pre .cmt  { color: #64748b; }
+
+    /* ── Finding cards ── */
+    .findings { display: flex; flex-direction: column; gap: 16px; }
+    .finding-card {
+      background: #fff;
+      border-radius: 12px;
+      border-left: 5px solid var(--c);
+      padding: 20px 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .finding-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 10px;
+    }
+    .finding-title { font-weight: 700; font-size:.95rem; color:#1e293b; }
+    .finding-file  { font-size:.78rem; color:#64748b; font-family:monospace; margin-top:2px; }
+    .finding-desc  { font-size:.875rem; color:#475569; }
+    .badges { display:flex; gap:6px; flex-wrap:wrap; }
+
+    /* ── Progress bars ── */
+    .progress-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .progress-row label { width: 80px; font-size:.8rem; color:#64748b; flex-shrink:0; }
+    .bar { flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:4px; background: var(--b); }
+    .progress-row span { width:36px; text-align:right; font-size:.8rem; font-weight:700; color:#1e293b; }
+
+    /* ── Grid 2 cols ── */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    @media(max-width:720px){ .grid-2{ grid-template-columns:1fr; } }
+
+    .card {
+      background:#fff; border-radius:12px; padding:20px 24px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .chip {
+      display:inline-block; background:#eff6ff; color:#2563EB;
+      padding:4px 10px; border-radius:6px; font-size:.78rem;
+      font-weight:600; margin:3px;
+    }
+
+    /* ── Roadmap ── */
+    .roadmap-item {
+      display:flex; gap:16px; align-items:flex-start;
+      padding:16px 0; border-bottom:1px solid #f1f5f9;
+    }
+    .roadmap-item:last-child { border-bottom:none; }
+    .roadmap-num {
+      width:32px; height:32px; border-radius:50%;
+      background:#2563EB; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:.85rem; flex-shrink:0;
+    }
+    .roadmap-content h4 { font-size:.9rem; font-weight:700; margin-bottom:4px; }
+    .roadmap-content p  { font-size:.82rem; color:#64748b; }
+    .roadmap-content .effort {
+      font-size:.75rem; color:#2563EB; font-weight:600; margin-top:4px;
+    }
+
+    footer {
+      background:#0D1B3D; color:#475569; text-align:center;
+      padding:24px; font-size:.8rem;
+    }
+    footer strong { color:#94a3b8; }
+
+    .toc { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:48px; }
+    .toc a {
+      background:#fff; border:1px solid #e2e8f0;
+      color:#2563EB; text-decoration:none;
+      padding:6px 14px; border-radius:20px; font-size:.82rem; font-weight:600;
+      transition: background .15s, color .15s;
+    }
+    .toc a:hover { background:#2563EB; color:#fff; }
+
+    .icon { font-size:.9rem; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+<header>
+  <div class="tag">Informe Ejecutivo</div>
+  <h1>Auditoría: Clean Architecture &amp; SOLID — Frontend Angular</h1>
+  <p>Proyecto OPT — Sistema SaaS de Gestión de Ópticas</p>
+  <div class="meta">
+    <div><strong>Fecha</strong><span>08 de Junio de 2026</span></div>
+    <div><strong>Alcance</strong><span>src/frontend/src/app/</span></div>
+    <div><strong>Framework</strong><span>Angular 21 Standalone</span></div>
+    <div><strong>Módulos analizados</strong><span>12 módulos · 20+ archivos</span></div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════ MAIN ════════════════════════════════════ -->
+<main>
+
+  <!-- Tabla de contenidos -->
+  <nav class="toc" aria-label="Contenidos">
+    <a href="#resumen">1. Resumen</a>
+    <a href="#scorecard">2. Scorecard</a>
+    <a href="#clean-arch">3. Clean Architecture</a>
+    <a href="#solid">4. Principios SOLID</a>
+    <a href="#hallazgos">5. Hallazgos</a>
+    <a href="#patrones">6. Patrones Angular</a>
+    <a href="#roadmap">7. Roadmap</a>
+  </nav>
+
+  <!-- ── 1. RESUMEN EJECUTIVO ── -->
+  <section id="resumen">
+    <h2>1. Resumen Ejecutivo</h2>
+    <div class="summary-bar">
+      <div class="verdict bueno">BUENO</div>
+      <p>
+        El frontend presenta una <strong>arquitectura bien fundada</strong>: capas separadas, modelos centralizados,
+        lazy loading completo y patrones Angular modernos. No obstante, acumula
+        <strong>deuda técnica media</strong> concentrada en tres áreas: acoplamiento a
+        <code>localStorage</code>, ausencia de interfaces para servicios, y componentes con responsabilidades
+        múltiples. La deuda es corregible en 1–2 sprints sin riesgo de regresión estructural.
+      </p>
+    </div>
+
+    <!-- Scorecard global -->
+    <div class="scorecard">
+      <div class="score-card" style="--accent:#10B981">
+        <div class="value">7.2</div>
+        <div class="label">Puntuación Global<br><small>/ 10</small></div>
+      </div>
+      <div class="score-card" style="--accent:#2563EB">
+        <div class="value">8.5</div>
+        <div class="label">Clean Architecture<br><small>/ 10</small></div>
+      </div>
+      <div class="score-card" style="--accent:#F59E0B">
+        <div class="value">5.8</div>
+        <div class="label">SOLID<br><small>/ 10</small></div>
+      </div>
+      <div class="score-card" style="--accent:#06B6D4">
+        <div class="value">8.0</div>
+        <div class="label">Patrones Angular<br><small>/ 10</small></div>
+      </div>
+      <div class="score-card" style="--accent:#EF4444">
+        <div class="value">3</div>
+        <div class="label">Issues Críticos<br><small>a resolver</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2. SCORECARD CLEAN ARCH ── -->
+  <section id="scorecard">
+    <h2>2. Scorecard por Dimensión</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Clean Architecture</h3>
+        <div style="margin-top:12px">
+          <div class="progress-row">
+            <label>Separación</label>
+            <div class="bar"><div class="bar-fill" style="--b:#10B981;width:95%"></div></div>
+            <span>95%</span>
+          </div>
+          <div class="progress-row">
+            <label>Modelos</label>
+            <div class="bar"><div class="bar-fill" style="--b:#10B981;width:98%"></div></div>
+            <span>98%</span>
+          </div>
+          <div class="progress-row">
+            <label>Lazy load</label>
+            <div class="bar"><div class="bar-fill" style="--b:#10B981;width:100%"></div></div>
+            <span>100%</span>
+          </div>
+          <div class="progress-row">
+            <label>HTTP en svcs</label>
+            <div class="bar"><div class="bar-fill" style="--b:#10B981;width:100%"></div></div>
+            <span>100%</span>
+          </div>
+          <div class="progress-row">
+            <label>UUIDs correctos</label>
+            <div class="bar"><div class="bar-fill" style="--b:#10B981;width:100%"></div></div>
+            <span>100%</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Principios SOLID</h3>
+        <div style="margin-top:12px">
+          <div class="progress-row">
+            <label>SRP</label>
+            <div class="bar"><div class="bar-fill" style="--b:#F59E0B;width:62%"></div></div>
+            <span>62%</span>
+          </div>
+          <div class="progress-row">
+            <label>OCP</label>
+            <div class="bar"><div class="bar-fill" style="--b:#EF4444;width:30%"></div></div>
+            <span>30%</span>
+          </div>
+          <div class="progress-row">
+            <label>LSP</label>
+            <div class="bar"><div class="bar-fill" style="--b:#94a3b8;width:80%"></div></div>
+            <span>N/A</span>
+          </div>
+          <div class="progress-row">
+            <label>ISP</label>
+            <div class="bar"><div class="bar-fill" style="--b:#F59E0B;width:65%"></div></div>
+            <span>65%</span>
+          </div>
+          <div class="progress-row">
+            <label>DIP</label>
+            <div class="bar"><div class="bar-fill" style="--b:#EF4444;width:35%"></div></div>
+            <span>35%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. CLEAN ARCHITECTURE ── -->
+  <section id="clean-arch">
+    <h2>3. Evaluación Clean Architecture</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspecto</th>
+          <th>Estado</th>
+          <th>Evidencia clave</th>
+          <th>Calidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Separación de capas</strong><br><small>Componentes → Servicios → HTTP</small></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            HTTP exclusivo en <code>core/services/</code>.<br>
+            Ej: <code>clientes-list.component.ts:289</code> invoca <code>ClienteService.getClientes()</code>
+          </td>
+          <td><span class="badge badge-ok">Excelente</span></td>
+        </tr>
+        <tr>
+          <td><strong>Modelos centralizados</strong><br><small>Entidades en core/models/</small></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            <code>cliente.model.ts</code>, <code>atencion.model.ts</code>, <code>producto.model.ts</code><br>
+            DTOs separados por operación (CreateDto / UpdateDto / ReadDto)
+          </td>
+          <td><span class="badge badge-ok">Excelente</span></td>
+        </tr>
+        <tr>
+          <td><strong>Lazy Loading</strong><br><small>Code splitting por feature</small></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            Todas las rutas en <code>app.routes.ts</code> usan <code>loadComponent()</code>
+          </td>
+          <td><span class="badge badge-ok">Perfecto</span></td>
+        </tr>
+        <tr>
+          <td><strong>IDs de negocio como UUID</strong></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            <code>clienteId: string</code> en <code>cliente.model.ts:9</code><br>
+            Sin <code>Number(id)</code> ni <code>isNaN()</code> para GUIDs
+          </td>
+          <td><span class="badge badge-ok">Correcto</span></td>
+        </tr>
+        <tr>
+          <td><strong>Componentes delgados</strong><br><small>Sin lógica de negocio en templates</small></td>
+          <td><span class="badge badge-warn">⚠ Parcial</span></td>
+          <td>
+            <code>stock-list.component.ts</code>: 1 209 líneas con 6 responsabilidades.<br>
+            <code>cliente-form.component.ts</code>: 690 líneas con lógica mixta.
+          </td>
+          <td><span class="badge badge-warn">Mejorable</span></td>
+        </tr>
+        <tr>
+          <td><strong>Sin HTTP en componentes</strong></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>100% de componentes analizados usan solo servicios inyectados</td>
+          <td><span class="badge badge-ok">Perfecto</span></td>
+        </tr>
+        <tr>
+          <td><strong>Multi-tenancy (X-Sucursal-Id)</strong></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            <code>atencion.service.ts:14–16</code> y <code>agenda.service.ts</code> inyectan
+            <code>SucursalContextService</code> y construyen headers automáticamente
+          </td>
+          <td><span class="badge badge-ok">Excelente</span></td>
+        </tr>
+        <tr>
+          <td><strong>Guardias funcionales</strong></td>
+          <td><span class="badge badge-ok">✓ Cumple</span></td>
+          <td>
+            <code>auth.guard.ts</code> usa patrón <code>CanActivateFn</code> de Angular 15+<br>
+            Sin clases legacy
+          </td>
+          <td><span class="badge badge-ok">Moderno</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 4. SOLID ── -->
+  <section id="solid">
+    <h2>4. Evaluación Principios SOLID</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Principio</th>
+          <th>Estado</th>
+          <th>Hallazgo principal</th>
+          <th>Severidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>SRP</strong><br>
+            <small>Single Responsibility</small>
+          </td>
+          <td><span class="badge badge-warn">⚠ Parcial</span></td>
+          <td>
+            <code>StockListComponent</code> (1 209 líneas) gestiona 4 tabs, modales y helpers de
+            presentación. <code>ClienteFormComponent</code> mezcla lógica de formulario, catálogos
+            y validación RUT en 690 líneas.
+          </td>
+          <td><span class="badge badge-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>OCP</strong><br>
+            <small>Open/Closed</small>
+          </td>
+          <td><span class="badge badge-danger">✗ Incumple</span></td>
+          <td>
+            Ningún servicio implementa una interfaz (<code>IClienteService</code>,
+            <code>IAtencionService</code>…). Los componentes dependen de clases concretas:
+            imposible extender sin modificar.
+          </td>
+          <td><span class="badge badge-warn">Media</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>LSP</strong><br>
+            <small>Liskov Substitution</small>
+          </td>
+          <td><span class="badge badge-na">— N/A</span></td>
+          <td>
+            Sin jerarquías de herencia en el proyecto. No aplica.
+          </td>
+          <td><span class="badge badge-na">N/A</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>ISP</strong><br>
+            <small>Interface Segregation</small>
+          </td>
+          <td><span class="badge badge-warn">⚠ Parcial</span></td>
+          <td>
+            Los servicios exponen únicamente los métodos que cada módulo necesita (positivo), pero
+            al carecer de interfaces formales no se puede garantizar la segregación en contratos
+            explícitos.
+          </td>
+          <td><span class="badge badge-warn">Baja-Media</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>DIP</strong><br>
+            <small>Dependency Inversion</small>
+          </td>
+          <td><span class="badge badge-danger">✗ Incumple</span></td>
+          <td>
+            <code>AuthService</code>, <code>SucursalContextService</code> y
+            <code>auth.interceptor.ts</code> acceden directamente a <code>localStorage</code>.
+            Sin abstracción (<code>StorageService</code>), el código es no-testeable y
+            no-reemplazable.
+          </td>
+          <td><span class="badge badge-danger">Alta</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 5. HALLAZGOS DETALLADOS ── -->
+  <section id="hallazgos">
+    <h2>5. Hallazgos Detallados</h2>
+
+    <!-- POSITIVOS -->
+    <h3 style="margin-bottom:16px; color:#15803d">✅ Fortalezas Identificadas</h3>
+    <div class="findings" style="margin-bottom:32px">
+
+      <div class="finding-card" style="--c:#10B981">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">Servicios de catálogo con shareReplay(1)</div>
+            <div class="finding-file">region.service.ts:17–19 · prevision.service.ts:15</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-ok">ISP</span>
+            <span class="badge badge-ok">Performance</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Los catálogos compartidos (regiones, previsiones, roles, formas de pago) usan
+          <code>shareReplay(1)</code>, evitando peticiones HTTP duplicadas. Patrón consistente
+          en todos los servicios de catálogo.
+        </div>
+        <pre><code><span class="good">private readonly regiones$ = this.http
+  .get&lt;RegionWithComunas[]&gt;(`${this.apiUrl}/WithComunas`)
+  .pipe(shareReplay(1));  ✓</span></code></pre>
+      </div>
+
+      <div class="finding-card" style="--c:#10B981">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">takeUntilDestroyed en 90% de suscripciones</div>
+            <div class="finding-file">cliente-form.component.ts:485 · stock-list.component.ts:909</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-ok">Memory Safety</span>
+            <span class="badge badge-ok">Angular 16+</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          La mayoría de suscripciones a Observables están correctamente protegidas con
+          <code>takeUntilDestroyed(this.destroyRef)</code>, previniendo memory leaks en
+          navegación entre vistas.
+        </div>
+      </div>
+
+      <div class="finding-card" style="--c:#10B981">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">Lazy loading en todas las rutas</div>
+            <div class="finding-file">app.routes.ts:12–14, 22–26</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-ok">Performance</span>
+            <span class="badge badge-ok">Clean Arch</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Todas las rutas de negocio usan <code>loadComponent()</code>. El bundle inicial es mínimo
+          y cada módulo se carga bajo demanda, cumpliendo al 100% con la separación por features.
+        </div>
+      </div>
+
+      <div class="finding-card" style="--c:#10B981">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">Multi-tenancy correctamente encapsulado</div>
+            <div class="finding-file">atencion.service.ts:14–16 · agenda.service.ts:14–16</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-ok">SRP</span>
+            <span class="badge badge-ok">Encapsulación</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          El header <code>X-Sucursal-Id</code> se resuelve automáticamente en cada servicio via
+          <code>SucursalContextService</code>. Los componentes no conocen el header y no tienen que
+          gestionarlo.
+        </div>
+        <pre><code><span class="good">private headers(): HttpHeaders {
+  const sucursalId = this.sucursalContext.sucursalActual()?.sucursalId ?? '';
+  return new HttpHeaders({ 'X-Sucursal-Id': sucursalId });
+}  ✓</span></code></pre>
+      </div>
+
+    </div>
+
+    <!-- PROBLEMAS -->
+    <h3 style="margin-bottom:16px; color:#b91c1c">❌ Problemas Encontrados</h3>
+    <div class="findings">
+
+      <!-- P1 -->
+      <div class="finding-card" style="--c:#EF4444">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-01 · DIP violado — localStorage acoplado directamente</div>
+            <div class="finding-file">auth.service.ts:23,36,46 · sucursal-context.service.ts:14,23,29 · auth.interceptor.ts:4</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-danger">DIP</span>
+            <span class="badge badge-danger">Alta</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Tres archivos de capa core acceden directamente a <code>localStorage</code>, creando
+          acoplamiento a una implementación de infraestructura del navegador. Imposible testear
+          unitariamente sin mock de DOM, e imposible migrar a <code>sessionStorage</code> o
+          <code>IndexedDB</code> sin refactor.
+        </div>
+        <pre><code><span class="cmt">// ❌ auth.service.ts — dependencia concreta</span>
+<span class="bad">localStorage.setItem(TOKEN_KEY, response.token);
+const user = localStorage.getItem(USER_KEY);</span>
+
+<span class="cmt">// ❌ auth.interceptor.ts — duplicación del acoplamiento</span>
+<span class="bad">const token = localStorage.getItem('opt_token');</span>
+
+<span class="cmt">// ✓ Solución: crear StorageService abstracto</span>
+<span class="good">@Injectable({ providedIn: 'root' })
+export class StorageService {
+  get(key: string): string | null { return localStorage.getItem(key); }
+  set(key: string, value: string): void { localStorage.setItem(key, value); }
+  remove(key: string): void { localStorage.removeItem(key); }
+}</span></code></pre>
+      </div>
+
+      <!-- P2 -->
+      <div class="finding-card" style="--c:#EF4444">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-02 · OCP/DIP — Servicios sin interfaces (no testeables)</div>
+            <div class="finding-file">core/services/*.service.ts (todos)</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-danger">DIP</span>
+            <span class="badge badge-warn">OCP</span>
+            <span class="badge badge-warn">Media</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Ningún servicio del proyecto implementa una interfaz TypeScript formal. Los componentes
+          dependen de clases concretas, haciendo imposible el testeo con dobles de prueba sin
+          configuración compleja de Angular TestBed.
+        </div>
+        <pre><code><span class="cmt">// ❌ Actual — dependencia concreta</span>
+<span class="bad">constructor(private clienteService: ClienteService) {}</span>
+
+<span class="cmt">// ✓ Ideal — dependencia de abstracción</span>
+<span class="good">export abstract class ClienteService {
+  abstract getClientes(params: ClienteFilter): Observable&lt;PagedResult&lt;Cliente&gt;&gt;;
+  abstract getCliente(id: string): Observable&lt;Cliente&gt;;
+  // ...
+}</span></code></pre>
+      </div>
+
+      <!-- P3 -->
+      <div class="finding-card" style="--c:#F59E0B">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-03 · SRP violado — StockListComponent con 1 209 líneas y 6 responsabilidades</div>
+            <div class="finding-file">features/stock/stock-list/stock-list.component.ts</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-danger">SRP</span>
+            <span class="badge badge-warn">Media</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Un solo componente gestiona: (1) stock actual, (2) documentos de entrada, (3) historial
+          de movimientos, (4) transferencias, (5) modal stock por sucursal y (6) helpers de
+          presentación (<code>deltaDisplay()</code>, <code>deltaClass()</code>,
+          <code>tipoBadgeClass()</code>). Debería dividirse en sub-componentes por tab.
+        </div>
+        <pre><code><span class="cmt">// ❌ 6 responsabilidades en 1 componente:</span>
+<span class="bad">// líneas 851–920:  gestión stock actual
+// líneas 859–974:  documentos de entrada
+// líneas 866–1032: historial de movimientos
+// líneas 873–1124: transferencias
+// líneas 886–1142: modal stock por sucursal
+// líneas 1170–1207: helpers de presentación</span>
+
+<span class="cmt">// ✓ Dividir en:</span>
+<span class="good">stock-actual-tab.component.ts
+entradas-tab.component.ts
+historial-tab.component.ts
+transferencias-tab.component.ts</span></code></pre>
+      </div>
+
+      <!-- P4 -->
+      <div class="finding-card" style="--c:#F59E0B">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-04 · Memory leak — suscripciones sin takeUntilDestroyed</div>
+            <div class="finding-file">clientes-list.component.ts:289,337 · productos-list.component.ts:481,497</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-warn">Memory Leak</span>
+            <span class="badge badge-warn">Alta</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Varias suscripciones en métodos de carga (<code>cargarClientes()</code>,
+          <code>cargarCategorias()</code>) no usan <code>takeUntilDestroyed</code>.
+          En apps con navegación frecuente esto acumula suscripciones activas que nunca se cancelan.
+        </div>
+        <pre><code><span class="cmt">// ❌ clientes-list.component.ts:289</span>
+<span class="bad">this.clienteService.getClientes(...).subscribe({
+  next: (response) => { ... },
+});</span>
+
+<span class="cmt">// ✓ Corrección</span>
+<span class="good">this.clienteService.getClientes(...)
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe({ next: (response) => { ... } });</span></code></pre>
+      </div>
+
+      <!-- P5 -->
+      <div class="finding-card" style="--c:#F59E0B">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-05 · Inconsistencia — Mezcla de Signal Forms y ReactiveFormsModule</div>
+            <div class="finding-file">cliente-form.component.ts · usuario-form.component.ts</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-warn">Inconsistencia</span>
+            <span class="badge badge-warn">Baja-Media</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          El proyecto declara Signal Forms como estándar en <code>CLAUDE.md</code>, pero
+          <code>cliente-form.component.ts</code> y <code>usuario-form.component.ts</code> usan
+          <code>ReactiveFormsModule</code> con <code>FormBuilder</code>. Deuda técnica reconocida
+          para <code>usuario-form</code>, pero no para <code>cliente-form</code>.
+        </div>
+      </div>
+
+      <!-- P6 -->
+      <div class="finding-card" style="--c:#94a3b8">
+        <div class="finding-header">
+          <div>
+            <div class="finding-title">P-06 · SRP leve — Lógica de formato de fechas duplicada en componentes</div>
+            <div class="finding-file">atenciones-list.component.ts:17–28 · stock-list.component.ts:1170–1207</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-na">SRP</span>
+            <span class="badge badge-na">Baja</span>
+          </div>
+        </div>
+        <div class="finding-desc">
+          Funciones de formato de fechas y helpers de presentación están definidas directamente en
+          los archivos de componentes. Si el mismo formato es necesario en otro módulo, hay que
+          duplicar. Solucionable con un Angular Pipe o un <code>DateFormatService</code>.
+        </div>
+        <pre><code><span class="cmt">// ❌ Duplicado en atenciones-list.component.ts</span>
+<span class="bad">function pad(n: number): string { return String(n).padStart(2, '0'); }
+function formatFecha(iso: string): string { ... }
+function formatHora(iso: string): string { ... }</span>
+
+<span class="cmt">// ✓ Extraer a pipe reutilizable</span>
+<span class="good">@Pipe({ name: 'optFecha', standalone: true })
+export class OptFechaPipe implements PipeTransform { ... }</span></code></pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 6. PATRONES ANGULAR ── -->
+  <section id="patrones">
+    <h2>6. Patrones Angular Específicos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Patrón</th>
+          <th>Estado</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Standalone Components</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td>100% de componentes son standalone. Sin NgModules.</td>
+        </tr>
+        <tr>
+          <td>inject() en lugar de constructor</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td>Todos los componentes nuevos usan <code>inject()</code>. Patrón Angular 14+.</td>
+        </tr>
+        <tr>
+          <td>Signal Forms</td>
+          <td><span class="badge badge-warn">⚠ Parcial</span></td>
+          <td>
+            Adoptado en módulos nuevos (productos, stock, ordenes-trabajo).<br>
+            <code>cliente-form</code> y <code>usuario-form</code> pendientes de migrar.
+          </td>
+        </tr>
+        <tr>
+          <td>shareReplay(1) en catálogos</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td>region, prevision, rol, forma-pago — todos implementan el patrón.</td>
+        </tr>
+        <tr>
+          <td>takeUntilDestroyed</td>
+          <td><span class="badge badge-warn">⚠ Parcial</span></td>
+          <td>
+            ~90% de suscripciones protegidas. Faltan 4+ casos en
+            <code>clientes-list</code> y <code>productos-list</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Functional Guards</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td><code>auth.guard.ts</code> usa <code>CanActivateFn</code> moderno.</td>
+        </tr>
+        <tr>
+          <td>Interceptors funcionales</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td><code>auth.interceptor.ts</code> usa <code>HttpInterceptorFn</code>.</td>
+        </tr>
+        <tr>
+          <td>Signals para estado local</td>
+          <td><span class="badge badge-ok">✓ Bueno</span></td>
+          <td>
+            <code>loading.set()</code>, <code>errorMessage.set()</code>,
+            <code>items.set()</code> en todos los módulos modernos.
+          </td>
+        </tr>
+        <tr>
+          <td>SweetAlert2 para confirmaciones</td>
+          <td><span class="badge badge-ok">✓ Completo</span></td>
+          <td>Usado de forma consistente en todas las acciones destructivas.</td>
+        </tr>
+        <tr>
+          <td>UUID validation en route params</td>
+          <td><span class="badge badge-warn">⚠ Ausente</span></td>
+          <td>
+            No hay resolver ni guard que valide formato UUID en rutas como
+            <code>/clientes/:id</code>. Recomendado pero no crítico.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 7. ROADMAP ── -->
+  <section id="roadmap">
+    <h2>7. Roadmap de Mejoras Recomendado</h2>
+
+    <div class="card">
+      <div class="roadmap-item">
+        <div class="roadmap-num">1</div>
+        <div class="roadmap-content">
+          <h4>Crear StorageService — eliminar acoplamiento a localStorage</h4>
+          <p>
+            Extraer todos los accesos a <code>localStorage</code> en
+            <code>auth.service.ts</code>, <code>sucursal-context.service.ts</code> y
+            <code>auth.interceptor.ts</code> hacia un servicio <code>StorageService</code>
+            inyectable. Habilita mocks en tests y posible migración futura.
+          </p>
+          <div class="effort">Esfuerzo: ~2h · Impacto: Alto (DIP + testabilidad)</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-num">2</div>
+        <div class="roadmap-content">
+          <h4>Completar takeUntilDestroyed en todas las suscripciones</h4>
+          <p>
+            Buscar todos los <code>.subscribe({</code> sin pipe precedente en
+            <code>clientes-list.component.ts</code> y <code>productos-list.component.ts</code>.
+            Agregar <code>.pipe(takeUntilDestroyed(this.destroyRef))</code> en cada caso.
+          </p>
+          <div class="effort">Esfuerzo: ~1h · Impacto: Alto (memory leaks)</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-num">3</div>
+        <div class="roadmap-content">
+          <h4>Migrar cliente-form a Signal Forms</h4>
+          <p>
+            Reemplazar <code>FormBuilder</code> + <code>ReactiveFormsModule</code> por Signal Forms
+            en <code>cliente-form.component.ts</code>. Aprovechar la migración para extraer la
+            lógica de contactos a un sub-componente <code>ContactoFormComponent</code>.
+          </p>
+          <div class="effort">Esfuerzo: ~4h · Impacto: Medio (consistencia + SRP)</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-num">4</div>
+        <div class="roadmap-content">
+          <h4>Dividir StockListComponent en sub-componentes por tab</h4>
+          <p>
+            Extraer <code>StockActualTabComponent</code>, <code>EntradasTabComponent</code>,
+            <code>HistorialTabComponent</code> y <code>TransferenciasTabComponent</code>.
+            El componente host pasa solo datos y eventos via <code>@Input</code>/<code>@Output</code>.
+          </p>
+          <div class="effort">Esfuerzo: ~6h · Impacto: Medio (mantenibilidad + SRP)</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-num">5</div>
+        <div class="roadmap-content">
+          <h4>Agregar interfaces abstractas para los servicios principales</h4>
+          <p>
+            Definir <code>abstract class ClienteService</code>, <code>AtencionService</code>,
+            <code>StockService</code> y <code>ProductoService</code> con los métodos públicos.
+            Las implementaciones concretas los extienden. Permite crear doubles de prueba sin
+            <code>HttpClientTestingModule</code>.
+          </p>
+          <div class="effort">Esfuerzo: ~3h · Impacto: Medio (OCP + DIP + testabilidad)</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-num">6</div>
+        <div class="roadmap-content">
+          <h4>Crear OptFechaPipe — centralizar formateo de fechas</h4>
+          <p>
+            Extraer las funciones <code>formatFecha()</code>, <code>formatHora()</code> y
+            <code>pad()</code> dispersas en componentes a un Angular Pipe standalone
+            reutilizable. Registrar en <code>core/pipes/</code>.
+          </p>
+          <div class="effort">Esfuerzo: ~1h · Impacto: Bajo (DRY + SRP)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen de esfuerzo -->
+    <div class="card" style="margin-top:20px">
+      <h3 style="margin-bottom:16px">Resumen de Esfuerzo Total</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:16px">
+        <div style="text-align:center; padding:16px 24px; background:#eff6ff; border-radius:10px">
+          <div style="font-size:1.8rem; font-weight:800; color:#2563EB">~17h</div>
+          <div style="font-size:.8rem; color:#64748b">Esfuerzo total estimado</div>
+        </div>
+        <div style="text-align:center; padding:16px 24px; background:#f0fdf4; border-radius:10px">
+          <div style="font-size:1.8rem; font-weight:800; color:#15803d">1–2</div>
+          <div style="font-size:.8rem; color:#64748b">Sprints recomendados</div>
+        </div>
+        <div style="text-align:center; padding:16px 24px; background:#fef9c3; border-radius:10px">
+          <div style="font-size:1.8rem; font-weight:800; color:#a16207">0</div>
+          <div style="font-size:.8rem; color:#64748b">Riesgo de regresión estructural</div>
+        </div>
+        <div style="text-align:center; padding:16px 24px; background:#fef2f2; border-radius:10px">
+          <div style="font-size:1.8rem; font-weight:800; color:#b91c1c">3</div>
+          <div style="font-size:.8rem; color:#64748b">Issues de prioridad alta</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <strong>OPT SaaS — Gestión de Ópticas</strong> &nbsp;·&nbsp;
+  Informe generado el 08/06/2026 &nbsp;·&nbsp;
+  Análisis estático sobre Angular 21 Standalone + RxJS + Signals
+</footer>
+
+</body>
+</html>
